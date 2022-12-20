@@ -1,0 +1,44 @@
+---
+project_name: price-feeder
+
+env:
+  - CGO_ENABLED=1
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - main: ./cmd
+    id: "price-feeder"
+    binary: price-feeder
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -tags=badgerdb ledger netgo
+      - -trimpath
+    ldflags:
+      - -s -w -X main.commit={{.Commit}} -X main.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.AppName=price-feeder -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }} -X github.com/tendermint/tendermint/version.TMCoreSemVer={{ .Env.TM_VERSION }}
+    goos:
+      - linux
+    goarch:
+      - amd64
+
+archives:
+  - id: bins
+    format: binary
+    name_template: "{{ .Binary }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+
+release:
+  github:
+    owner: ojo-network
+    name: price-feeder
+
+snapshot:
+  name_template: SNAPSHOT-{{ .Commit }}
+
+checksum:
+  name_template: SHA256SUMS-v{{.Version}}.txt
+  algorithm: sha256
+
+changelog:
+  skip: false
