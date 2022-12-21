@@ -1,0 +1,22 @@
+name: "CodeQL"
+
+on:
+  pull_request:
+    paths: ["**.go"]
+    branches:
+      - main
+      - release/**
+  push:
+    branches:
+      - main
+      - release/**
+    paths: ["**.go"]
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write

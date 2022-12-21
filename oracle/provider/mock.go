@@ -41,7 +41,7 @@ func NewMockProvider() *MockProvider {
 }
 
 // SubscribeCurrencyPairs performs a no-op since mock does not use websockets
-func (p MockProvider) SubscribeCurrencyPairs(pairs ...types.CurrencyPair) error {
+func (p MockProvider) SubscribeCurrencyPairs(_ ...types.CurrencyPair) error {
 	return nil
 }
 

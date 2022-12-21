@@ -73,7 +73,7 @@ func NewOsmosisProvider(endpoint Endpoint) *OsmosisProvider {
 }
 
 // SubscribeCurrencyPairs performs a no-op since osmosis does not use websockets
-func (p OsmosisProvider) SubscribeCurrencyPairs(pairs ...types.CurrencyPair) error {
+func (p OsmosisProvider) SubscribeCurrencyPairs(_ ...types.CurrencyPair) error {
 	return nil
 }
 
