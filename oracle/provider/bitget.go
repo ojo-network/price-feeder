@@ -213,7 +213,11 @@ func (p *BitgetProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 }
 
 // messageReceived handles the received data from the Bitget websocket.
-func (p *BitgetProvider) messageReceived(_ int, bz []byte) {
+func (p *BitgetProvider) messageReceived(messageType int, bz []byte) {
+	if messageType != websocket.TextMessage {
+		return
+	}
+
 	var (
 		tickerResp           BitgetTicker
 		tickerErr            error

@@ -189,8 +189,12 @@ func (p *OsmosisV2Provider) getCandlePrices(key string) ([]types.CandlePrice, er
 	return candleList, nil
 }
 
-func (p *OsmosisV2Provider) messageReceived(_ int, bz []byte) {
-	// check if message is an ack first
+func (p *OsmosisV2Provider) messageReceived(messageType int, bz []byte) {
+	if messageType != websocket.TextMessage {
+		return
+	}
+
+	// check if message is an ack
 	if string(bz) == "ack" {
 		return
 	}

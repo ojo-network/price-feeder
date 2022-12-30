@@ -226,7 +226,11 @@ func (p *MexcProvider) getCandlePrices(key string) ([]types.CandlePrice, error) 
 	return candleList, nil
 }
 
-func (p *MexcProvider) messageReceived(_ int, bz []byte) {
+func (p *MexcProvider) messageReceived(messageType int, bz []byte) {
+	if messageType != websocket.TextMessage {
+		return
+	}
+
 	var (
 		tickerResp MexcTickerResponse
 		tickerErr  error

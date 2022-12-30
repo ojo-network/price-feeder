@@ -307,7 +307,11 @@ func (p *CoinbaseProvider) getTradePrices(key string) ([]CoinbaseTrade, error) {
 	return trades, nil
 }
 
-func (p *CoinbaseProvider) messageReceived(_ int, bz []byte) {
+func (p *CoinbaseProvider) messageReceived(messageType int, bz []byte) {
+	if messageType != websocket.TextMessage {
+		return
+	}
+
 	var coinbaseTrade CoinbaseTradeResponse
 	if err := json.Unmarshal(bz, &coinbaseTrade); err != nil {
 		p.logger.Error().Err(err).Msg("unable to unmarshal response")

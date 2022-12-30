@@ -239,7 +239,11 @@ func (p *BinanceProvider) getCandlePrices(key string) ([]types.CandlePrice, erro
 	return candleList, nil
 }
 
-func (p *BinanceProvider) messageReceived(_ int, bz []byte) {
+func (p *BinanceProvider) messageReceived(messageType int, bz []byte) {
+	if messageType != websocket.TextMessage {
+		return
+	}
+
 	var (
 		tickerResp       BinanceTicker
 		tickerErr        error
