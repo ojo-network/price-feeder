@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ojo-network/ojo v0.0.0-20221205171006-738b3fea6dbe
+	github.com/ojo-network/ojo v0.0.0-20221228224632-5f88227ca7f4
 	github.com/rs/cors v1.8.3
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/cobra v1.6.1
@@ -70,11 +70,11 @@ require (
 	github.com/coinbase/rosetta-sdk-go v0.7.9 // indirect
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
-	github.com/cosmos/cosmos-proto v1.0.0-alpha7 // indirect
+	github.com/cosmos/cosmos-proto v1.0.0-beta.1 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/iavl v0.19.4 // indirect
-	github.com/cosmos/ibc-go/v5 v5.1.0 // indirect
+	github.com/cosmos/ibc-go/v5 v5.2.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.1 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
