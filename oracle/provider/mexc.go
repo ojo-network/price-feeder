@@ -13,7 +13,7 @@ import (
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 
-	"github.com/ojo-network/ojo/util/coin"
+	"github.com/ojo-network/ojo/util/decmath"
 )
 
 const (
@@ -271,11 +271,11 @@ func (p *MexcProvider) setTickerPair(symbol string, ticker MexcTicker) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
-	price, err := coin.NewDecFromFloat(ticker.LastPrice)
+	price, err := decmath.NewDecFromFloat(ticker.LastPrice)
 	if err != nil {
 		p.logger.Warn().Err(err).Msg("mexc: failed to parse ticker price")
 	}
-	volume, err := coin.NewDecFromFloat(ticker.Volume)
+	volume, err := decmath.NewDecFromFloat(ticker.Volume)
 	if err != nil {
 		p.logger.Warn().Err(err).Msg("mexc: failed to parse ticker volume")
 	}
@@ -290,11 +290,11 @@ func (p *MexcProvider) setCandlePair(candleResp MexcCandleResponse) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
-	close, err := coin.NewDecFromFloat(candleResp.Metadata.Close)
+	close, err := decmath.NewDecFromFloat(candleResp.Metadata.Close)
 	if err != nil {
 		p.logger.Warn().Err(err).Msg("mexc: failed to parse candle close")
 	}
-	volume, err := coin.NewDecFromFloat(candleResp.Metadata.Volume)
+	volume, err := decmath.NewDecFromFloat(candleResp.Metadata.Volume)
 	if err != nil {
 		p.logger.Warn().Err(err).Msg("mexc: failed to parse candle volume")
 	}

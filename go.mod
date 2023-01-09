@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ojo-network/ojo v0.0.0-20221228224632-5f88227ca7f4
+	github.com/ojo-network/ojo v0.1.0
 	github.com/rs/cors v1.8.3
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/cobra v1.6.1
