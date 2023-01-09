@@ -124,12 +124,10 @@ func (p OsmosisProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 		if err != nil {
 			return nil, fmt.Errorf("failed to read Osmosis price (%f) for %s", tr.Price, symbol)
 		}
-
 		volume, err := decmath.NewDecFromFloat(tr.Volume)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read Osmosis volume (%f) for %s", tr.Volume, symbol)
 		}
-
 		tickerPrices[cp.String()] = types.TickerPrice{Price: price, Volume: volume}
 	}
 
