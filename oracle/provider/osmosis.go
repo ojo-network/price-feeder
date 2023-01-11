@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ojo-network/ojo/util/coin"
+	"github.com/ojo-network/ojo/util/decmath"
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
@@ -120,16 +120,14 @@ func (p OsmosisProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, fmt.Errorf("duplicate token found in Osmosis response: %s", symbol)
 		}
 
-		price, err := coin.NewDecFromFloat(tr.Price)
+		price, err := decmath.NewDecFromFloat(tr.Price)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read Osmosis price (%f) for %s", tr.Price, symbol)
 		}
-
-		volume, err := coin.NewDecFromFloat(tr.Volume)
+		volume, err := decmath.NewDecFromFloat(tr.Volume)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read Osmosis volume (%f) for %s", tr.Volume, symbol)
 		}
-
 		tickerPrices[cp.String()] = types.TickerPrice{Price: price, Volume: volume}
 	}
 
@@ -179,9 +177,18 @@ func (p OsmosisProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 			if staleTime >= responseCandle.Time {
 				continue
 			}
+
+			price, err := decmath.NewDecFromFloat(responseCandle.Close)
+			if err != nil {
+				return nil, err
+			}
+			volume, err := decmath.NewDecFromFloat(responseCandle.Volume)
+			if err != nil {
+				return nil, err
+			}
 			candlePrices = append(candlePrices, types.CandlePrice{
-				Price:  coin.MustNewDecFromFloat(responseCandle.Close),
-				Volume: coin.MustNewDecFromFloat(responseCandle.Volume),
+				Price:  price,
+				Volume: volume,
 				// convert osmosis timestamp seconds -> milliseconds
 				TimeStamp: SecondsToMilli(responseCandle.Time),
 			})
