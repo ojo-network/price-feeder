@@ -903,6 +903,8 @@ github.com/ojo-network/ojo v0.0.0-20221228224632-5f88227ca7f4 h1:6vMM7A34FnVzHhV
 github.com/ojo-network/ojo v0.0.0-20221228224632-5f88227ca7f4/go.mod h1:C13DyeXAdXixM0KBbMF+/we9FwqEc+DzBwE8iZPs/sU=
 github.com/ojo-network/ojo v0.1.0 h1:WucyUJ4riha2GhxZUdlN4IPPDfXXl4ktHXQmQ5fWZK0=
 github.com/ojo-network/ojo v0.1.0/go.mod h1:1YqSkW1e4uvZ27TvYKq+KAik3ap5d2c94yXrzlXu/Zk=
+github.com/ojo-network/ojo v0.1.1 h1:3qpQPfse6loegSAU4ZXmU2XSV12XIfaTMEcb9lDV+g4=
+github.com/ojo-network/ojo v0.1.1/go.mod h1:C603Ii7BuiCqxVmtI/3gvPgJCxpi6rJlkbM9uw0udNc=
 github.com/oklog/oklog v0.3.2/go.mod h1:FCV+B7mhrz4o+ueLpx+KqkyXRGMWOYEvfiXtdGtbWGs=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
