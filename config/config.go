@@ -33,19 +33,20 @@ var (
 	// SupportedProviders defines a lookup table of all the supported currency API
 	// providers.
 	SupportedProviders = map[provider.Name]struct{}{
-		provider.ProviderKraken:    {},
-		provider.ProviderBinance:   {},
-		provider.ProviderBinanceUS: {},
-		provider.ProviderOsmosis:   {},
-		provider.ProviderOsmosisV2: {},
-		provider.ProviderOkx:       {},
-		provider.ProviderHuobi:     {},
-		provider.ProviderGate:      {},
-		provider.ProviderCoinbase:  {},
-		provider.ProviderBitget:    {},
-		provider.ProviderMexc:      {},
-		provider.ProviderCrypto:    {},
-		provider.ProviderMock:      {},
+		provider.ProviderKraken:       {},
+		provider.ProviderBinance:      {},
+		provider.ProviderBinanceUS:    {},
+		provider.ProviderOsmosis:      {},
+		provider.ProviderOsmosisV2:    {},
+		provider.ProviderOkx:          {},
+		provider.ProviderHuobi:        {},
+		provider.ProviderGate:         {},
+		provider.ProviderCoinbase:     {},
+		provider.ProviderBitget:       {},
+		provider.ProviderMexc:         {},
+		provider.ProviderCrypto:       {},
+		provider.ProviderAlphaVantage: {},
+		provider.ProviderMock:         {},
 	}
 
 	// maxDeviationThreshold is the maxmimum allowed amount of standard
