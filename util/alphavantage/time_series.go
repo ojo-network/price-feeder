@@ -1,4 +1,4 @@
-package util
+package alphavantage
 
 import (
 	"encoding/csv"
@@ -34,8 +34,8 @@ func (b sortTimeSeriesValuesByDate) Len() int           { return len(b) }
 func (b sortTimeSeriesValuesByDate) Less(i, j int) bool { return b[i].Time.Before(b[j].Time) }
 func (b sortTimeSeriesValuesByDate) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 
-// parseTimeSeriesData will parse csv data from a reader
-func parseTimeSeriesData(r io.Reader) ([]*TimeSeriesValue, error) {
+// ParseTimeSeriesData will parse csv data from a reader
+func ParseTimeSeriesData(r io.Reader) ([]*TimeSeriesValue, error) {
 
 	reader := csv.NewReader(r)
 	reader.ReuseRecord = true // optimization

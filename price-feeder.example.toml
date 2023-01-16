@@ -107,6 +107,14 @@ providers = [
 ]
 quote = "USDT"
 
+[[currency_pairs]]
+base = "EUR"
+providers = [
+  "alphavantage",
+]
+quote = "USD"
+
+
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
 chain_id = "ojo-testnet"
@@ -134,3 +142,9 @@ prometheus-retention-time = 100
 name = "binance"
 rest = "https://api1.binance.com"
 websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "alphavantage"
+rest = "https://www.alphavantage.co/query?"
+websocket = "https://www.alphavantage.co/query?"
+apikey = "test"

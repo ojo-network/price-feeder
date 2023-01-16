@@ -2,26 +2,20 @@ package provider
 
 import (
 	"context"
-	"encoding/csv"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/rs/zerolog"
 	"github.com/ojo-network/price-feeder/oracle/types"
-	"github.com/ojo-network/ojo/v3/util/coin"
+	"github.com/ojo-network/price-feeder/util/alphavantage"
+	"github.com/rs/zerolog"
 )
 
 const (
 	alphaVantageRestUrl        = "https://www.alphavantage.co/query?"
-	alphaVantageCandleEndpoint = "function=FX_INTRADAY&interval=15min"
-	alphaVantageAPIKey         = "E3DX2T5QYNZ0ERVM"
+	alphaVantageCandleEndpoint = "function=FX_INTRADAY&interval=15min&datatypesize=csv&output=compact"
 
 	cacheInterval = 500 * time.Millisecond
 )
@@ -35,6 +29,7 @@ type (
 	// REF: https://www.alphavantage.co/documentation/
 	AlphaVantageProvider struct {
 		baseURL string
+		apiKey  string
 		client  *http.Client
 
 		logger zerolog.Logger
@@ -43,41 +38,34 @@ type (
 		// candleCache is the cache of candle prices for assets.
 		candleCache map[string][]types.CandlePrice
 	}
-
-	AlphaVantageTimeSeriesData struct {
-		Time   time.Time
-		Open   float64
-		High   float64
-		Low    float64
-		Close  float64
-		Volume float64
-	}
 )
 
 func NewAlphaVantageProvider(
 	ctx context.Context,
 	logger zerolog.Logger,
-	endpoint Endpoint,
+	endpoints Endpoint,
 	pairs ...types.CurrencyPair,
 ) *AlphaVantageProvider {
-	restURL := alphaVantageRestUrl
-
-	if endpoint.Name == ProviderAlphaVantage {
-		restURL = endpoint.Rest
+	if endpoints.Name != ProviderAlphaVantage {
+		endpoints = Endpoint{
+			Name: ProviderAlphaVantage,
+			Rest: alphaVantageRestUrl,
+		}
 	}
 
 	alphavantage := AlphaVantageProvider{
-		baseURL:      restURL,
-		client:       newDefaultHTTPClient(),
-		logger:       logger,
-		candleCache:  nil,
+		baseURL:     endpoints.Rest,
+		apiKey:      endpoints.APIKey,
+		client:      newDefaultHTTPClient(),
+		logger:      logger,
+		candleCache: nil,
 	}
 
 	go func() {
 		logger.Debug().Msg("starting alphavantage polling...")
 		err := alphavantage.pollCache(ctx, pairs...)
 		if err != nil {
-			logger.Err(err).Msg("ftx provider unable to poll new data")
+			logger.Err(err).Msg("alphavantage provider unable to poll new data")
 		}
 	}()
 
@@ -89,33 +77,27 @@ func (p *AlphaVantageProvider) SubscribeCurrencyPairs(pairs ...types.CurrencyPai
 	return nil
 }
 
+// GetTickerPrices uses the cached candlePrices to return ticker prices based on the provided pairs.
 func (p *AlphaVantageProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
+	candleCache := p.getCandleCache()
+	if len(candleCache) < 1 {
+		return nil, fmt.Errorf("candles have not been cached")
+	}
 
-}
-
-// pollCache polls the markets and candles endpoints,
-// and updates the alphavantage cache.
-func (p *AlphaVantageProvider) pollCache(ctx context.Context, pairs ...types.CurrencyPair) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-
-		default:
-			p.logger.Debug().Msg("querying alphavantage api")
-
-			err := p.pollMarkets()
-			if err != nil {
-				return err
-			}
-			err = p.pollCandles(pairs...)
-			if err != nil {
-				return err
-			}
-
-			time.Sleep(cacheInterval)
+	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
+	for _, pair := range pairs {
+		if _, ok := candleCache[pair.String()]; !ok {
+			return nil, fmt.Errorf("alphavantage failed to get ticker price for %s", pair.String())
+		}
+		// construct ticker with most recent candle
+		latestCandle := candleCache[pair.String()][len(candleCache[pair.String()])-1]
+		tickerPrices[pair.String()] = types.TickerPrice{
+			Price:  latestCandle.Price,
+			Volume: latestCandle.Volume,
 		}
 	}
+
+	return tickerPrices, nil
 }
 
 // GetCandlePrices returns the cached candlePrices based on provided pairs.
@@ -128,7 +110,7 @@ func (p *AlphaVantageProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map
 	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
 	for _, pair := range pairs {
 		if _, ok := candleCache[pair.String()]; !ok {
-			return nil, fmt.Errorf("missing candles for %s", pair.String())
+			return nil, fmt.Errorf("alphavantage failed to get candle price for %s", pair.String())
 		}
 		candlePrices[pair.String()] = candleCache[pair.String()]
 	}
@@ -136,23 +118,33 @@ func (p *AlphaVantageProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map
 	return candlePrices, nil
 }
 
-// GetAvailablePairs return all available pairs symbol to susbscribe.
-func (p *AlphaVantageProvider) GetAvailablePairs() (map[string]struct{}, error) {
-	markets := p.getMarketsCache()
-	availablePairs := make(map[string]struct{}, len(markets))
-	for _, pair := range markets {
-		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(pair.Base),
-			Quote: strings.ToUpper(pair.Quote),
-		}
-		availablePairs[cp.String()] = struct{}{}
-	}
+// pollCache polls the c andles endpoint and updates the alphavantage cache.
+func (p *AlphaVantageProvider) pollCache(ctx context.Context, pairs ...types.CurrencyPair) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
 
-	return availablePairs, nil
+		default:
+			p.logger.Debug().Msg("querying alphavantage api")
+
+			err := p.pollCandles(pairs...)
+			if err != nil {
+				return err
+			}
+
+			time.Sleep(cacheInterval)
+		}
+	}
 }
 
-// pollMarkets retrieves the candles response from the ftx api and
-// places it in p.candleCache.
+// GetAvailablePairs return all available pairs symbol to susbscribe.
+func (p *AlphaVantageProvider) GetAvailablePairs() (map[string]struct{}, error) {
+	return nil, nil
+}
+
+// pollCandles retrieves the candles response from the alphavantage api
+// and places it in p.candleCache.
 func (p *AlphaVantageProvider) pollCandles(pairs ...types.CurrencyPair) error {
 	candles := make(map[string][]types.CandlePrice)
 
@@ -166,7 +158,7 @@ func (p *AlphaVantageProvider) pollCandles(pairs ...types.CurrencyPair) error {
 			alphaVantageCandleEndpoint,
 			pair.Base,
 			pair.Quote,
-			alphaVantageAPIKey,
+			p.apiKey,
 		)
 
 		resp, err := p.client.Get(path)
@@ -180,31 +172,24 @@ func (p *AlphaVantageProvider) pollCandles(pairs ...types.CurrencyPair) error {
 
 		defer resp.Body.Close()
 
-		bz, err := io.ReadAll(resp.Body)
+		timeSeriesData, err := alphavantage.ParseTimeSeriesData(resp.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read AlphaVantage candle response body: %w", err)
-		}
-
-		var candlesResp AlphaVantageCandleResponse
-		if err := json.Unmarshal(bz, &candlesResp); err != nil {
-			return fmt.Errorf("failed to unmarshal AlphaVantage response body: %w", err)
+			return err
 		}
 
 		candlePrices := []types.CandlePrice{}
-		for _, responseCandle := range candlesResp.Candle {
-			// the ftx api does not provide the endtime for these candles,
-			// so we have to calculate it
-			candleStart, err := responseCandle.parseTime()
+		for _, timeSeries := range timeSeriesData {
+			candlePrice, err := types.NewCandlePrice(
+				string(ProviderAlphaVantage),
+				pair.String(),
+				strconv.FormatFloat(timeSeries.Close, 'f', -1, 64),
+				strconv.FormatFloat(timeSeries.Volume, 'f', -1, 64),
+				timeSeries.Time.Unix(),
+			)
 			if err != nil {
 				return err
 			}
-			candleEnd := candleStart.Add(candleWindowLength).Unix() * int64(time.Second/time.Millisecond)
-
-			candlePrices = append(candlePrices, types.CandlePrice{
-				Price:     coin.MustNewDecFromFloat(responseCandle.Price),
-				Volume:    coin.MustNewDecFromFloat(responseCandle.Volume),
-				TimeStamp: candleEnd,
-			})
+			candlePrices = append(candlePrices, candlePrice)
 		}
 		candles[pair.String()] = candlePrices
 	}

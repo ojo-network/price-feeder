@@ -71,6 +71,9 @@ type (
 
 		// Websocket endpoint for the provider, ex. "stream.binance.com:9443"
 		Websocket string `toml:"websocket"`
+
+		// APIKey for API Key protected endpoints
+		APIKey string `toml:"apikey"`
 	}
 )
 
