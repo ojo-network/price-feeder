@@ -122,7 +122,7 @@ validator = "ojovaloper1zypqa76je7pxsdwkfah6mu9a583sju6x6tnq6w"
 
 [keyring]
 backend = "test"
-dir = "/Users/username/.ojo"
+dir = "/Users/adamwozniak/.ojo"
 
 [rpc]
 grpc_endpoint = "localhost:9090"
