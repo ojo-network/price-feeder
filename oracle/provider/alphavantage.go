@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	alphaVantageRestUrl        = "https://www.alphavantage.co/query?"
+	alphaVantageRestURL        = "https://www.alphavantage.co/query?"
 	alphaVantageCandleEndpoint = "function=FX_INTRADAY&interval=15min&datatypesize=csv&output=compact"
 
 	cacheInterval = 500 * time.Millisecond
@@ -49,7 +49,7 @@ func NewAlphaVantageProvider(
 	if endpoints.Name != ProviderAlphaVantage {
 		endpoints = Endpoint{
 			Name: ProviderAlphaVantage,
-			Rest: alphaVantageRestUrl,
+			Rest: alphaVantageRestURL,
 		}
 	}
 
@@ -73,7 +73,7 @@ func NewAlphaVantageProvider(
 }
 
 // SubscribeCurrencyPairs performs a no-op since alphavantage does not use websockets
-func (p *AlphaVantageProvider) SubscribeCurrencyPairs(pairs ...types.CurrencyPair) error {
+func (p *AlphaVantageProvider) SubscribeCurrencyPairs(...types.CurrencyPair) error {
 	return nil
 }
 
