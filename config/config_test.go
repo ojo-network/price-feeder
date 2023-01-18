@@ -803,7 +803,7 @@ providers = [
 [[currency_pairs]]
 base = "EUR"
 providers = [
-  "alphavantage",
+  "polygon",
 ]
 quote = "USD"
 
@@ -826,9 +826,9 @@ rpc_timeout = "100ms"
 enabled = false
 
 [[provider_endpoints]]
-name = "alphavantage"
-rest = "https://www.alphavantage.co/query?"
-websocket = "https://www.alphavantage.co/query?"
+name = "polygon"
+rest = "https://api.polygon.io/v2/"
+websocket = "wss://socket.polygon.io/forex"
 apikey = "test"
 `)
 	_, err = tmpFile.Write(content)
@@ -887,7 +887,7 @@ providers = [
 [[currency_pairs]]
 base = "EUR"
 providers = [
-  "alphavantage",
+  "polygon",
 ]
 quote = "USD"
 
@@ -910,13 +910,13 @@ rpc_timeout = "100ms"
 enabled = false
 
 [[provider_endpoints]]
-name = "alphavantage"
-rest = "https://www.alphavantage.co/query?"
-websocket = "https://www.alphavantage.co/query?"
+name = "polygon"
+rest = "https://api.polygon.io/v2/"
+websocket = "wss://socket.polygon.io/forex"
 `)
 	_, err = tmpFile.Write(content)
 	require.NoError(t, err)
 
 	_, err = config.ParseConfig(tmpFile.Name())
-	require.EqualError(t, err, "provider alphavantage requires an API Key")
+	require.EqualError(t, err, "provider polygon requires an API Key")
 }
