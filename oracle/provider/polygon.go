@@ -109,7 +109,14 @@ func NewPolygonProvider(
 }
 
 func (p *PolygonProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {
-	subscriptionMsgs := make([]interface{}, 0, len(cps)*2)
+	subscriptionMsgs := make([]interface{}, 0, len(cps)*2+1)
+
+	// Send authorization request first
+	authMsg := PolygonSubscriptionMsg{
+		Action: "auth",
+		Params: p.endpoints.APIKey,
+	}
+	subscriptionMsgs = append(subscriptionMsgs, authMsg)
 
 	msg := newPolygonSubscriptionMsg(cps)
 	subscriptionMsgs = append(subscriptionMsgs, msg)
@@ -314,7 +321,7 @@ func currencyPairToPolygonPair(cp types.CurrencyPair) string {
 // i.e: "CA.EUR/USD,CA.JPY/USD"
 func currencyPairsToPolygonPairs(cps []types.CurrencyPair) (pairs string) {
 	for i, cp := range cps {
-		pair := strings.ToUpper("CA." + cp.Base + "/" + cp.Quote)
+		pair := strings.ToUpper(polygonAggregatesEvent + "." + cp.Base + "/" + cp.Quote)
 		if i != len(cps)-1 {
 			pair += ","
 		}

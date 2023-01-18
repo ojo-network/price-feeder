@@ -114,7 +114,6 @@ providers = [
 ]
 quote = "USD"
 
-
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
 chain_id = "ojo-testnet"
