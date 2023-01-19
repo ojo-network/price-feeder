@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -15,9 +16,14 @@ import (
 )
 
 const (
-	polygonWSHost          = "wss://socket.polygon.io/"
-	polygonWSPath          = "forex"
-	polygonRestHost        = "https://api.polygon.io/v2/"
+	polygonWSHost          = "socket.polygon.io"
+	polygonWSPath          = "/forex"
+	polygonRestHost        = "https://api.polygon.io"
+	polygonRestPath        = "/v3/reference/tickers?market=fx&active=true&apikey="
+	polygonLimitOne        = "&limit=1000"
+	polygonLimitTwo        = "&limit=360"
+	polygonOrderOne        = "&order=asc"
+	polygonOrderTwo        = "&order=desc"
 	polygonStatusEvent     = "status"
 	polygonAggregatesEvent = "CA"
 )
@@ -59,6 +65,14 @@ type (
 		Action string `json:"action"` // ex.: subscribe
 		Params string `json:"params"` // ex.: CA.EUR/USD,CA.JPY/USD
 	}
+
+	// Response returns all tickers available to be subsribed to.
+	PolygonTickersResponse struct {
+		Result []PolygonTicker `json:"results"`
+	}
+	PolygonTicker struct {
+		Ticker string `json:"ticker"` // ex: C.EURUSD
+	}
 )
 
 func NewPolygonProvider(
@@ -89,6 +103,23 @@ func NewPolygonProvider(
 		tickers:         map[string]types.TickerPrice{},
 		candles:         map[string][]types.CandlePrice{},
 		subscribedPairs: map[string]types.CurrencyPair{},
+	}
+
+	availablePairs, err := provider.GetAvailablePairs()
+	if err != nil {
+		return nil, err
+	}
+
+	// confirm pairs can be subscribed to
+	for i, pair := range pairs {
+		if _, ok := availablePairs[pair.String()]; ok {
+			continue
+		}
+		polygonLogger.Warn().Msg(fmt.Sprintf(
+			"%s not an available pair to be subscribed to in polygon.io, dropping pair",
+			pair.String()),
+		)
+		pairs = append(pairs[:i], pairs[i+1:]...)
 	}
 
 	provider.setSubscribedPairs(pairs...)
@@ -216,7 +247,45 @@ func (p *PolygonProvider) getCandlePrices(key string) ([]types.CandlePrice, erro
 
 // GetAvailablePairs return all available pairs symbol to susbscribe.
 func (p *PolygonProvider) GetAvailablePairs() (map[string]struct{}, error) {
-	return nil, nil
+	// request for first 1000 tickers (request limit)
+	resp, err := http.Get(p.endpoints.Rest + polygonRestPath + p.endpoints.APIKey + polygonOrderOne + polygonLimitOne)
+	if err != nil {
+		return nil, err
+	}
+	var tickers PolygonTickersResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tickers); err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// request for rest of the tickers
+	resp, err = http.Get(p.endpoints.Rest + polygonRestPath + p.endpoints.APIKey + polygonOrderTwo + polygonLimitTwo)
+	if err != nil {
+		return nil, err
+	}
+	var tickersLeftover PolygonTickersResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tickersLeftover); err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	tickers.Result = append(tickers.Result, tickersLeftover.Result...)
+
+	availablePairs := make(map[string]struct{}, len(tickers.Result))
+	for _, pair := range tickers.Result {
+		if len(pair.Ticker) != 8 {
+			continue
+		}
+
+		cp := types.CurrencyPair{
+			Base:  strings.ToUpper(pair.Ticker[2:5]),
+			Quote: strings.ToUpper(pair.Ticker[5:8]),
+		}
+
+		availablePairs[cp.String()] = struct{}{}
+	}
+
+	return availablePairs, nil
 }
 
 func (p *PolygonProvider) messageReceived(messageType int, bz []byte) {

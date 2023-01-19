@@ -144,6 +144,6 @@ websocket = "stream.binance.com:9443"
 
 [[provider_endpoints]]
 name = "polygon"
-rest = "https://api.polygon.io/v2/"
-websocket = "wss://socket.polygon.io/"
+rest = "https://api.polygon.io"
+websocket = "socket.polygon.io"
 apikey = "test"
