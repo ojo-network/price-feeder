@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -54,11 +53,11 @@ type (
 
 	// Real-time per-minute forex aggregates for a given forex pair.
 	PolygonAggregatesResponse struct {
-		EV        string `json:"ev"`   // Event type
-		Pair      string `json:"pair"` // ex.: USD/EUR
-		Close     string `json:"c"`    // Rate at close
-		Volume    string `json:"v"`    // Volume during 1 minute interval
-		Timestamp string `json:"e"`    // Endtime of candle (Unix milliseconds)
+		EV        string  `json:"ev"`   // Event type
+		Pair      string  `json:"pair"` // ex.: USD/EUR
+		Close     float64 `json:"c"`    // Rate at close
+		Volume    float64 `json:"v"`    // Volume during 1 minute interval
+		Timestamp int64   `json:"e"`    // Endtime of candle (Unix milliseconds)
 	}
 
 	PolygonSubscriptionMsg struct {
@@ -116,9 +115,11 @@ func NewPolygonProvider(
 			continue
 		}
 		polygonLogger.Warn().Msg(fmt.Sprintf(
-			"%s not an available pair to be subscribed to in polygon.io, dropping pair",
-			pair.String()),
-		)
+			"%s not an available pair to be subscribed to in %v, %v ignoring pair",
+			pair.String(),
+			ProviderPolygon,
+			ProviderPolygon,
+		))
 		pairs = append(pairs[:i], pairs[i+1:]...)
 	}
 
@@ -294,22 +295,22 @@ func (p *PolygonProvider) messageReceived(messageType int, bz []byte) {
 	}
 
 	var (
-		statusResp     PolygonStatusResponse
+		statusResp     []PolygonStatusResponse
 		statusErr      error
-		aggregatesResp PolygonAggregatesResponse
+		aggregatesResp []PolygonAggregatesResponse
 		aggregatesErr  error
 	)
 
 	statusErr = json.Unmarshal(bz, &statusResp)
-	if statusResp.EV == polygonStatusEvent {
-		p.logger.Info().Str("status msg received: ", statusResp.Message)
+	if statusResp[0].EV == polygonStatusEvent {
+		p.logger.Info().Str("status msg received: ", statusResp[0].Message)
 		return
 	}
 
 	aggregatesErr = json.Unmarshal(bz, &aggregatesResp)
-	if aggregatesResp.EV == polygonAggregatesEvent {
-		p.setTickerPair(aggregatesResp)
-		p.setCandlePair(aggregatesResp)
+	if aggregatesResp[0].EV == polygonAggregatesEvent {
+		p.setTickerPair(aggregatesResp[0])
+		p.setCandlePair(aggregatesResp[0])
 		return
 	}
 
@@ -327,8 +328,8 @@ func (p *PolygonProvider) setTickerPair(data PolygonAggregatesResponse) {
 	tickerPrice, err := types.NewTickerPrice(
 		string(ProviderPolygon),
 		data.Pair,
-		data.Close,
-		data.Volume,
+		fmt.Sprintf("%f", data.Close),
+		fmt.Sprintf("%f", data.Volume),
 	)
 	if err != nil {
 		p.logger.Warn().Err(err).Msg("failed to parse ticker")
@@ -342,17 +343,12 @@ func (p *PolygonProvider) setCandlePair(data PolygonAggregatesResponse) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
-	timestamp, err := strconv.ParseInt(data.Timestamp, 10, 64)
-	if err != nil {
-		p.logger.Warn().Err(err).Msg("failed to convert timestamp string to int64")
-		return
-	}
 	candle, err := types.NewCandlePrice(
 		string(ProviderPolygon),
 		data.Pair,
-		data.Close,
-		data.Volume,
-		timestamp,
+		fmt.Sprintf("%f", data.Close),
+		fmt.Sprintf("%f", data.Volume),
+		data.Timestamp,
 	)
 	if err != nil {
 		p.logger.Warn().Err(err).Msg("failed to parse candle")

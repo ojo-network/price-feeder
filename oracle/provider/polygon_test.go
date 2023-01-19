@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -85,9 +86,9 @@ func TestPolygonProvider_GetCandlePrices(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("valid_request_single_candle", func(t *testing.T) {
-		price := "1.190000000000000000"
-		volume := "2396974.000000000000000000"
-		timeStamp := "1000000000"
+		price := 1.190000000000000000
+		volume := 2396974.000000000000000000
+		timeStamp := int64(1000000000)
 
 		data := PolygonAggregatesResponse{
 			EV:        "CA",
@@ -102,12 +103,12 @@ func TestPolygonProvider_GetCandlePrices(t *testing.T) {
 		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "EUR", Quote: "USD"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		priceDec, _ := sdk.NewDecFromStr(price)
-		volumeDec, _ := sdk.NewDecFromStr(volume)
+		priceDec, _ := sdk.NewDecFromStr(fmt.Sprintf("%f", price))
+		volumeDec, _ := sdk.NewDecFromStr(fmt.Sprintf("%f", volume))
 
 		require.Equal(t, priceDec, prices["EURUSD"][0].Price)
 		require.Equal(t, volumeDec, prices["EURUSD"][0].Volume)
-		require.Equal(t, int64(1000000000), prices["EURUSD"][0].TimeStamp)
+		require.Equal(t, timeStamp, prices["EURUSD"][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {
