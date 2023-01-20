@@ -119,6 +119,25 @@ func NewCoinbaseProvider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
+	availablePairs, err := provider.GetAvailablePairs()
+	if err != nil {
+		return nil, err
+	}
+
+	// confirm pairs can be subscribed to
+	for i, pair := range pairs {
+		if _, ok := availablePairs[pair.String()]; ok {
+			continue
+		}
+		coinbaseLogger.Warn().Msg(fmt.Sprintf(
+			"%s not an available pair to be subscribed to in %v, %v ignoring pair",
+			pair.String(),
+			ProviderCoinbase,
+			ProviderCoinbase,
+		))
+		pairs = append(pairs[:i], pairs[i+1:]...)
+	}
+
 	provider.setSubscribedPairs(pairs...)
 
 	provider.wsc = NewWebsocketController(

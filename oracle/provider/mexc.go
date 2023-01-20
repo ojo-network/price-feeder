@@ -77,6 +77,11 @@ type (
 	// MexcPairSummary defines the response structure for a Mexc pair
 	// summary.
 	MexcPairSummary struct {
+		Data []MexcPairData `json:"data"`
+	}
+
+	// MexcPairData defines the data response structure for an Mexc pair.
+	MexcPairData struct {
 		Symbol string `json:"symbol"`
 	}
 )
@@ -109,6 +114,25 @@ func NewMexcProvider(
 		tickers:         map[string]types.TickerPrice{},
 		candles:         map[string][]types.CandlePrice{},
 		subscribedPairs: map[string]types.CurrencyPair{},
+	}
+
+	availablePairs, err := provider.GetAvailablePairs()
+	if err != nil {
+		return nil, err
+	}
+
+	// confirm pairs can be subscribed to
+	for i, pair := range pairs {
+		if _, ok := availablePairs[pair.String()]; ok {
+			continue
+		}
+		mexcLogger.Warn().Msg(fmt.Sprintf(
+			"%s not an available pair to be subscribed to in %v, %v ignoring pair",
+			pair.String(),
+			ProviderMexc,
+			ProviderMexc,
+		))
+		pairs = append(pairs[:i], pairs[i+1:]...)
 	}
 
 	provider.setSubscribedPairs(pairs...)
@@ -334,13 +358,13 @@ func (p *MexcProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 	defer resp.Body.Close()
 
-	var pairsSummary []MexcPairSummary
+	var pairsSummary MexcPairSummary
 	if err := json.NewDecoder(resp.Body).Decode(&pairsSummary); err != nil {
 		return nil, err
 	}
 
-	availablePairs := make(map[string]struct{}, len(pairsSummary))
-	for _, pairName := range pairsSummary {
+	availablePairs := make(map[string]struct{}, len(pairsSummary.Data))
+	for _, pairName := range pairsSummary.Data {
 		availablePairs[strings.ToUpper(pairName.Symbol)] = struct{}{}
 	}
 

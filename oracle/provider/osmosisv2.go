@@ -59,8 +59,8 @@ type (
 
 	// OsmosisV2PairData defines the data response structure for an Osmosis pair.
 	OsmosisV2PairData struct {
-		Base  string `json:"base_symbol"`
-		Quote string `json:"quote_symbol"`
+		Base  string `json:"base"`
+		Quote string `json:"quote"`
 	}
 )
 
@@ -93,6 +93,25 @@ func NewOsmosisV2Provider(
 		tickers:         map[string]types.TickerPrice{},
 		candles:         map[string][]types.CandlePrice{},
 		subscribedPairs: map[string]types.CurrencyPair{},
+	}
+
+	availablePairs, err := provider.GetAvailablePairs()
+	if err != nil {
+		return nil, err
+	}
+
+	// confirm pairs can be subscribed to
+	for i, pair := range pairs {
+		if _, ok := availablePairs[pair.String()]; ok {
+			continue
+		}
+		osmosisV2Logger.Warn().Msg(fmt.Sprintf(
+			"%s not an available pair to be subscribed to in %v, %v ignoring pair",
+			pair.String(),
+			ProviderOsmosisV2,
+			ProviderOsmosisV2,
+		))
+		pairs = append(pairs[:i], pairs[i+1:]...)
 	}
 
 	provider.setSubscribedPairs(pairs...)
@@ -337,13 +356,13 @@ func (p *OsmosisV2Provider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 	defer resp.Body.Close()
 
-	var pairsSummary OsmosisV2PairsSummary
+	var pairsSummary []OsmosisV2PairData
 	if err := json.NewDecoder(resp.Body).Decode(&pairsSummary); err != nil {
 		return nil, err
 	}
 
-	availablePairs := make(map[string]struct{}, len(pairsSummary.Data))
-	for _, pair := range pairsSummary.Data {
+	availablePairs := make(map[string]struct{}, len(pairsSummary))
+	for _, pair := range pairsSummary {
 		cp := types.CurrencyPair{
 			Base:  strings.ToUpper(pair.Base),
 			Quote: strings.ToUpper(pair.Quote),
