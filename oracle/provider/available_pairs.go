@@ -25,18 +25,19 @@ func ConfirmPairAvailability(
 	}
 
 	// confirm pairs can be subscribed to
-	for i, cp := range cps {
-		if _, ok := availablePairs[cp.String()]; ok {
+	confirmedPairs := []types.CurrencyPair{}
+	for _, cp := range cps {
+		if _, ok := availablePairs[cp.String()]; !ok {
+			logger.Warn().Msg(fmt.Sprintf(
+				"%s not an available pair to be subscribed to in %v, %v ignoring pair",
+				cp.String(),
+				providerName,
+				providerName,
+			))
 			continue
 		}
-		logger.Warn().Msg(fmt.Sprintf(
-			"%s not an available pair to be subscribed to in %v, %v ignoring pair",
-			cp.String(),
-			providerName,
-			providerName,
-		))
-		cps = append(cps[:i], cps[i+1:]...)
+		confirmedPairs = append(confirmedPairs, cp)
 	}
 
-	return cps, nil
+	return confirmedPairs, nil
 }
