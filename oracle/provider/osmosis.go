@@ -229,9 +229,3 @@ func (p OsmosisProvider) GetAvailablePairs() (map[string]struct{}, error) {
 
 	return availablePairs, nil
 }
-
-// ConfirmPairAvailability performs a no-op since osmosis does not confirm
-// available currency pairs
-func (p OsmosisProvider) ConfirmPairAvailability(...types.CurrencyPair) ([]types.CurrencyPair, error) {
-	return []types.CurrencyPair{}, nil
-}

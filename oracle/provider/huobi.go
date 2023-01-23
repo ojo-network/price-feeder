@@ -126,7 +126,12 @@ func NewHuobiProvider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
-	confirmedPairs, err := provider.ConfirmPairAvailability(pairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		provider,
+		provider.endpoints.Name,
+		provider.logger,
+		pairs...,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +175,12 @@ func (p *HuobiProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error 
 		}
 	}
 
-	confirmedPairs, err := p.ConfirmPairAvailability(newPairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		p,
+		p.endpoints.Name,
+		p.logger,
+		newPairs...,
+	)
 	if err != nil {
 		return err
 	}
@@ -372,32 +382,6 @@ func (p *HuobiProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
-}
-
-// ConfirmPairAvailability takes a list of pairs that are meant to be subscribed
-// to, and returns a list of pairs that removes any pairs that are not available
-// to be subsribed to by the provider.
-func (p *HuobiProvider) ConfirmPairAvailability(cps ...types.CurrencyPair) ([]types.CurrencyPair, error) {
-	availablePairs, err := p.GetAvailablePairs()
-	if err != nil {
-		return nil, err
-	}
-
-	// confirm pairs can be subscribed to
-	for i, cp := range cps {
-		if _, ok := availablePairs[cp.String()]; ok {
-			continue
-		}
-		p.logger.Warn().Msg(fmt.Sprintf(
-			"%s not an available pair to be subscribed to in %v, %v ignoring pair",
-			cp.String(),
-			p.endpoints.Name,
-			p.endpoints.Name,
-		))
-		cps = append(cps[:i], cps[i+1:]...)
-	}
-
-	return cps, nil
 }
 
 // decompressGzip uncompress gzip compressed messages. All data returned from the

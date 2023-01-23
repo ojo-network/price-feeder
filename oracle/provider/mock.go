@@ -150,9 +150,3 @@ func (p MockProvider) GetAvailablePairs() (map[string]struct{}, error) {
 
 	return availablePairs, nil
 }
-
-// ConfirmPairAvailability performs a no-op since mock does not confirm
-// available currency pairs
-func (p MockProvider) ConfirmPairAvailability(...types.CurrencyPair) ([]types.CurrencyPair, error) {
-	return []types.CurrencyPair{}, nil
-}
