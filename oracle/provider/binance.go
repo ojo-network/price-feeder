@@ -125,32 +125,18 @@ func NewBinanceProvider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
-	availablePairs, err := provider.GetAvailablePairs()
+	confirmedPairs, err := provider.ConfirmPairAvailability(pairs...)
 	if err != nil {
 		return nil, err
 	}
 
-	// confirm pairs can be subscribed to
-	for i, pair := range pairs {
-		if _, ok := availablePairs[pair.String()]; ok {
-			continue
-		}
-		binanceLogger.Warn().Msg(fmt.Sprintf(
-			"%s not an available pair to be subscribed to in %v, %v ignoring pair",
-			pair.String(),
-			ProviderBinance,
-			ProviderBinance,
-		))
-		pairs = append(pairs[:i], pairs[i+1:]...)
-	}
-
-	provider.setSubscribedPairs(pairs...)
+	provider.setSubscribedPairs(confirmedPairs...)
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		ProviderBinance,
+		provider.endpoints.Name,
 		wsURL,
-		provider.getSubscriptionMsgs(pairs...),
+		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
 		disabledPingDuration,
 		websocket.PingMessage,
@@ -186,11 +172,16 @@ func (p *BinanceProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) erro
 		}
 	}
 
-	newSubscriptionMsgs := p.getSubscriptionMsgs(newPairs...)
+	confirmedPairs, err := p.ConfirmPairAvailability(newPairs...)
+	if err != nil {
+		return err
+	}
+
+	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
 	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
 		return err
 	}
-	p.setSubscribedPairs(newPairs...)
+	p.setSubscribedPairs(confirmedPairs...)
 	return nil
 }
 
@@ -356,6 +347,32 @@ func (p *BinanceProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
+}
+
+// ConfirmPairAvailability takes a list of pairs that are meant to be subscribed
+// to, and returns a list of pairs that removes any pairs that are not available
+// to be subsribed to by the provider.
+func (p *BinanceProvider) ConfirmPairAvailability(cps ...types.CurrencyPair) ([]types.CurrencyPair, error) {
+	availablePairs, err := p.GetAvailablePairs()
+	if err != nil {
+		return nil, err
+	}
+
+	// confirm pairs can be subscribed to
+	for i, cp := range cps {
+		if _, ok := availablePairs[cp.String()]; ok {
+			continue
+		}
+		p.logger.Warn().Msg(fmt.Sprintf(
+			"%s not an available pair to be subscribed to in %v, %v ignoring pair",
+			cp.String(),
+			p.endpoints.Name,
+			p.endpoints.Name,
+		))
+		cps = append(cps[:i], cps[i+1:]...)
+	}
+
+	return cps, nil
 }
 
 // currencyPairToBinanceTickerPair receives a currency pair and return binance

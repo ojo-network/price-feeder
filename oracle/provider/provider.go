@@ -44,6 +44,11 @@ type (
 		// SubscribeCurrencyPairs sends subscription messages for the new currency
 		// pairs and adds them to the providers subscribed pairs
 		SubscribeCurrencyPairs(...types.CurrencyPair) error
+
+		// ConfirmPairAvailability takes a list of pairs that are meant to be subscribed
+		// to, and returns a list of pairs that removes any pairs that are not available
+		// to be subsribed to by the provider.
+		ConfirmPairAvailability(cps ...types.CurrencyPair) ([]types.CurrencyPair, error)
 	}
 
 	// Name name of an oracle provider. Usually it is an exchange
