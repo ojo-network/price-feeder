@@ -110,26 +110,27 @@ func NewPolygonProvider(
 	}
 
 	// confirm pairs can be subscribed to
-	for i, pair := range pairs {
-		if _, ok := availablePairs[pair.String()]; ok {
+	confirmedPairs := []types.CurrencyPair{}
+	for _, pair := range pairs {
+		if _, ok := availablePairs[pair.String()]; !ok {
+			polygonLogger.Warn().Msg(fmt.Sprintf(
+				"%s not an available pair to be subscribed to in %v, %v ignoring pair",
+				pair.String(),
+				ProviderPolygon,
+				ProviderPolygon,
+			))
 			continue
 		}
-		polygonLogger.Warn().Msg(fmt.Sprintf(
-			"%s not an available pair to be subscribed to in %v, %v ignoring pair",
-			pair.String(),
-			ProviderPolygon,
-			ProviderPolygon,
-		))
-		pairs = append(pairs[:i], pairs[i+1:]...)
+		confirmedPairs = append(confirmedPairs, pair)
 	}
 
-	provider.setSubscribedPairs(pairs...)
+	provider.setSubscribedPairs(confirmedPairs...)
 
 	provider.wsc = NewWebsocketController(
 		ctx,
 		ProviderPolygon,
 		wsURL,
-		provider.getSubscriptionMsgs(pairs...),
+		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
 		disabledPingDuration,
 		websocket.PingMessage,

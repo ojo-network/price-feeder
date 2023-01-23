@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/go-playground/validator/v10"
 	"github.com/ojo-network/price-feeder/oracle/provider"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
@@ -30,40 +31,9 @@ var (
 	// ErrEmptyConfigPath defines a sentinel error for an empty config path.
 	ErrEmptyConfigPath = errors.New("empty configuration file path")
 
-	// SupportedProviders defines a lookup table of all the supported currency API
-	// providers.
-	SupportedProviders = map[provider.Name]struct{}{
-		provider.ProviderKraken:    {},
-		provider.ProviderBinance:   {},
-		provider.ProviderBinanceUS: {},
-		provider.ProviderOsmosis:   {},
-		provider.ProviderOsmosisV2: {},
-		provider.ProviderOkx:       {},
-		provider.ProviderHuobi:     {},
-		provider.ProviderGate:      {},
-		provider.ProviderCoinbase:  {},
-		provider.ProviderBitget:    {},
-		provider.ProviderMexc:      {},
-		provider.ProviderCrypto:    {},
-		provider.ProviderPolygon:   {},
-		provider.ProviderMock:      {},
-	}
-
 	// maxDeviationThreshold is the maxmimum allowed amount of standard
 	// deviations which validators are able to set for a given asset.
 	maxDeviationThreshold = sdk.MustNewDecFromStr("3.0")
-
-	// SupportedQuotes defines a lookup table for which assets we support
-	// using as quotes.
-	SupportedQuotes = map[string]struct{}{
-		DenomUSD: {},
-		"USDC":   {},
-		"USDT":   {},
-		"DAI":    {},
-		"BTC":    {},
-		"ETH":    {},
-		"ATOM":   {},
-	}
 )
 
 type (
@@ -217,7 +187,7 @@ func ParseConfig(configPath string) (Config, error) {
 			if _, ok := SupportedProviders[prov]; !ok {
 				return cfg, fmt.Errorf("unsupported provider: %s", prov)
 			}
-			if prov == provider.ProviderPolygon && !hasAPIKey(prov, cfg.ProviderEndpoints) {
+			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, cfg.ProviderEndpoints) {
 				return cfg, fmt.Errorf("provider %s requires an API Key", prov)
 			}
 			pairs[cp.Base][prov] = struct{}{}
