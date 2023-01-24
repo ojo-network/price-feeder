@@ -104,31 +104,21 @@ func NewPolygonProvider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
-	availablePairs, err := provider.GetAvailablePairs()
+	confirmedPairs, err := ConfirmPairAvailability(
+		provider,
+		provider.endpoints.Name,
+		provider.logger,
+		pairs...,
+	)
 	if err != nil {
 		return nil, err
-	}
-
-	// confirm pairs can be subscribed to
-	confirmedPairs := []types.CurrencyPair{}
-	for _, pair := range pairs {
-		if _, ok := availablePairs[pair.String()]; !ok {
-			polygonLogger.Warn().Msg(fmt.Sprintf(
-				"%s not an available pair to be subscribed to in %v, %v ignoring pair",
-				pair.String(),
-				ProviderPolygon,
-				ProviderPolygon,
-			))
-			continue
-		}
-		confirmedPairs = append(confirmedPairs, pair)
 	}
 
 	provider.setSubscribedPairs(confirmedPairs...)
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		ProviderPolygon,
+		provider.endpoints.Name,
 		wsURL,
 		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
@@ -172,11 +162,21 @@ func (p *PolygonProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) erro
 		}
 	}
 
-	newSubscriptionMsgs := p.getSubscriptionMsgs(newPairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		p,
+		p.endpoints.Name,
+		p.logger,
+		newPairs...,
+	)
+	if err != nil {
+		return err
+	}
+
+	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
 	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
 		return err
 	}
-	p.setSubscribedPairs(newPairs...)
+	p.setSubscribedPairs(confirmedPairs...)
 	return nil
 }
 
