@@ -119,11 +119,21 @@ func NewCoinbaseProvider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
-	provider.setSubscribedPairs(pairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		provider,
+		provider.endpoints.Name,
+		provider.logger,
+		pairs...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	provider.setSubscribedPairs(confirmedPairs...)
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		ProviderCoinbase,
+		provider.endpoints.Name,
 		wsURL,
 		provider.getSubscriptionMsgs(pairs...),
 		provider.messageReceived,
@@ -164,11 +174,21 @@ func (p *CoinbaseProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) err
 		}
 	}
 
-	newSubscriptionMsgs := p.getSubscriptionMsgs(newPairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		p,
+		p.endpoints.Name,
+		p.logger,
+		newPairs...,
+	)
+	if err != nil {
+		return err
+	}
+
+	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
 	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
 		return err
 	}
-	p.setSubscribedPairs(newPairs...)
+	p.setSubscribedPairs(confirmedPairs...)
 	return nil
 }
 

@@ -107,6 +107,27 @@ providers = [
 ]
 quote = "USDT"
 
+[[currency_pairs]]
+base = "EUR"
+providers = [
+  "polygon",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "JPY"
+providers = [
+  "polygon",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "MXN"
+providers = [
+  "polygon",
+]
+quote = "USD"
+
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
 chain_id = "ojo-testnet"
@@ -114,7 +135,7 @@ validator = "ojovaloper1zypqa76je7pxsdwkfah6mu9a583sju6x6tnq6w"
 
 [keyring]
 backend = "test"
-dir = "/Users/adamwozniak/.ojo"
+dir = "/Users/username/.ojo"
 
 [rpc]
 grpc_endpoint = "localhost:9090"
@@ -134,3 +155,9 @@ prometheus-retention-time = 100
 name = "binance"
 rest = "https://api1.binance.com"
 websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "polygon"
+rest = "https://api.polygon.io"
+websocket = "socket.polygon.io"
+apikey = "test"

@@ -77,6 +77,11 @@ type (
 	// MexcPairSummary defines the response structure for a Mexc pair
 	// summary.
 	MexcPairSummary struct {
+		Data []MexcPairData `json:"data"`
+	}
+
+	// MexcPairData defines the data response structure for an Mexc pair.
+	MexcPairData struct {
 		Symbol string `json:"symbol"`
 	}
 )
@@ -111,13 +116,23 @@ func NewMexcProvider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
-	provider.setSubscribedPairs(pairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		provider,
+		provider.endpoints.Name,
+		provider.logger,
+		pairs...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	provider.setSubscribedPairs(confirmedPairs...)
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		ProviderMexc,
+		provider.endpoints.Name,
 		wsURL,
-		provider.getSubscriptionMsgs(pairs...),
+		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
 		defaultPingDuration,
 		websocket.PingMessage,
@@ -151,11 +166,21 @@ func (p *MexcProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
 		}
 	}
 
-	newSubscriptionMsgs := p.getSubscriptionMsgs(newPairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		p,
+		p.endpoints.Name,
+		p.logger,
+		newPairs...,
+	)
+	if err != nil {
+		return err
+	}
+
+	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
 	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
 		return err
 	}
-	p.setSubscribedPairs(newPairs...)
+	p.setSubscribedPairs(confirmedPairs...)
 	return nil
 }
 
@@ -354,13 +379,13 @@ func (p *MexcProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 	defer resp.Body.Close()
 
-	var pairsSummary []MexcPairSummary
+	var pairsSummary MexcPairSummary
 	if err := json.NewDecoder(resp.Body).Decode(&pairsSummary); err != nil {
 		return nil, err
 	}
 
-	availablePairs := make(map[string]struct{}, len(pairsSummary))
-	for _, pairName := range pairsSummary {
+	availablePairs := make(map[string]struct{}, len(pairsSummary.Data))
+	for _, pairName := range pairsSummary.Data {
 		availablePairs[strings.ToUpper(pairName.Symbol)] = struct{}{}
 	}
 

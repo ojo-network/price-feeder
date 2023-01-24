@@ -493,6 +493,9 @@ func NewProvider(
 	case provider.ProviderCrypto:
 		return provider.NewCryptoProvider(ctx, logger, endpoint, providerPairs...)
 
+	case provider.ProviderPolygon:
+		return provider.NewPolygonProvider(ctx, logger, endpoint, providerPairs...)
+
 	case provider.ProviderMock:
 		return provider.NewMockProvider(), nil
 	}
