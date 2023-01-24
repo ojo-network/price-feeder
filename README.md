@@ -50,8 +50,8 @@ In addition, it defines the oracle's keyring and feeder account information.
 The keyring's password is defined via environment variables or user input.
 More information on the keyring can be found [here](#keyring)
 Please see the [example configuration](price-feeder.example.toml) for more details.
-Please see the [example configuration](price-feeder.example_forex.toml) for an example
-configuration fetching Forex rates from [polygon.io](polygon.io) (premium API key required).
+Please see the [forex example configuration](price-feeder.example_forex.toml) for an example
+configuration fetching Forex rates from polygon.io (premium API key required).
 
 ```shell
 $ price-feeder /path/to/price_feeder_config.toml
