@@ -59,8 +59,8 @@ type (
 
 	// OsmosisV2PairData defines the data response structure for an Osmosis pair.
 	OsmosisV2PairData struct {
-		Base  string `json:"base_symbol"`
-		Quote string `json:"quote_symbol"`
+		Base  string `json:"base"`
+		Quote string `json:"quote"`
 	}
 )
 
@@ -95,11 +95,21 @@ func NewOsmosisV2Provider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
-	provider.setSubscribedPairs(pairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		provider,
+		provider.endpoints.Name,
+		provider.logger,
+		pairs...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	provider.setSubscribedPairs(confirmedPairs...)
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		ProviderOsmosisV2,
+		provider.endpoints.Name,
 		wsURL,
 		[]interface{}{""},
 		provider.messageReceived,
@@ -118,7 +128,17 @@ func (p *OsmosisV2Provider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) er
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
-	p.setSubscribedPairs(cps...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		p,
+		p.endpoints.Name,
+		p.logger,
+		cps...,
+	)
+	if err != nil {
+		return err
+	}
+
+	p.setSubscribedPairs(confirmedPairs...)
 	return nil
 }
 
@@ -337,13 +357,13 @@ func (p *OsmosisV2Provider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 	defer resp.Body.Close()
 
-	var pairsSummary OsmosisV2PairsSummary
+	var pairsSummary []OsmosisV2PairData
 	if err := json.NewDecoder(resp.Body).Decode(&pairsSummary); err != nil {
 		return nil, err
 	}
 
-	availablePairs := make(map[string]struct{}, len(pairsSummary.Data))
-	for _, pair := range pairsSummary.Data {
+	availablePairs := make(map[string]struct{}, len(pairsSummary))
+	for _, pair := range pairsSummary {
 		cp := types.CurrencyPair{
 			Base:  strings.ToUpper(pair.Base),
 			Quote: strings.ToUpper(pair.Quote),

@@ -133,13 +133,23 @@ func NewGateProvider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
-	provider.setSubscribedPairs(pairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		provider,
+		provider.endpoints.Name,
+		provider.logger,
+		pairs...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	provider.setSubscribedPairs(confirmedPairs...)
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		ProviderGate,
+		provider.endpoints.Name,
 		wsURL,
-		provider.getSubscriptionMsgs(pairs...),
+		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
 		defaultPingDuration,
 		websocket.PingMessage,
@@ -173,11 +183,21 @@ func (p *GateProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
 		}
 	}
 
-	newSubscriptionMsgs := p.getSubscriptionMsgs(newPairs...)
+	confirmedPairs, err := ConfirmPairAvailability(
+		p,
+		p.endpoints.Name,
+		p.logger,
+		newPairs...,
+	)
+	if err != nil {
+		return err
+	}
+
+	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
 	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
 		return err
 	}
-	p.setSubscribedPairs(newPairs...)
+	p.setSubscribedPairs(confirmedPairs...)
 	return nil
 }
 
