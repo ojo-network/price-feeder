@@ -200,7 +200,7 @@ func (p *CoinbaseProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[str
 	for _, cp := range pairs {
 		price, err := p.getTickerPrice(cp)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			tickerErrs++
 			continue
 		}
@@ -227,7 +227,7 @@ func (p *CoinbaseProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[str
 		key := currencyPairToCoinbasePair(cp)
 		tradeSet, err := p.getTradePrices(key)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			tradeErrs++
 			continue
 		}

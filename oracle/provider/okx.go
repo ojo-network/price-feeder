@@ -206,7 +206,7 @@ func (p *OkxProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]t
 	for _, cp := range pairs {
 		price, err := p.getTickerPrice(cp)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			tickerErrs++
 			continue
 		}
@@ -231,7 +231,7 @@ func (p *OkxProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][
 	for _, cp := range pairs {
 		prices, err := p.getCandlePrices(cp)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			candleErrs++
 			continue
 		}

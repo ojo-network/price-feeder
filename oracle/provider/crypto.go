@@ -218,7 +218,7 @@ func (p *CryptoProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 		)
 		price, err := p.getTickerPrice(key)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			tickerErrs++
 			continue
 		}
@@ -244,7 +244,7 @@ func (p *CryptoProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 		key := currencyPairToCryptoPair(cp)
 		prices, err := p.getCandlePrices(key)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			candleErrs++
 			continue
 		}

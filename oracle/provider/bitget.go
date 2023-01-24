@@ -210,7 +210,7 @@ func (p *BitgetProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	for _, cp := range pairs {
 		price, err := p.getTickerPrice(cp)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			tickerErrs++
 			continue
 		}
@@ -235,7 +235,7 @@ func (p *BitgetProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	for _, cp := range pairs {
 		prices, err := p.getCandlePrices(cp)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			candleErrs++
 			continue
 		}

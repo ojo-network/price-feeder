@@ -199,7 +199,7 @@ func (p *KrakenProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 		key := cp.String()
 		price, ok := p.tickers[key]
 		if !ok {
-			p.logger.Error().Err(fmt.Errorf(
+			p.logger.Warn().Err(fmt.Errorf(
 				types.ErrTickerNotFound.Error(),
 				p.endpoints.Name,
 				key,
@@ -229,7 +229,7 @@ func (p *KrakenProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 		key := cp.String()
 		prices, err := p.getCandlePrices(key)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			candleErrs++
 			continue
 		}

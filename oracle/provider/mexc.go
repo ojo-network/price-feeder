@@ -193,7 +193,7 @@ func (p *MexcProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]
 		key := currencyPairToMexcPair(cp)
 		price, err := p.getTickerPrice(key)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			tickerErrs++
 			continue
 		}
@@ -219,7 +219,7 @@ func (p *MexcProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string]
 		key := currencyPairToMexcPair(cp)
 		prices, err := p.getCandlePrices(key)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			candleErrs++
 			continue
 		}

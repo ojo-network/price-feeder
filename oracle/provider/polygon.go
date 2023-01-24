@@ -189,7 +189,7 @@ func (p *PolygonProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[stri
 		key := currencyPairToPolygonPair(cp)
 		price, err := p.getTickerPrice(key)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			tickerErrs++
 			continue
 		}
@@ -215,7 +215,7 @@ func (p *PolygonProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[stri
 		key := currencyPairToPolygonPair(cp)
 		prices, err := p.getCandlePrices(key)
 		if err != nil {
-			p.logger.Error().Err(err)
+			p.logger.Warn().Err(err)
 			candleErrs++
 			continue
 		}
