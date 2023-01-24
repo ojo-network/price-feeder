@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/go-playground/validator/v10"
 	"github.com/ojo-network/price-feeder/oracle/provider"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
@@ -30,39 +31,9 @@ var (
 	// ErrEmptyConfigPath defines a sentinel error for an empty config path.
 	ErrEmptyConfigPath = errors.New("empty configuration file path")
 
-	// SupportedProviders defines a lookup table of all the supported currency API
-	// providers.
-	SupportedProviders = map[provider.Name]struct{}{
-		provider.ProviderKraken:    {},
-		provider.ProviderBinance:   {},
-		provider.ProviderBinanceUS: {},
-		provider.ProviderOsmosis:   {},
-		provider.ProviderOsmosisV2: {},
-		provider.ProviderOkx:       {},
-		provider.ProviderHuobi:     {},
-		provider.ProviderGate:      {},
-		provider.ProviderCoinbase:  {},
-		provider.ProviderBitget:    {},
-		provider.ProviderMexc:      {},
-		provider.ProviderCrypto:    {},
-		provider.ProviderMock:      {},
-	}
-
 	// maxDeviationThreshold is the maxmimum allowed amount of standard
 	// deviations which validators are able to set for a given asset.
 	maxDeviationThreshold = sdk.MustNewDecFromStr("3.0")
-
-	// SupportedQuotes defines a lookup table for which assets we support
-	// using as quotes.
-	SupportedQuotes = map[string]struct{}{
-		DenomUSD: {},
-		"USDC":   {},
-		"USDT":   {},
-		"DAI":    {},
-		"BTC":    {},
-		"ETH":    {},
-		"ATOM":   {},
-	}
 )
 
 type (
@@ -148,6 +119,17 @@ func endpointValidation(sl validator.StructLevel) {
 	}
 }
 
+// hasAPIKey searches through the provided endpoints to return whether or not
+// a given endpoint was supplied with an API Key.
+func hasAPIKey(endpointName provider.Name, endpoints []provider.Endpoint) bool {
+	for _, endpoint := range endpoints {
+		if endpoint.Name == endpointName && endpoint.APIKey != "" {
+			return true
+		}
+	}
+	return false
+}
+
 // Validate returns an error if the Config object is invalid.
 func (c Config) Validate() error {
 	validate.RegisterStructValidation(telemetryValidation, telemetry.Config{})
@@ -201,11 +183,14 @@ func ParseConfig(configPath string) (Config, error) {
 			return cfg, fmt.Errorf("unsupported quote: %s", cp.Quote)
 		}
 
-		for _, provider := range cp.Providers {
-			if _, ok := SupportedProviders[provider]; !ok {
-				return cfg, fmt.Errorf("unsupported provider: %s", provider)
+		for _, prov := range cp.Providers {
+			if _, ok := SupportedProviders[prov]; !ok {
+				return cfg, fmt.Errorf("unsupported provider: %s", prov)
 			}
-			pairs[cp.Base][provider] = struct{}{}
+			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, cfg.ProviderEndpoints) {
+				return cfg, fmt.Errorf("provider %s requires an API Key", prov)
+			}
+			pairs[cp.Base][prov] = struct{}{}
 		}
 	}
 
@@ -275,9 +260,12 @@ func CheckProviderMins(ctx context.Context, logger zerolog.Logger, cfg Config) e
 		var minProviders int
 		if currencyProviderTracker != nil {
 			minProviders = currencyProviderTracker.CurrencyProviderMin[base]
+		} else if _, ok := SupportedForexCurrencies[base]; ok {
+			minProviders = 1
 		} else {
 			minProviders = 3
 		}
+
 		if _, ok := pairs[base][provider.ProviderMock]; !ok && len(providers) < minProviders {
 			return fmt.Errorf("must have at least %d providers for %s", minProviders, base)
 		}
