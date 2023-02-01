@@ -212,10 +212,6 @@ func (p *CryptoProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	tickerErrs := 0
 	for _, cp := range pairs {
 		key := currencyPairToCryptoPair(cp)
-		fmt.Println(
-			"key:",
-			key,
-		)
 		price, err := p.getTickerPrice(key)
 		if err != nil {
 			p.logger.Warn().Err(err)
