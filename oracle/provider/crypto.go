@@ -440,11 +440,11 @@ func (p *CryptoProvider) GetAvailablePairs() (map[string]struct{}, error) {
 		}
 
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(splitInstName[0]),
-			Quote: strings.ToUpper(splitInstName[1]),
+			Base:  splitInstName[0],
+			Quote: splitInstName[1],
 		}
 
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

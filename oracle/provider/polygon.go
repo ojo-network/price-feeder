@@ -302,11 +302,11 @@ func (p *PolygonProvider) GetAvailablePairs() (map[string]struct{}, error) {
 		}
 
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(pair.Ticker[2:5]),
-			Quote: strings.ToUpper(pair.Ticker[5:8]),
+			Base:  pair.Ticker[2:5],
+			Quote: pair.Ticker[5:8],
 		}
 
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

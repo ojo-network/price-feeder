@@ -482,10 +482,10 @@ func (p *GateProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	availablePairs := make(map[string]struct{}, len(pairsSummary))
 	for _, pair := range pairsSummary {
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(pair.Base),
-			Quote: strings.ToUpper(pair.Quote),
+			Base:  pair.Base,
+			Quote: pair.Quote,
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

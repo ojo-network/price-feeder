@@ -390,10 +390,10 @@ func (p *OkxProvider) GetAvailablePairs() (map[string]struct{}, error) {
 		}
 
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(splitInstID[0]),
-			Quote: strings.ToUpper(splitInstID[1]),
+			Base:  splitInstID[0],
+			Quote: splitInstID[1],
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

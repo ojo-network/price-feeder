@@ -384,7 +384,7 @@ func (p *MexcProvider) GetAvailablePairs() (map[string]struct{}, error) {
 
 	availablePairs := make(map[string]struct{}, len(pairsSummary.Data))
 	for _, pairName := range pairsSummary.Data {
-		availablePairs[strings.ToUpper(pairName.Symbol)] = struct{}{}
+		availablePairs[strings.ToUpper(strings.ReplaceAll(pairName.Symbol, "_", ""))] = struct{}{}
 	}
 
 	return availablePairs, nil

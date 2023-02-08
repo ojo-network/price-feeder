@@ -535,10 +535,10 @@ func (p *KrakenProvider) GetAvailablePairs() (map[string]struct{}, error) {
 		}
 
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(splitPair[0]),
-			Quote: strings.ToUpper(splitPair[1]),
+			Base:  splitPair[0],
+			Quote: splitPair[1],
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

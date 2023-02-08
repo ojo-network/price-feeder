@@ -143,7 +143,7 @@ func (p MockProvider) GetAvailablePairs() (map[string]struct{}, error) {
 			Base:  strings.ToUpper(r[0]),
 			Quote: strings.ToUpper(r[1]),
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil
