@@ -133,7 +133,7 @@ func NewCoinbaseProvider(
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		provider.endpoints.Name,
+		endpoints.Name,
 		wsURL,
 		provider.getSubscriptionMsgs(pairs...),
 		provider.messageReceived,
@@ -141,7 +141,7 @@ func NewCoinbaseProvider(
 		websocket.PingMessage,
 		coinbaseLogger,
 	)
-	go provider.wsc.Start()
+	go provider.wsc.StartConnections()
 
 	return provider, nil
 }
@@ -163,7 +163,7 @@ func (p *CoinbaseProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []inte
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *CoinbaseProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
+func (p *CoinbaseProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -181,15 +181,17 @@ func (p *CoinbaseProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) err
 		newPairs...,
 	)
 	if err != nil {
-		return err
+		return
 	}
 
 	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
-	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
-		return err
-	}
+	p.wsc.AddWebsocketConnection(
+		newSubscriptionMsgs,
+		p.messageReceived,
+		defaultPingDuration,
+		websocket.PingMessage,
+	)
 	p.setSubscribedPairs(confirmedPairs...)
-	return nil
 }
 
 // GetTickerPrices returns the tickerPrices based on the provided pairs.
@@ -347,11 +349,7 @@ func (p *CoinbaseProvider) getTradePrices(key string) ([]CoinbaseTrade, error) {
 	return trades, nil
 }
 
-func (p *CoinbaseProvider) messageReceived(messageType int, bz []byte) {
-	if messageType != websocket.TextMessage {
-		return
-	}
-
+func (p *CoinbaseProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	var coinbaseTrade CoinbaseTradeResponse
 	if err := json.Unmarshal(bz, &coinbaseTrade); err != nil {
 		p.logger.Error().Err(err).Msg("unable to unmarshal response")

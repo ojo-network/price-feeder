@@ -26,7 +26,6 @@ import (
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
-	"github.com/ojo-network/price-feeder/oracle/provider"
 	v1 "github.com/ojo-network/price-feeder/router/v1"
 )
 
@@ -162,18 +161,13 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		deviations[deviation.Base] = threshold
 	}
 
-	endpoints := make(map[provider.Name]provider.Endpoint, len(cfg.ProviderEndpoints))
-	for _, endpoint := range cfg.ProviderEndpoints {
-		endpoints[endpoint.Name] = endpoint
-	}
-
 	oracle := oracle.New(
 		logger,
 		oracleClient,
-		cfg.CurrencyPairs,
+		cfg.ProviderPairs(),
 		providerTimeout,
 		deviations,
-		endpoints,
+		cfg.ProviderEndpointsMap(),
 	)
 
 	telemetryCfg := telemetry.Config{}

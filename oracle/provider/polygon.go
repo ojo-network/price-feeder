@@ -118,7 +118,7 @@ func NewPolygonProvider(
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		provider.endpoints.Name,
+		endpoints.Name,
 		wsURL,
 		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
@@ -126,7 +126,7 @@ func NewPolygonProvider(
 		websocket.PingMessage,
 		polygonLogger,
 	)
-	go provider.wsc.Start()
+	go provider.wsc.StartConnections()
 
 	return provider, nil
 }
@@ -151,7 +151,7 @@ func (p *PolygonProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []inter
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *PolygonProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
+func (p *PolygonProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -169,15 +169,17 @@ func (p *PolygonProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) erro
 		newPairs...,
 	)
 	if err != nil {
-		return err
+		return
 	}
 
 	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
-	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
-		return err
-	}
+	p.wsc.AddWebsocketConnection(
+		newSubscriptionMsgs,
+		p.messageReceived,
+		defaultPingDuration,
+		websocket.PingMessage,
+	)
 	p.setSubscribedPairs(confirmedPairs...)
-	return nil
 }
 
 // GetTickerPrices returns the tickerPrices based on the saved map.
@@ -310,7 +312,7 @@ func (p *PolygonProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return availablePairs, nil
 }
 
-func (p *PolygonProvider) messageReceived(messageType int, bz []byte) {
+func (p *PolygonProvider) messageReceived(messageType int, _ *WebsocketConnection, bz []byte) {
 	if messageType != websocket.TextMessage {
 		return
 	}
