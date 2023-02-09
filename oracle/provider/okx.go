@@ -141,7 +141,7 @@ func NewOkxProvider(
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		provider.endpoints.Name,
+		endpoints.Name,
 		wsURL,
 		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
@@ -149,7 +149,7 @@ func NewOkxProvider(
 		websocket.PingMessage,
 		okxLogger,
 	)
-	go provider.wsc.Start()
+	go provider.wsc.StartConnections()
 
 	return provider, nil
 }
@@ -169,7 +169,7 @@ func (p *OkxProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *OkxProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
+func (p *OkxProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -187,15 +187,17 @@ func (p *OkxProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
 		newPairs...,
 	)
 	if err != nil {
-		return err
+		return
 	}
 
 	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
-	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
-		return err
-	}
+	p.wsc.AddWebsocketConnection(
+		newSubscriptionMsgs,
+		p.messageReceived,
+		defaultPingDuration,
+		websocket.PingMessage,
+	)
 	p.setSubscribedPairs(confirmedPairs...)
-	return nil
 }
 
 // GetTickerPrices returns the tickerPrices based on the saved map.
@@ -290,11 +292,7 @@ func (p *OkxProvider) getCandlePrices(cp types.CurrencyPair) ([]types.CandlePric
 	return candleList, nil
 }
 
-func (p *OkxProvider) messageReceived(messageType int, bz []byte) {
-	if messageType != websocket.TextMessage {
-		return
-	}
-
+func (p *OkxProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	var (
 		tickerResp OkxTickerResponse
 		tickerErr  error
@@ -392,10 +390,10 @@ func (p *OkxProvider) GetAvailablePairs() (map[string]struct{}, error) {
 		}
 
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(splitInstID[0]),
-			Quote: strings.ToUpper(splitInstID[1]),
+			Base:  splitInstID[0],
+			Quote: splitInstID[1],
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

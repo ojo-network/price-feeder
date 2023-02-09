@@ -34,6 +34,30 @@ threshold = "2"
 base = "WBTC"
 threshold = "1.5"
 
+[[deviation_thresholds]]
+base = "BNB"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "JUNO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "OSMO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stATOM"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stOSMO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "IST"
+threshold = "2"
+
 [[currency_pairs]]
 base = "USDT"
 providers = [
@@ -55,6 +79,7 @@ quote = "USDT"
 base = "ATOM"
 providers = [
   "kraken",
+  "binanceus",
 ]
 quote = "USD"
 
@@ -107,6 +132,88 @@ providers = [
 ]
 quote = "USDT"
 
+[[currency_pairs]]
+base = "JUNO"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "JUNO"
+providers = [
+  "bitget",
+  "mexc",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "JUNO"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "CRO"
+providers = [
+  "crypto",
+  "bitget",
+  "okx",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "BNB"
+providers = [
+  "binanceus",
+  "bitget",
+  "okx",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "crypto",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "stATOM"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "stOSMO"
+providers = [
+  "osmosisv2",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "IST"
+providers = [
+  "osmosisv2",
+]
+quote = "OSMO"
+
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
 chain_id = "ojo-testnet"
@@ -134,3 +241,8 @@ prometheus-retention-time = 100
 name = "binance"
 rest = "https://api1.binance.com"
 websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "osmosisv2"
+rest = "https://api.osmo-api.prod.network.umee.cc"
+websocket = "api.osmo-api.prod.network.umee.cc"

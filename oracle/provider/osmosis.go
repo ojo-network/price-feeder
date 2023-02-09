@@ -73,9 +73,7 @@ func NewOsmosisProvider(endpoint Endpoint) *OsmosisProvider {
 }
 
 // SubscribeCurrencyPairs performs a no-op since osmosis does not use websockets
-func (p OsmosisProvider) SubscribeCurrencyPairs(_ ...types.CurrencyPair) error {
-	return nil
-}
+func (p OsmosisProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 
 func (p OsmosisProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
 	path := fmt.Sprintf("%s%s/all", p.baseURL, osmosisTokenEndpoint)
@@ -221,10 +219,10 @@ func (p OsmosisProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	availablePairs := make(map[string]struct{}, len(pairsSummary.Data))
 	for _, pair := range pairsSummary.Data {
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(pair.Base),
-			Quote: strings.ToUpper(pair.Quote),
+			Base:  pair.Base,
+			Quote: pair.Quote,
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

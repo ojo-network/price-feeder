@@ -147,7 +147,7 @@ func NewGateProvider(
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		provider.endpoints.Name,
+		endpoints.Name,
 		wsURL,
 		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
@@ -155,7 +155,7 @@ func NewGateProvider(
 		websocket.PingMessage,
 		gateLogger,
 	)
-	go provider.wsc.Start()
+	go provider.wsc.StartConnections()
 
 	return provider, nil
 }
@@ -172,7 +172,7 @@ func (p *GateProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interfac
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *GateProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
+func (p *GateProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -190,15 +190,17 @@ func (p *GateProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
 		newPairs...,
 	)
 	if err != nil {
-		return err
+		return
 	}
 
 	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
-	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
-		return err
-	}
+	p.wsc.AddWebsocketConnection(
+		newSubscriptionMsgs,
+		p.messageReceived,
+		defaultPingDuration,
+		websocket.PingMessage,
+	)
 	p.setSubscribedPairs(confirmedPairs...)
-	return nil
 }
 
 // GetTickerPrices returns the tickerPrices based on the provided pairs.
@@ -255,7 +257,7 @@ func (p *GateProvider) getCandlePrices(cp types.CurrencyPair) ([]types.CandlePri
 	p.mtx.RLock()
 	defer p.mtx.RUnlock()
 
-	candles, ok := p.candles[cp.String()]
+	candles, ok := p.candles[currencyPairToGatePair(cp)]
 	if !ok {
 		return []types.CandlePrice{}, fmt.Errorf(
 			types.ErrCandleNotFound.Error(),
@@ -293,11 +295,7 @@ func (p *GateProvider) getTickerPrice(cp types.CurrencyPair) (types.TickerPrice,
 	)
 }
 
-func (p *GateProvider) messageReceived(messageType int, bz []byte) {
-	if messageType != websocket.TextMessage {
-		return
-	}
-
+func (p *GateProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	var (
 		gateEvent GateEvent
 		gateErr   error
@@ -484,10 +482,10 @@ func (p *GateProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	availablePairs := make(map[string]struct{}, len(pairsSummary))
 	for _, pair := range pairsSummary {
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(pair.Base),
-			Quote: strings.ToUpper(pair.Quote),
+			Base:  pair.Base,
+			Quote: pair.Quote,
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

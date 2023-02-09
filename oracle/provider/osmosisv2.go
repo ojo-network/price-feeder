@@ -109,7 +109,7 @@ func NewOsmosisV2Provider(
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		provider.endpoints.Name,
+		endpoints.Name,
 		wsURL,
 		[]interface{}{""},
 		provider.messageReceived,
@@ -117,14 +117,14 @@ func NewOsmosisV2Provider(
 		websocket.PingMessage,
 		osmosisV2Logger,
 	)
-	go provider.wsc.Start()
+	go provider.wsc.StartConnections()
 
 	return provider, nil
 }
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *OsmosisV2Provider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
+func (p *OsmosisV2Provider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -135,11 +135,10 @@ func (p *OsmosisV2Provider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) er
 		cps...,
 	)
 	if err != nil {
-		return err
+		return
 	}
 
 	p.setSubscribedPairs(confirmedPairs...)
-	return nil
 }
 
 // GetTickerPrices returns the tickerPrices based on the saved map.
@@ -229,11 +228,7 @@ func (p *OsmosisV2Provider) getCandlePrices(key string) ([]types.CandlePrice, er
 	return candleList, nil
 }
 
-func (p *OsmosisV2Provider) messageReceived(messageType int, bz []byte) {
-	if messageType != websocket.TextMessage {
-		return
-	}
-
+func (p *OsmosisV2Provider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	// check if message is an ack
 	if string(bz) == "ack" {
 		return
@@ -385,10 +380,10 @@ func (p *OsmosisV2Provider) GetAvailablePairs() (map[string]struct{}, error) {
 	availablePairs := make(map[string]struct{}, len(pairsSummary))
 	for _, pair := range pairsSummary {
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(pair.Base),
-			Quote: strings.ToUpper(pair.Quote),
+			Base:  pair.Base,
+			Quote: pair.Quote,
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil
@@ -397,5 +392,5 @@ func (p *OsmosisV2Provider) GetAvailablePairs() (map[string]struct{}, error) {
 // currencyPairToOsmosisV2Pair receives a currency pair and return osmosisv2
 // ticker symbol atomusdt@ticker.
 func currencyPairToOsmosisV2Pair(cp types.CurrencyPair) string {
-	return strings.ToUpper(cp.Base + "/" + cp.Quote)
+	return cp.Base + "/" + cp.Quote
 }

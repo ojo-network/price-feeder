@@ -136,7 +136,7 @@ func NewKrakenProvider(
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		provider.endpoints.Name,
+		endpoints.Name,
 		wsURL,
 		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
@@ -144,7 +144,7 @@ func NewKrakenProvider(
 		websocket.PingMessage,
 		krakenLogger,
 	)
-	go provider.wsc.Start()
+	go provider.wsc.StartConnections()
 
 	return provider, nil
 }
@@ -161,7 +161,7 @@ func (p *KrakenProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interf
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *KrakenProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
+func (p *KrakenProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -179,15 +179,17 @@ func (p *KrakenProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error
 		newPairs...,
 	)
 	if err != nil {
-		return err
+		return
 	}
 
 	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
-	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
-		return err
-	}
+	p.wsc.AddWebsocketConnection(
+		newSubscriptionMsgs,
+		p.messageReceived,
+		time.Duration(0),
+		websocket.PingMessage,
+	)
 	p.setSubscribedPairs(confirmedPairs...)
-	return nil
 }
 
 // GetTickerPrices returns the tickerPrices based on the provided pairs.
@@ -281,7 +283,7 @@ func (p *KrakenProvider) getCandlePrices(key string) ([]types.CandlePrice, error
 }
 
 // messageReceived handles any message sent by the provider.
-func (p *KrakenProvider) messageReceived(messageType int, bz []byte) {
+func (p *KrakenProvider) messageReceived(messageType int, _ *WebsocketConnection, bz []byte) {
 	if messageType != websocket.TextMessage {
 		return
 	}
@@ -533,10 +535,10 @@ func (p *KrakenProvider) GetAvailablePairs() (map[string]struct{}, error) {
 		}
 
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(splitPair[0]),
-			Quote: strings.ToUpper(splitPair[1]),
+			Base:  splitPair[0],
+			Quote: splitPair[1],
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

@@ -145,7 +145,7 @@ func NewCryptoProvider(
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		provider.endpoints.Name,
+		endpoints.Name,
 		wsURL,
 		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
@@ -153,7 +153,7 @@ func NewCryptoProvider(
 		websocket.PingMessage,
 		cryptoLogger,
 	)
-	go provider.wsc.Start()
+	go provider.wsc.StartConnections()
 
 	return provider, nil
 }
@@ -176,7 +176,7 @@ func (p *CryptoProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interf
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *CryptoProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
+func (p *CryptoProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -194,15 +194,17 @@ func (p *CryptoProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error
 		newPairs...,
 	)
 	if err != nil {
-		return err
+		return
 	}
 
 	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
-	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
-		return err
-	}
+	p.wsc.AddWebsocketConnection(
+		newSubscriptionMsgs,
+		p.messageReceived,
+		disabledPingDuration,
+		websocket.PingMessage,
+	)
 	p.setSubscribedPairs(confirmedPairs...)
-	return nil
 }
 
 // GetTickerPrices returns the tickerPrices based on the provided pairs.
@@ -292,7 +294,7 @@ func (p *CryptoProvider) getCandlePrices(key string) ([]types.CandlePrice, error
 	return candleList, nil
 }
 
-func (p *CryptoProvider) messageReceived(messageType int, bz []byte) {
+func (p *CryptoProvider) messageReceived(messageType int, conn *WebsocketConnection, bz []byte) {
 	if messageType != websocket.TextMessage {
 		return
 	}
@@ -309,7 +311,7 @@ func (p *CryptoProvider) messageReceived(messageType int, bz []byte) {
 	// sometimes the message received is not a ticker or a candle response.
 	heartbeatErr = json.Unmarshal(bz, &heartbeatResp)
 	if heartbeatResp.Method == cryptoHeartbeatMethod {
-		p.pong(heartbeatResp)
+		p.pong(conn, heartbeatResp)
 		return
 	}
 
@@ -345,19 +347,19 @@ func (p *CryptoProvider) messageReceived(messageType int, bz []byte) {
 		Msg("Error on receive message")
 }
 
-// pong return a heartbeat message when a "ping" is received and reset the
+// pongReceived return a heartbeat message when a "ping" is received and reset the
 // recconnect ticker because the connection is alive. After connected to crypto.com's
 // Websocket server, the server will send heartbeat periodically (30s interval).
 // When client receives an heartbeat message, it must respond back with the
 // public/respond-heartbeat method, using the same matching id,
 // within 5 seconds, or the connection will break.
-func (p *CryptoProvider) pong(heartbeatResp CryptoHeartbeatResponse) {
+func (p *CryptoProvider) pong(conn *WebsocketConnection, heartbeatResp CryptoHeartbeatResponse) {
 	heartbeatReq := CryptoHeartbeatRequest{
 		ID:     heartbeatResp.ID,
 		Method: cryptoHeartbeatReqMethod,
 	}
 
-	if err := p.wsc.SendJSON(heartbeatReq); err != nil {
+	if err := conn.SendJSON(heartbeatReq); err != nil {
 		p.logger.Err(err).Msg("could not send pong message back")
 	}
 }
@@ -438,11 +440,11 @@ func (p *CryptoProvider) GetAvailablePairs() (map[string]struct{}, error) {
 		}
 
 		cp := types.CurrencyPair{
-			Base:  strings.ToUpper(splitInstName[0]),
-			Quote: strings.ToUpper(splitInstName[1]),
+			Base:  splitInstName[0],
+			Quote: splitInstName[1],
 		}
 
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

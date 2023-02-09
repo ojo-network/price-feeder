@@ -41,9 +41,7 @@ func NewMockProvider() *MockProvider {
 }
 
 // SubscribeCurrencyPairs performs a no-op since mock does not use websockets
-func (p MockProvider) SubscribeCurrencyPairs(_ ...types.CurrencyPair) error {
-	return nil
-}
+func (p MockProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 
 func (p MockProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
@@ -145,7 +143,7 @@ func (p MockProvider) GetAvailablePairs() (map[string]struct{}, error) {
 			Base:  strings.ToUpper(r[0]),
 			Quote: strings.ToUpper(r[1]),
 		}
-		availablePairs[cp.String()] = struct{}{}
+		availablePairs[strings.ToUpper(cp.String())] = struct{}{}
 	}
 
 	return availablePairs, nil

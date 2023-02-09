@@ -130,7 +130,7 @@ func NewMexcProvider(
 
 	provider.wsc = NewWebsocketController(
 		ctx,
-		provider.endpoints.Name,
+		endpoints.Name,
 		wsURL,
 		provider.getSubscriptionMsgs(confirmedPairs...),
 		provider.messageReceived,
@@ -138,7 +138,7 @@ func NewMexcProvider(
 		websocket.PingMessage,
 		mexcLogger,
 	)
-	go provider.wsc.Start()
+	go provider.wsc.StartConnections()
 
 	return provider, nil
 }
@@ -155,7 +155,7 @@ func (p *MexcProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interfac
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *MexcProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
+func (p *MexcProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -173,15 +173,17 @@ func (p *MexcProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) error {
 		newPairs...,
 	)
 	if err != nil {
-		return err
+		return
 	}
 
 	newSubscriptionMsgs := p.getSubscriptionMsgs(confirmedPairs...)
-	if err := p.wsc.AddSubscriptionMsgs(newSubscriptionMsgs); err != nil {
-		return err
-	}
+	p.wsc.AddWebsocketConnection(
+		newSubscriptionMsgs,
+		p.messageReceived,
+		defaultPingDuration,
+		websocket.PingMessage,
+	)
 	p.setSubscribedPairs(confirmedPairs...)
-	return nil
 }
 
 // GetTickerPrices returns the tickerPrices based on the provided pairs.
@@ -271,11 +273,7 @@ func (p *MexcProvider) getCandlePrices(key string) ([]types.CandlePrice, error) 
 	return candleList, nil
 }
 
-func (p *MexcProvider) messageReceived(messageType int, bz []byte) {
-	if messageType != websocket.TextMessage {
-		return
-	}
-
+func (p *MexcProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	var (
 		tickerResp MexcTickerResponse
 		tickerErr  error
@@ -386,7 +384,7 @@ func (p *MexcProvider) GetAvailablePairs() (map[string]struct{}, error) {
 
 	availablePairs := make(map[string]struct{}, len(pairsSummary.Data))
 	for _, pairName := range pairsSummary.Data {
-		availablePairs[strings.ToUpper(pairName.Symbol)] = struct{}{}
+		availablePairs[strings.ToUpper(strings.ReplaceAll(pairName.Symbol, "_", ""))] = struct{}{}
 	}
 
 	return availablePairs, nil
