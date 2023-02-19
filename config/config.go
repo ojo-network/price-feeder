@@ -172,6 +172,7 @@ func ParseConfig(configPath string) (Config, error) {
 	}
 
 	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.SetConfigFile(configPath)
 
 	if err := viper.ReadInConfig(); err != nil {
