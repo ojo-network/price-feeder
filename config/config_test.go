@@ -600,10 +600,10 @@ global-labels = [["chain-id", "ojo-local-testnet"]]
 	require.NoError(t, err)
 
 	// Set env variables to overwrite config files
-	os.Setenv("SERVER.LISTEN_ADDR", "0.0.0.0:888888")
-	os.Setenv("SERVER.WRITE_TIMEOUT", "10s")
-	os.Setenv("SERVER.READ_TIMEOUT", "10s")
-	os.Setenv("SERVER.VERBOSE_CORS", "false")
+	os.Setenv("SERVER_LISTEN_ADDR", "0.0.0.0:888888")
+	os.Setenv("SERVER_WRITE_TIMEOUT", "10s")
+	os.Setenv("SERVER_READ_TIMEOUT", "10s")
+	os.Setenv("SERVER_VERBOSE_CORS", "false")
 
 	cfg, err := config.ParseConfig(tmpFile.Name())
 	require.NoError(t, err)
