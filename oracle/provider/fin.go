@@ -31,8 +31,6 @@ type (
 	FinProvider struct {
 		baseURL string
 		client  *http.Client
-
-		currentTickers FinTickers
 	}
 
 	FinTickers struct {
@@ -127,9 +125,18 @@ func (ft FinTickers) toTickerPrices(pairs []types.CurrencyPair) (
 			return nil,
 				fmt.Errorf("FIN tickers response contained duplicate: %s", ticker.Symbol)
 		}
+
+		price, err := strToDec(ticker.Price)
+		if err != nil {
+			return nil, err
+		}
+		volume, err := strToDec(ticker.Volume)
+		if err != nil {
+			return nil, err
+		}
 		tickerPrices[pair.String()] = types.TickerPrice{
-			Price:  sdk.MustNewDecFromStr(ticker.Price),
-			Volume: sdk.MustNewDecFromStr(ticker.Volume),
+			Price:  price,
+			Volume: volume,
 		}
 	}
 
@@ -207,9 +214,18 @@ func (fc FinCandles) ToCandlePrice() ([]types.CandlePrice, error) {
 		if err != nil {
 			return nil, fmt.Errorf("FIN candle timestamp failed to parse: %s", candle.Bin)
 		}
+
+		close, err := strToDec(candle.Close)
+		if err != nil {
+			return nil, err
+		}
+		volume, err := strToDec(candle.Volume)
+		if err != nil {
+			return nil, err
+		}
 		candlePrices = append(candlePrices, types.CandlePrice{
-			Price:     sdk.MustNewDecFromStr(candle.Close),
-			Volume:    sdk.MustNewDecFromStr(candle.Volume),
+			Price:     close,
+			Volume:    volume,
 			TimeStamp: timeStamp,
 		})
 	}
@@ -277,4 +293,17 @@ func binToTimeStamp(bin string) (int64, error) {
 		return -1, err
 	}
 	return timeParsed.Unix(), nil
+}
+
+// strToDec converts fin provider's decimals as a string to sdk.Dec.
+// It's necessary because the precision of the decimal returned
+// by the API is greater than what's supported by sdk.Dec (18).
+func strToDec(str string) (sdk.Dec, error) {
+	if strings.Contains(str, ".") {
+		split := strings.Split(str, ".")
+		if len(split[1]) > 18 {
+			str = split[0] + "." + split[1][0:18]
+		}
+	}
+	return sdk.NewDecFromStr(str)
 }
