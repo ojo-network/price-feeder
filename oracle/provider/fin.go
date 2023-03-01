@@ -24,9 +24,15 @@ const (
 var _ Provider = (*FinProvider)(nil)
 
 type (
+	// FinProvider implements an Oracle provider for use with the
+	// json-based FIN API.
+	//
+	// It polls and caches all data once every 30 seconds.
 	FinProvider struct {
 		baseURL string
 		client  *http.Client
+
+		currentTickers FinTickers
 	}
 
 	FinTickers struct {
@@ -97,13 +103,20 @@ func (p FinProvider) GetTickerPrices(pairs ...types.CurrencyPair) (
 		return nil,
 			fmt.Errorf("FIN tickers response unmarshal failed: %w", err)
 	}
+	return tickers.toTickerPrices(pairs)
+}
+
+// toTickerPrices takes a FinTickers object and returns a
+// map of string => types.TickerPrice.
+func (ft FinTickers) toTickerPrices(pairs []types.CurrencyPair) (
+	map[string]types.TickerPrice, error,
+) {
 	tickerSymbolPairs := make(map[string]types.CurrencyPair, len(pairs))
 	for _, pair := range pairs {
 		tickerSymbolPairs[pair.Base+"_"+pair.Quote] = pair
 	}
-
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-	for _, ticker := range tickers.Tickers {
+	for _, ticker := range ft.Tickers {
 		pair, ok := tickerSymbolPairs[strings.ToUpper(ticker.Symbol)]
 		if !ok {
 			// skip tokens that are not requested
@@ -130,8 +143,9 @@ func (p FinProvider) GetTickerPrices(pairs ...types.CurrencyPair) (
 	return tickerPrices, nil
 }
 
-// GetCandlePrices queries the FIN json API and returns with a
-// map of string => []types.CandlePrice.
+// GetCandlePrices queries the FIN json API for each pair,
+// gets each set of candles, and returns with a map
+// of string => []types.CandlePrice.
 func (p FinProvider) GetCandlePrices(pairs ...types.CurrencyPair) (
 	map[string][]types.CandlePrice, error,
 ) {
@@ -148,8 +162,8 @@ func (p FinProvider) GetCandlePrices(pairs ...types.CurrencyPair) (
 			return nil,
 				fmt.Errorf("FIN contract address lookup failed for pair: %s", pair.String())
 		}
-
 		candlePricesPairs[pair.String()] = []types.CandlePrice{}
+
 		windowEndTime := time.Now()
 		windowStartTime := windowEndTime.Add(-finCandleWindowSizeHours * time.Hour)
 		path := fmt.Sprintf("%s%s?contract=%s&precision=%d&from=%s&to=%s",
@@ -176,22 +190,31 @@ func (p FinProvider) GetCandlePrices(pairs ...types.CurrencyPair) (
 			return nil, fmt.Errorf("FIN candles response unmarshal failed: %w", err)
 		}
 
-		candlePrices := []types.CandlePrice{}
-		for _, candle := range candles.Candles {
-			timeStamp, err := binToTimeStamp(candle.Bin)
-			if err != nil {
-				return nil, fmt.Errorf("FIN candle timestamp failed to parse: %s", candle.Bin)
-			}
-			candlePrices = append(candlePrices, types.CandlePrice{
-				Price:     sdk.MustNewDecFromStr(candle.Close),
-				Volume:    sdk.MustNewDecFromStr(candle.Volume),
-				TimeStamp: timeStamp,
-			})
+		cp, err := candles.ToCandlePrice()
+		if err != nil {
+			return nil, err
 		}
-
-		candlePricesPairs[pair.String()] = candlePrices
+		candlePricesPairs[pair.String()] = cp
 	}
 	return candlePricesPairs, nil
+}
+
+// ToCandlePrice converts a FinCandles object to a []types.CandlePrice object.
+func (fc FinCandles) ToCandlePrice() ([]types.CandlePrice, error) {
+	candlePrices := []types.CandlePrice{}
+	for _, candle := range fc.Candles {
+		timeStamp, err := binToTimeStamp(candle.Bin)
+		if err != nil {
+			return nil, fmt.Errorf("FIN candle timestamp failed to parse: %s", candle.Bin)
+		}
+		candlePrices = append(candlePrices, types.CandlePrice{
+			Price:     sdk.MustNewDecFromStr(candle.Close),
+			Volume:    sdk.MustNewDecFromStr(candle.Volume),
+			TimeStamp: timeStamp,
+		})
+	}
+
+	return candlePrices, nil
 }
 
 // GetAvailablePairs queries fin's pairs and returns a map of
