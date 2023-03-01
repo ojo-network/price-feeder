@@ -172,6 +172,8 @@ func ParseConfig(configPath string) (Config, error) {
 	}
 
 	viper.AutomaticEnv()
+	// Allow nested env vars to be read with underscore separators.
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.SetConfigFile(configPath)
 
 	if err := viper.ReadInConfig(); err != nil {

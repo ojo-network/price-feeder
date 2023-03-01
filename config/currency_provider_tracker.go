@@ -15,7 +15,7 @@ const (
 	coinGeckoRestURL            = "https://api.coingecko.com/api/v3/coins"
 	coinGeckoListEndpoint       = "list"
 	coinGeckoTickersEndpoint    = "tickers"
-	osmosisV2RestURL            = "https://api.osmo-api.network.umee.cc"
+	osmosisV2RestURL            = "https://api.osmo-api.prod.network.umee.cc"
 	osmosisV2AssetPairsEndpoint = "assetpairs"
 	requestTimeout              = time.Second * 2
 	trackingPeriod              = time.Hour * 24
