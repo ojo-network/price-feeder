@@ -429,9 +429,8 @@ func (o *Oracle) getOrSetProvider(ctx context.Context, providerName provider.Nam
 		if err != nil {
 			return nil, err
 		}
-		priceProvider = newProvider
-
-		o.priceProviders[providerName] = priceProvider
+		newProvider.StartConnections()
+		o.priceProviders[providerName] = newProvider
 	}
 
 	return priceProvider, nil
