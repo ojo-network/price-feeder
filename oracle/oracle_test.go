@@ -20,6 +20,8 @@ type mockProvider struct {
 	prices map[string]types.TickerPrice
 }
 
+func (m mockProvider) StartConnections() {}
+
 func (m mockProvider) GetTickerPrices(_ ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
 	return m.prices, nil
 }
@@ -47,6 +49,8 @@ func (m mockProvider) GetAvailablePairs() (map[string]struct{}, error) {
 type failingProvider struct {
 	prices map[string]types.TickerPrice
 }
+
+func (m failingProvider) StartConnections() {}
 
 func (m failingProvider) GetTickerPrices(_ ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
 	return nil, fmt.Errorf("unable to get ticker prices")

@@ -48,6 +48,7 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 			t.Parallel()
 			ctx, cancel := context.WithCancel(context.Background())
 			pvd, _ := oracle.NewProvider(ctx, providerName, getLogger(), endpoint, currencyPairs...)
+			pvd.StartConnections()
 			time.Sleep(60 * time.Second) // wait for provider to connect and receive some prices
 			checkForPrices(t, pvd, currencyPairs, providerName.String())
 			cancel()

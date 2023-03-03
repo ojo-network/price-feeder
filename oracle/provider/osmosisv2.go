@@ -117,9 +117,13 @@ func NewOsmosisV2Provider(
 		websocket.PingMessage,
 		osmosisV2Logger,
 	)
-	go provider.wsc.StartConnections()
+	// go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *OsmosisV2Provider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
