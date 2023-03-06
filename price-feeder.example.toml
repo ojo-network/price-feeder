@@ -11,6 +11,10 @@ base = "USDT"
 threshold = "1.5"
 
 [[deviation_thresholds]]
+base = "UMEE"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "ATOM"
 threshold = "1.5"
 
@@ -57,6 +61,21 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "IST"
 threshold = "2"
+
+[[currency_pairs]]
+base = "UMEE"
+providers = [
+  "okx",
+  "gate",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "UMEE"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
 
 [[currency_pairs]]
 base = "USDT"
@@ -133,28 +152,6 @@ providers = [
 quote = "USDT"
 
 [[currency_pairs]]
-base = "JUNO"
-providers = [
-  "kraken",
-]
-quote = "USD"
-
-[[currency_pairs]]
-base = "JUNO"
-providers = [
-  "bitget",
-  "mexc",
-]
-quote = "USDT"
-
-[[currency_pairs]]
-base = "JUNO"
-providers = [
-  "osmosisv2",
-]
-quote = "ATOM"
-
-[[currency_pairs]]
 base = "CRO"
 providers = [
   "crypto",
@@ -183,6 +180,7 @@ quote = "ATOM"
 base = "OSMO"
 providers = [
   "bitget",
+  "gate",
 ]
 quote = "USDT"
 
@@ -221,7 +219,7 @@ validator = "umeevaloper1zypqa76je7pxsdwkfah6mu9a583sju6xjettez"
 
 [keyring]
 backend = "test"
-dir = "/Users/username/.umee"
+dir = "/Users/ryanbajollari/.umee"
 
 [rpc]
 grpc_endpoint = "localhost:9090"

@@ -148,9 +148,12 @@ func NewHuobiProvider(
 		websocket.PingMessage,
 		huobiLogger,
 	)
-	go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *HuobiProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *HuobiProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {

@@ -138,9 +138,12 @@ func NewMexcProvider(
 		websocket.PingMessage,
 		mexcLogger,
 	)
-	go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *MexcProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *MexcProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {

@@ -144,9 +144,12 @@ func NewKrakenProvider(
 		websocket.PingMessage,
 		krakenLogger,
 	)
-	go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *KrakenProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *KrakenProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {

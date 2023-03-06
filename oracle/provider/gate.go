@@ -155,9 +155,12 @@ func NewGateProvider(
 		websocket.PingMessage,
 		gateLogger,
 	)
-	go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *GateProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *GateProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {

@@ -147,9 +147,12 @@ func NewBinanceProvider(
 		websocket.PingMessage,
 		binanceLogger,
 	)
-	go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *BinanceProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *BinanceProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {

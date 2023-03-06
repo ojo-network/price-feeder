@@ -153,9 +153,12 @@ func NewCryptoProvider(
 		websocket.PingMessage,
 		cryptoLogger,
 	)
-	go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *CryptoProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *CryptoProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {

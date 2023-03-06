@@ -141,9 +141,12 @@ func NewCoinbaseProvider(
 		websocket.PingMessage,
 		coinbaseLogger,
 	)
-	go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *CoinbaseProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *CoinbaseProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {

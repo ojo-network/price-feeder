@@ -40,6 +40,10 @@ func NewMockProvider() *MockProvider {
 	}
 }
 
+func (p *MockProvider) StartConnections() {
+	// no-op mock does not use websockets
+}
+
 // SubscribeCurrencyPairs performs a no-op since mock does not use websockets
 func (p MockProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 

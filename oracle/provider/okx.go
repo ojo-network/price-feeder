@@ -149,9 +149,12 @@ func NewOkxProvider(
 		websocket.PingMessage,
 		okxLogger,
 	)
-	go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *OkxProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *OkxProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {
