@@ -126,9 +126,12 @@ func NewPolygonProvider(
 		websocket.PingMessage,
 		polygonLogger,
 	)
-	go provider.wsc.StartConnections()
 
 	return provider, nil
+}
+
+func (p *PolygonProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *PolygonProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {

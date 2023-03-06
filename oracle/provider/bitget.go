@@ -159,9 +159,11 @@ func NewBitgetProvider(
 		websocket.TextMessage,
 		bitgetLogger,
 	)
-	go provider.wsc.StartConnections()
-
 	return provider, nil
+}
+
+func (p *BitgetProvider) StartConnections() {
+	p.wsc.StartConnections()
 }
 
 func (p *BitgetProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {

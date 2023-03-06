@@ -72,6 +72,10 @@ func NewOsmosisProvider(endpoint Endpoint) *OsmosisProvider {
 	}
 }
 
+func (p *OsmosisProvider) StartConnections() {
+	// no-op osmosis v1 does not use websockets
+}
+
 // SubscribeCurrencyPairs performs a no-op since osmosis does not use websockets
 func (p OsmosisProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 
