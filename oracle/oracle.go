@@ -18,11 +18,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	pfsync "github.com/ojo-network/price-feeder/pkg/sync"
+	oracletypes "github.com/umee-network/umee/v4/x/oracle/types"
 )
 
 // We define tickerSleep as the minimum timeout between each oracle loop. We

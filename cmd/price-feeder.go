@@ -22,7 +22,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ojo-network/ojo/app/params"
+
+	// "github.com/ojo-network/ojo/app/params"
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
@@ -53,10 +54,10 @@ vote and prevote messages following the oracle voting procedure.`,
 }
 
 func init() {
-	// We need to set our bech32 address prefix because it was moved
-	// out of ojo's init function.
-	// Ref: https://github.com/ojo-network/ojo/pull/63
-	params.SetAddressPrefixes()
+	// // We need to set our bech32 address prefix because it was moved
+	// // out of ojo's init function.
+	// // Ref: https://github.com/ojo-network/ojo/pull/63
+	// params.SetAddressPrefixes()
 	rootCmd.PersistentFlags().String(flagLogLevel, zerolog.InfoLevel.String(), "logging level")
 	rootCmd.PersistentFlags().String(flagLogFormat, logLevelText, "logging format; must be either json or text")
 

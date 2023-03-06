@@ -215,13 +215,13 @@ providers = [
 quote = "OSMO"
 
 [account]
-address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
-chain_id = "ojo-testnet"
-validator = "ojovaloper1zypqa76je7pxsdwkfah6mu9a583sju6x6tnq6w"
+address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
+chain_id = "umee-local-testnet"
+validator = "umeevaloper1zypqa76je7pxsdwkfah6mu9a583sju6xjettez"
 
 [keyring]
 backend = "test"
-dir = "/Users/username/.ojo"
+dir = "/Users/username/.umee"
 
 [rpc]
 grpc_endpoint = "localhost:9090"
@@ -233,7 +233,7 @@ enable-hostname = true
 enable-hostname-label = true
 enable-service-label = true
 enabled = true
-global-labels = [["chain_id", "ojo-testnet"]]
+global-labels = [["chain_id", "umee-local-testnet"]]
 service-name = "price-feeder"
 prometheus-retention-time = 100
 

@@ -18,15 +18,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	ojoapp "github.com/ojo-network/ojo/app"
-	ojoparams "github.com/ojo-network/ojo/app/params"
 	"github.com/rs/zerolog"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	tmjsonclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
+	umeeapp "github.com/umee-network/umee/v4/app"
+	umeeparams "github.com/umee-network/umee/v4/app/params"
 )
 
 type (
-	// OracleClient defines a structure that interfaces with the Ojo node.
+	// OracleClient defines a structure that interfaces with the Umee node.
 	OracleClient struct {
 		Logger              zerolog.Logger
 		ChainID             string
@@ -39,7 +39,7 @@ type (
 		OracleAddrString    string
 		ValidatorAddr       sdk.ValAddress
 		ValidatorAddrString string
-		Encoding            ojoparams.EncodingConfig
+		Encoding            umeeparams.EncodingConfig
 		GasPrices           string
 		GasAdjustment       float64
 		GRPCEndpoint        string
@@ -84,7 +84,7 @@ func NewOracleClient(
 		OracleAddrString:    oracleAddrString,
 		ValidatorAddr:       sdk.ValAddress(validatorAddrString),
 		ValidatorAddrString: validatorAddrString,
-		Encoding:            ojoapp.MakeEncodingConfig(),
+		Encoding:            umeeapp.MakeEncodingConfig(),
 		GasAdjustment:       gasAdjustment,
 		GRPCEndpoint:        grpcEndpoint,
 	}

@@ -3,8 +3,8 @@ package oracle
 import (
 	"testing"
 
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/stretchr/testify/require"
+	oracletypes "github.com/umee-network/umee/v4/x/oracle/types"
 )
 
 func TestParamCacheIsOutdated(t *testing.T) {
