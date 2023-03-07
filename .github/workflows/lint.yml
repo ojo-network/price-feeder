@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - umee
       - release/**
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
           config: .revive.toml
           exclude: "*.pb.go;*.pb.gw.go;*.pulsar.go;swagger/..."
           path: "./..."
-      - name: golangci-lint main
+      - name: golangci-lint umee
         uses: golangci/golangci-lint-action@v3
         if: env.GIT_DIFF
         with:

@@ -4,7 +4,7 @@ on:
     paths: ["**.md"]
   push:
     branches:
-      - main
+      - umee
       - release/**
     paths: ["**.md"]
 
@@ -16,5 +16,5 @@ jobs:
       - uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
           check-modified-files-only: "yes"
-          base-branch: main
+          base-branch: umee
           config-file: ".github/workflows/linkchecker.config.json"
