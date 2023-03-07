@@ -1,11 +1,11 @@
 # This workflow helps with creating docker images.
-# This job will only be triggered when a tag (vX.X.x) is pushed
+# This job will only be triggered when a tag (umee/vX.X.x) is pushed
 name: Release price-feeder
 
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "umee/v*.*.*"
 
 jobs:
   goreleaser:
@@ -19,7 +19,7 @@ jobs:
           go-version: 1.19
           cache: true
           cache-dependency-path: go.sum
-      # Parse 'v*.*.*' semantic version from 'v*.*.*' and save to
+      # Parse 'umee/v*.*.*' semantic version from 'umee/v*.*.*' and save to
       # the $GITHUB_ENV environment variable.
       - name: Set env
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
