@@ -147,7 +147,7 @@ func TestFinProvider_GetTickerPrices(t *testing.T) {
 	})
 }
 
-func TestFinProvideR_GetCandlePrices(t *testing.T) {
+func TestFinProvider_GetCandlePrices(t *testing.T) {
 	p := NewFinProvider(Endpoint{})
 
 	t.Run("valid_request_single_candle", func(t *testing.T) {

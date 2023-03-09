@@ -307,3 +307,7 @@ func strToDec(str string) (sdk.Dec, error) {
 	}
 	return sdk.NewDecFromStr(str)
 }
+
+// StartConnections performs a no-op since fin is not a websocket
+// provider.
+func (f FinProvider) StartConnections() {}
