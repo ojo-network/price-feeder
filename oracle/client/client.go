@@ -237,7 +237,7 @@ func (oc OracleClient) CreateClientContext() (client.Context, error) {
 		ChainID:           oc.ChainID,
 		InterfaceRegistry: oc.Encoding.InterfaceRegistry,
 		Output:            os.Stderr,
-		BroadcastMode:     flags.BroadcastSync,
+		BroadcastMode:     flags.BroadcastAsync,
 		TxConfig:          oc.Encoding.TxConfig,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		Codec:             oc.Encoding.Codec,

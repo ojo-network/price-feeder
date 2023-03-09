@@ -30,7 +30,7 @@ import (
 // and broadcast pre-vote and vote transactions such that they're committed in
 // at least one block during each voting period.
 const (
-	tickerSleep = 1000 * time.Millisecond
+	tickerSleep = 100 * time.Millisecond
 )
 
 // PreviousPrevote defines a structure for defining the previous prevote
@@ -587,7 +587,7 @@ func (o *Oracle) tick(ctx context.Context) error {
 			Str("validator", preVoteMsg.Validator).
 			Str("feeder", preVoteMsg.Feeder).
 			Msg("broadcasting pre-vote")
-		if err := o.oracleClient.BroadcastTx(nextBlockHeight, oracleVotePeriod*2, preVoteMsg); err != nil {
+		if err := o.oracleClient.BroadcastTx(nextBlockHeight, 1, preVoteMsg); err != nil {
 			return err
 		}
 
@@ -618,7 +618,7 @@ func (o *Oracle) tick(ctx context.Context) error {
 			Msg("broadcasting vote")
 		if err := o.oracleClient.BroadcastTx(
 			nextBlockHeight,
-			oracleVotePeriod-indexInVotePeriod,
+			1,
 			voteMsg,
 		); err != nil {
 			return err
