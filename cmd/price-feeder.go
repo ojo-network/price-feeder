@@ -91,6 +91,9 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 	}
 
 	skipProviderCheck, err := cmd.Flags().GetBool(flagSkipProviderCheck)
+	if err != nil {
+		return err
+	}
 
 	var logWriter io.Writer
 	switch strings.ToLower(logFormatStr) {
