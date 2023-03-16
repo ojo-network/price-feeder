@@ -17,3 +17,12 @@ pull_request_rules:
         commit_message_template: |
           {{ title }} (#{{ number }})
           {{ body }}
+
+  - name: Backport changes to umee branch
+    conditions:
+      - base=main
+      - label=S:backport/umee
+    actions:
+      backport:
+        branches:
+          - umee
