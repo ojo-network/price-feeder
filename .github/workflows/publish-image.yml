@@ -21,6 +21,7 @@ jobs:
     - name: Log in to the Container Registry
       uses: docker/login-action@v1
       with:
+        registry: ghcr.io
         username: USERNAME
         password: ${{ secrets.REPO_PUSH_PAT }}
 
