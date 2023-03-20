@@ -219,7 +219,7 @@ validator = "umeevaloper1zypqa76je7pxsdwkfah6mu9a583sju6xjettez"
 
 [keyring]
 backend = "test"
-dir = "/Users/ryanbajollari/.umee"
+dir = "/Users/username/.umee"
 
 [rpc]
 grpc_endpoint = "localhost:9090"
