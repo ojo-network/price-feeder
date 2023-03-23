@@ -17,7 +17,7 @@ builds:
       - -tags=badgerdb ledger netgo
       - -trimpath
     ldflags:
-      - -s -w -X umee.commit={{.Commit}} -X umee.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.AppName=price-feeder -X github.com/cosmos/cosmos-sdk/version.Version={{ .Version }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -s -w -X umee.commit={{.Commit}} -X umee.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.AppName=price-feeder -X github.com/cosmos/cosmos-sdk/version.Version={{ replace .Version "umee/" "umee-" }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
     goos:
       - linux
     goarch:
@@ -26,11 +26,11 @@ builds:
 archives:
   - id: bins
     format: binary
-    name_template: "{{ .Binary }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    name_template: '{{ replace .Version "umee/" "umee-" }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
 
   - id: tarball
     format: tar.gz
-    name_template: "{{ .Binary }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    name_template: '{{ replace .Version "umee/" "umee-" }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     files:
       - LICENSE
       - README.md
@@ -44,7 +44,7 @@ snapshot:
   name_template: SNAPSHOT-{{ .Commit }}
 
 checksum:
-  name_template: SHA256SUMS-v{{.Version}}.txt
+  name_template: 'SHA256SUMS-{{ replace .Version "umee/" "umee-" }}.txt'
   algorithm: sha256
 
 changelog:
