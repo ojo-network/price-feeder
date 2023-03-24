@@ -16,3 +16,4 @@ updates:
     labels:
       - "A:Automerge"
       - "T:Dependencies"
+      - "S:backport/umee"
