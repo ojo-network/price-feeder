@@ -46,6 +46,18 @@ install: go.sum
 .PHONY: build install
 
 ###############################################################################
+##                                  Docker                                   ##
+###############################################################################
+
+docker-build:
+	@DOCKER_BUILDKIT=1 docker build -t ghcr.io/ojo-network/price-feeder-ojo .
+
+docker-push:
+	@docker push ghcr.io/ojo-network/price-feeder-ojo
+
+.PHONY: docker-build docker-push
+
+###############################################################################
 ##                              Tests & Linting                              ##
 ###############################################################################
 
