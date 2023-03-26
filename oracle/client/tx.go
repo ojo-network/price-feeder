@@ -24,7 +24,6 @@ func BroadcastTx(clientCtx client.Context, txf tx.Factory, msgs ...sdk.Msg) (*sd
 		return nil, err
 	}
 
-	// make sure gas in enough to execute the txs
 	txf = txf.WithGas(adjusted)
 
 	unsignedTx, err := txf.BuildUnsignedTx(msgs...)
