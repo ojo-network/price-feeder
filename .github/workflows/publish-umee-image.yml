@@ -31,4 +31,4 @@ jobs:
       with:
         context: .
         push: true
-        tags: ghcr.io/umee-network/price-feeder-umee-e2e
+        tags: ghcr.io/umee-network/price-feeder-umee
