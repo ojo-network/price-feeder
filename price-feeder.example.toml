@@ -62,6 +62,18 @@ threshold = "2"
 base = "IST"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "AKT"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "JUNO"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "LUNA"
+threshold = "1.5"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -211,6 +223,31 @@ providers = [
   "osmosisv2",
 ]
 quote = "OSMO"
+
+[[currency_pairs]]
+base = "AKT"
+quote = "USDT"
+providers = [ "huobi", "gate",]
+
+[[currency_pairs]]
+base = "AKT"
+quote = "USD"
+providers = [ "kraken", "crypto",]
+
+[[currency_pairs]]
+base = "JUNO"
+quote = "USDT"
+providers = [ "bitget", "mexc",]
+
+[[currency_pairs]]
+base = "JUNO"
+quote = "USD"
+providers = [ "kraken",]
+
+[[currency_pairs]]
+base = "LUNA"
+quote = "USDT"
+providers = [ "okx", "gate", "huobi", "bitget",]
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
