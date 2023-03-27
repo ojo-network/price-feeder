@@ -1,0 +1,34 @@
+name: Publish Image
+
+on:
+  push:
+    branches:
+      - umee
+
+jobs:
+  build_and_publish:
+    name: Build and Publish Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        ref: umee
+
+    - name: Log in to the Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: USERNAME
+        password: ${{ secrets.REPO_PUSH_PAT }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ghcr.io/umee-network/price-feeder-umee-e2e
