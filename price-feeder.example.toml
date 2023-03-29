@@ -67,11 +67,19 @@ base = "AKT"
 threshold = "1.5"
 
 [[deviation_thresholds]]
-base = "JUNO"
+base = "LUNA"
 threshold = "1.5"
 
 [[deviation_thresholds]]
-base = "LUNA"
+base = "WAXL"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "MATIC"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "DOT"
 threshold = "1.5"
 
 [[currency_pairs]]
@@ -245,9 +253,64 @@ quote = "USD"
 providers = [ "kraken",]
 
 [[currency_pairs]]
+base = "JUNO"
+quote = "OSMO"
+providers = [ "osmosisv2",]
+
+[[currency_pairs]]
 base = "LUNA"
 quote = "USDT"
 providers = [ "okx", "gate", "huobi", "bitget",]
+
+[[currency_pairs]]
+base = "WAXL"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "WAXL"
+providers = [
+  "huobi",
+  "bitget",
+  "gate",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "DOT"
+providers = [
+  "kraken",
+  "coinbase",
+  "crypto",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "DOT"
+providers = [
+  "gate",
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "MATIC"
+providers = [
+  "coinbase",
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "MATIC"
+providers = [
+  "gate",
+  "mexc",
+  "bitget",
+]
+quote = "USDT"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
