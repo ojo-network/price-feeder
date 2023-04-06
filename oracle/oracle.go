@@ -487,6 +487,9 @@ func NewProvider(
 	case provider.ProviderFin:
 		return provider.NewFinProvider(endpoint), nil
 
+	case provider.ProviderCrescent:
+		return provider.NewCrescentProvider(ctx, logger, endpoint, providerPairs...)
+
 	case provider.ProviderMock:
 		return provider.NewMockProvider(), nil
 	}

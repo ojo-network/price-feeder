@@ -17,6 +17,8 @@ const (
 	coinGeckoTickersEndpoint    = "tickers"
 	osmosisV2RestURL            = "https://api.osmo-api.prod.network.umee.cc"
 	osmosisV2AssetPairsEndpoint = "assetpairs"
+	crescentRestURL             = ""
+	crescentAssetPairsEndpoint  = "assetpairs"
 	requestTimeout              = time.Second * 2
 	trackingPeriod              = time.Hour * 24
 )
@@ -86,7 +88,12 @@ func NewCurrencyProviderTracker(
 		return nil, err
 	}
 
-	if err := currencyProviderTracker.setCurrencyProviders(osmosisAPIPairs); err != nil {
+	crescentAPIPairs, err := currencyProviderTracker.getCrescentAPIPairs()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := currencyProviderTracker.setCurrencyProviders(osmosisAPIPairs, crescentAPIPairs); err != nil {
 		return nil, err
 	}
 
@@ -150,9 +157,34 @@ func (t *CurrencyProviderTracker) getOsmosisAPIPairs() (map[string]string, error
 	return osmosisAPIPairs, nil
 }
 
+// getCrescentAPIPairs queries the crescent-api assetpairs endpoint to get the asset pairs
+// supported by it.
+func (t *CurrencyProviderTracker) getCrescentAPIPairs() (map[string]string, error) {
+	client := &http.Client{
+		Timeout: requestTimeout,
+	}
+	crescentAPIPairs := make(map[string]string)
+
+	crescentResp, err := client.Get(fmt.Sprintf("%s/%s", crescentRestURL, crescentAssetPairsEndpoint))
+	if err != nil {
+		return nil, err
+	}
+	defer crescentResp.Body.Close()
+	var assetPairsResponse []assetPair
+	if err = json.NewDecoder(crescentResp.Body).Decode(&assetPairsResponse); err != nil {
+		return nil, err
+	}
+
+	for _, assetPair := range assetPairsResponse {
+		crescentAPIPairs[assetPair.Base] = assetPair.Quote
+	}
+
+	return crescentAPIPairs, nil
+}
+
 // setCurrencyProviders queries CoinGecko's tickers endpoint to get all the exchanges
 // that support each price feeder currency pair and store it in the CurrencyProviders map.
-func (t *CurrencyProviderTracker) setCurrencyProviders(osmosisAPIPairs map[string]string) error {
+func (t *CurrencyProviderTracker) setCurrencyProviders(osmosisAPIPairs map[string]string, crescentAPIPairs map[string]string) error {
 	client := &http.Client{
 		Timeout: requestTimeout,
 	}
@@ -160,6 +192,11 @@ func (t *CurrencyProviderTracker) setCurrencyProviders(osmosisAPIPairs map[strin
 		// check if its a pair supported by the osmosis api
 		if osmosisAPIPairs[strings.ToUpper(pair.Base)] == strings.ToUpper(pair.Quote) {
 			t.CurrencyProviders[pair.Base] = append(t.CurrencyProviders[pair.Base], "osmosisv2")
+		}
+
+		// check if its a pair supported by the crescent api
+		if crescentAPIPairs[strings.ToUpper(pair.Base)] == strings.ToUpper(pair.Quote) {
+			t.CurrencyProviders[pair.Base] = append(t.CurrencyProviders[pair.Base], "crescent")
 		}
 
 		// check if CoinGecko API supports pair
@@ -217,7 +254,11 @@ func (t *CurrencyProviderTracker) trackCurrencyProviders(ctx context.Context) {
 			if err != nil {
 				t.logger.Error().Err(err).Msg("failed to query osmosis-api for available asset pairs")
 			}
-			if err := t.setCurrencyProviders(osmosisAPIPairs); err != nil {
+			crescentAPIPairs, err := t.getOsmosisAPIPairs()
+			if err != nil {
+				t.logger.Error().Err(err).Msg("failed to query crescent-api for available asset pairs")
+			}
+			if err := t.setCurrencyProviders(osmosisAPIPairs, crescentAPIPairs); err != nil {
 				t.logger.Error().Err(err).Msg("failed to set available providers for currencies")
 			}
 
