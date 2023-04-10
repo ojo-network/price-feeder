@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	osmosisV2WSHost   = "api.osmo-api.network.umee.cc"
+	osmosisV2WSHost   = "api.osmo-api.prod.network.umee.cc"
 	osmosisV2WSPath   = "ws"
-	osmosisV2RestHost = "https://api.osmo-api.network.umee.cc"
+	osmosisV2RestHost = "https://api.osmo-api.prod.network.umee.cc"
 	osmosisV2RestPath = "/assetpairs"
 )
 
