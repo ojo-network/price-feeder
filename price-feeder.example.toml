@@ -82,6 +82,10 @@ threshold = "1.5"
 base = "DOT"
 threshold = "1.5"
 
+[[deviation_thresholds]]
+base = "stkATOM"
+threshold = "1.5"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -311,6 +315,13 @@ providers = [
   "bitget",
 ]
 quote = "USDT"
+
+[[currency_pairs]]
+base = "stkATOM"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
