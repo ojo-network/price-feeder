@@ -238,6 +238,20 @@ func TestComputeTVWAP(t *testing.T) {
 			},
 			expected: map[string]sdk.Dec{},
 		},
+		"prices from the future": {
+			candles: map[provider.Name]map[string][]types.CandlePrice{
+				provider.ProviderBinance: {
+					"ATOM": []types.CandlePrice{
+						{
+							Price:     sdk.MustNewDecFromStr("25.09183"),
+							Volume:    sdk.MustNewDecFromStr("98444.123455"),
+							TimeStamp: provider.PastUnixTime(-5 * time.Minute),
+						},
+					},
+				},
+			},
+			expected: map[string]sdk.Dec{},
+		},
 	}
 
 	for name, tc := range testCases {
