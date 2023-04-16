@@ -14,7 +14,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ojo-network/ojo v0.1.2
 	github.com/rs/cors v1.9.0
-	github.com/rs/zerolog v1.29.0
+	github.com/rs/zerolog v1.29.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.1
