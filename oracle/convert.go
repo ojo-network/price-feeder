@@ -167,11 +167,13 @@ func ConvertTickersToUSD(
 	}
 
 	conversionRates := make(map[string]sdk.Dec)
-	requiredConversions := make(map[provider.Name]types.CurrencyPair)
+	requiredConversions := make(map[provider.Name][]types.CurrencyPair)
 
 	for pairProviderName, pairs := range providerPairs {
 		for _, pair := range pairs {
 			if strings.ToUpper(pair.Quote) != config.DenomUSD {
+				requiredConversions[pairProviderName] = append(requiredConversions[pairProviderName], pair)
+
 				// Get valid providers and use them to generate a USD-based price for this asset.
 				validProviders, err := getUSDBasedProviders(pair.Quote, providerPairs)
 				if err != nil {
@@ -197,7 +199,8 @@ func ConvertTickersToUSD(
 				}
 
 				if len(validTickerList) == 0 {
-					return nil, fmt.Errorf("there are no valid conversion rates for %s", pair.Quote)
+					logger.Error().Err(fmt.Errorf("there are no valid conversion rates for %s", pair.Quote))
+					continue
 				}
 
 				filteredTickers, err := FilterTickerDeviations(
@@ -206,13 +209,14 @@ func ConvertTickersToUSD(
 					deviationThresholds,
 				)
 				if err != nil {
+					logger.Error().Err(err).Msg("error on filtering candle deviations")
+					continue
 					return nil, err
 				}
 
 				vwap := ComputeVWAP(filteredTickers)
 
 				conversionRates[pair.Quote] = vwap[pair.Quote]
-				requiredConversions[pairProviderName] = pair
 			}
 		}
 	}
@@ -227,6 +231,29 @@ func ConvertTickersToUSD(
 					),
 					Volume: assetMap[asset].Volume,
 				}
+			}
+		}
+	}
+
+	// Convert assets to USD and filter out any unable to convert.
+	convertedTickers := make(provider.AggregatedProviderPrices)
+	for provider, assetMap := range tickers {
+		convertedTickers[provider] = make(map[string]types.TickerPrice)
+		for asset, ticker := range assetMap {
+			conversionAttempted := false
+			for _, requiredConversion := range requiredConversions[provider] {
+				if requiredConversion.Base == asset {
+					conversionAttempted = true
+					// candles are filtered out when conversion rate is not found
+					if conversionRate, ok := conversionRates[requiredConversion.Quote]; ok {
+						ticker.Price = ticker.Price.Mul(conversionRate)
+						convertedTickers[provider][asset] = ticker
+					}
+					break
+				}
+			}
+			if !conversionAttempted {
+				convertedTickers[provider][asset] = ticker
 			}
 		}
 	}
