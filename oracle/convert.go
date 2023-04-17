@@ -34,10 +34,9 @@ func getUSDBasedProviders(
 }
 
 // ConvertCandlesToUSD converts any candles which are not quoted in USD
-// to USD by other price feeds. It will also filter out any candles not
-// within the deviation threshold set by the config.
-//
-// Ref: https://github.com/ojo-network/ojo/blob/4348c3e433df8c37dd98a690e96fc275de609bc1/price-feeder/oracle/filter.go#L41
+// to USD by other price feeds. Filters out any candles unable to convert
+// to USD. It will also filter out any candles not within the deviation threshold set by the config.
+// TODO - Refactor with: https://github.com/ojo-network/price-feeder/issues/105
 func ConvertCandlesToUSD(
 	logger zerolog.Logger,
 	candles provider.AggregatedProviderCandles,
@@ -54,6 +53,8 @@ func ConvertCandlesToUSD(
 	for pairProviderName, pairs := range providerPairs {
 		for _, pair := range pairs {
 			if strings.ToUpper(pair.Quote) != config.DenomUSD {
+				requiredConversions[pairProviderName] = append(requiredConversions[pairProviderName], pair)
+
 				// Get valid providers and use them to generate a USD-based price for this asset.
 				validProviders, err := getUSDBasedProviders(pair.Quote, providerPairs)
 				if err != nil {
@@ -78,7 +79,8 @@ func ConvertCandlesToUSD(
 				}
 
 				if len(validCandleList) == 0 {
-					return nil, fmt.Errorf("there are no valid conversion rates for %s", pair.Quote)
+					logger.Error().Err(fmt.Errorf("there are no valid conversion rates for %s", pair.Quote))
+					continue
 				}
 
 				filteredCandles, err := FilterCandleDeviations(
@@ -87,47 +89,66 @@ func ConvertCandlesToUSD(
 					deviationThresholds,
 				)
 				if err != nil {
-					return nil, err
+					logger.Error().Err(err).Msg("error on filtering candle deviations")
+					continue
 				}
 
 				// TODO: we should revise ComputeTVWAP to avoid return empty slices
 				// Ref: https://github.com/ojo-network/ojo/issues/1261
 				tvwap, err := ComputeTVWAP(filteredCandles)
 				if err != nil {
-					return nil, err
+					logger.Error().Err(fmt.Errorf("error on computing tvwap for quote: %s, base: %s", pair.Quote, pair.Base))
+					continue
 				}
 
 				cvRate, ok := tvwap[pair.Quote]
 				if !ok {
-					return nil, fmt.Errorf("error on computing tvwap for quote: %s, base: %s", pair.Quote, pair.Base)
+					logger.Error().Err(fmt.Errorf("error on computing tvwap for quote: %s, base: %s", pair.Quote, pair.Base))
+					continue
 				}
 
 				conversionRates[pair.Quote] = cvRate
-				requiredConversions[pairProviderName] = append(requiredConversions[pairProviderName], pair)
 			}
 		}
 	}
 
-	// Convert assets to USD.
+	// Convert assets to USD and filter out any unable to convert.
+	convertedCandles := make(provider.AggregatedProviderCandles)
 	for provider, assetMap := range candles {
-		for _, requiredConversion := range requiredConversions[provider] {
-			conversionRate, ok := conversionRates[requiredConversion.Quote]
-			if !ok {
-				continue
-			}
-			for asset, assetCandles := range assetMap {
+		convertedCandles[provider] = make(map[string][]types.CandlePrice)
+		for asset, assetCandles := range assetMap {
+			conversionAttempted := false
+			for _, requiredConversion := range requiredConversions[provider] {
 				if requiredConversion.Base == asset {
-					for i := range assetCandles {
-						assetCandles[i].Price = assetCandles[i].Price.Mul(
-							conversionRate,
+					conversionAttempted = true
+					// candles are filtered out when conversion rate is not found
+					if conversionRate, ok := conversionRates[requiredConversion.Quote]; ok {
+						convertedCandles[provider][asset] = append(
+							convertedCandles[provider][asset],
+							convertCandles(assetCandles, conversionRate)...,
 						)
 					}
+					break
 				}
+			}
+			if !conversionAttempted {
+				convertedCandles[provider][asset] = append(
+					convertedCandles[provider][asset],
+					assetCandles...,
+				)
 			}
 		}
 	}
 
-	return candles, nil
+	return convertedCandles, nil
+}
+
+func convertCandles(candles []types.CandlePrice, conversionRate sdk.Dec) (ret []types.CandlePrice) {
+	for _, candle := range candles {
+		candle.Price = candle.Price.Mul(conversionRate)
+		ret = append(ret, candle)
+	}
+	return
 }
 
 // ConvertTickersToUSD converts any tickers which are not quoted in USD to USD,

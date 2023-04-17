@@ -175,6 +175,39 @@ func TestConvertCandlesToUSDFiltering(t *testing.T) {
 	)
 }
 
+func TestConvertCandlesToUSDNotFound(t *testing.T) {
+	providerCandles := make(provider.AggregatedProviderCandles, 2)
+
+	binanceCandles := map[string][]types.CandlePrice{
+		"ATOM": {{
+			Price:     atomPrice,
+			Volume:    atomVolume,
+			TimeStamp: provider.PastUnixTime(1 * time.Minute),
+		}},
+	}
+	providerCandles[provider.ProviderBinance] = binanceCandles
+
+	providerPairs := map[provider.Name][]types.CurrencyPair{
+		provider.ProviderBinance: {atomPair},
+		provider.ProviderKraken:  {usdtPair},
+		provider.ProviderGate:    {usdtPair},
+		provider.ProviderOkx:     {usdtPair},
+	}
+
+	convertedCandles, err := ConvertCandlesToUSD(
+		zerolog.Nop(),
+		providerCandles,
+		providerPairs,
+		make(map[string]sdk.Dec),
+	)
+	require.NoError(t, err)
+
+	require.Empty(
+		t,
+		convertedCandles[provider.ProviderBinance]["ATOM"],
+	)
+}
+
 func TestConvertTickersToUSD(t *testing.T) {
 	providerPrices := make(provider.AggregatedProviderPrices, 2)
 
