@@ -155,8 +155,7 @@ func convertCandles(candles []types.CandlePrice, conversionRate sdk.Dec) (ret []
 // ConvertTickersToUSD converts any tickers which are not quoted in USD to USD,
 // using the conversion rates of other tickers. It will also filter out any tickers
 // not within the deviation threshold set by the config.
-//
-// Ref: https://github.com/ojo-network/ojo/blob/4348c3e433df8c37dd98a690e96fc275de609bc1/price-feeder/oracle/filter.go#L41
+// TODO - Refactor with: https://github.com/ojo-network/price-feeder/issues/105
 func ConvertTickersToUSD(
 	logger zerolog.Logger,
 	tickers provider.AggregatedProviderPrices,
