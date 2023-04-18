@@ -276,15 +276,12 @@ func (o *Oracle) GetComputedPrices(
 	deviations map[string]sdk.Dec,
 ) (prices map[string]sdk.Dec, err error) {
 	// convert any non-USD denominated candles into USD
-	convertedCandles, err := ConvertCandlesToUSD(
+	convertedCandles := ConvertCandlesToUSD(
 		o.logger,
 		providerCandles,
 		providerPairs,
 		deviations,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	// filter out any erroneous candles
 	filteredCandles, err := FilterCandleDeviations(
@@ -308,15 +305,12 @@ func (o *Oracle) GetComputedPrices(
 	// If TVWAP candles are not available or were filtered out due to staleness,
 	// use most recent prices & VWAP instead.
 	if len(tvwapPrices) == 0 {
-		convertedTickers, err := ConvertTickersToUSD(
+		convertedTickers := ConvertTickersToUSD(
 			o.logger,
 			providerPrices,
 			providerPairs,
 			deviations,
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		filteredProviderPrices, err := FilterTickerDeviations(
 			o.logger,
