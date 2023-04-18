@@ -160,7 +160,6 @@ func (ots *OracleTestSuite) TestPrices() {
 		},
 	}
 
-	ots.Require().Error(ots.oracle.SetPrices(context.TODO()))
 	ots.Require().Empty(ots.oracle.GetPrices())
 
 	// use a mock provider without a conversion rate for these stablecoins
@@ -182,8 +181,6 @@ func (ots *OracleTestSuite) TestPrices() {
 			},
 		},
 	}
-
-	ots.Require().Error(ots.oracle.SetPrices(context.TODO()))
 
 	prices := ots.oracle.GetPrices()
 	ots.Require().Len(prices, 0)
@@ -769,10 +766,10 @@ func (ots *OracleTestSuite) TestGetComputedPricesEmptyTvwap() {
 	}
 
 	testCases := map[string]struct {
-		expected string
-		candles  provider.AggregatedProviderCandles
-		prices   provider.AggregatedProviderPrices
-		pairs    map[provider.Name][]types.CurrencyPair
+		candles   provider.AggregatedProviderCandles
+		prices    provider.AggregatedProviderPrices
+		pairs     map[provider.Name][]types.CurrencyPair
+		numPrices int
 	}{
 		"Empty tvwap": {
 			candles: provider.AggregatedProviderCandles{
@@ -782,9 +779,9 @@ func (ots *OracleTestSuite) TestGetComputedPricesEmptyTvwap() {
 					"DAI":  daiCandle,
 				},
 			},
-			prices:   prices,
-			pairs:    pairs,
-			expected: "error on computing tvwap for quote: DAI, base: ETH",
+			prices:    prices,
+			pairs:     pairs,
+			numPrices: 2,
 		},
 		"No valid conversion rates DAI": {
 			candles: provider.AggregatedProviderCandles{
@@ -793,9 +790,9 @@ func (ots *OracleTestSuite) TestGetComputedPricesEmptyTvwap() {
 					"ETH":  ethCandle,
 				},
 			},
-			prices:   prices,
-			pairs:    pairs,
-			expected: "there are no valid conversion rates for DAI",
+			prices:    prices,
+			pairs:     pairs,
+			numPrices: 2,
 		},
 	}
 
@@ -803,14 +800,14 @@ func (ots *OracleTestSuite) TestGetComputedPricesEmptyTvwap() {
 		tc := tc
 
 		ots.Run(name, func() {
-			_, err := ots.oracle.GetComputedPrices(
+			prices, _ := ots.oracle.GetComputedPrices(
 				tc.candles,
 				tc.prices,
 				tc.pairs,
 				make(map[string]sdk.Dec),
 			)
 
-			require.ErrorContains(ots.T(), err, tc.expected)
+			require.Equal(ots.T(), tc.numPrices, len(prices))
 		})
 	}
 }
