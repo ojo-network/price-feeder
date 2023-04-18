@@ -245,5 +245,5 @@ func ConvertTickersToUSD(
 		}
 	}
 
-	return tickers
+	return convertedTickers
 }
