@@ -42,9 +42,9 @@ func ConvertCandlesToUSD(
 	candles provider.AggregatedProviderCandles,
 	providerPairs map[provider.Name][]types.CurrencyPair,
 	deviationThresholds map[string]sdk.Dec,
-) (provider.AggregatedProviderCandles, error) {
+) provider.AggregatedProviderCandles {
 	if len(candles) == 0 {
-		return candles, nil
+		return candles
 	}
 
 	conversionRates := make(map[string]sdk.Dec)
@@ -58,7 +58,8 @@ func ConvertCandlesToUSD(
 				// Get valid providers and use them to generate a USD-based price for this asset.
 				validProviders, err := getUSDBasedProviders(pair.Quote, providerPairs)
 				if err != nil {
-					return nil, err
+					logger.Error().Err(err).Msg("error on getting usd based providers")
+					continue
 				}
 
 				// Find candles which we can use for conversion, and calculate the tvwap
@@ -140,7 +141,7 @@ func ConvertCandlesToUSD(
 		}
 	}
 
-	return convertedCandles, nil
+	return convertedCandles
 }
 
 func convertCandles(candles []types.CandlePrice, conversionRate sdk.Dec) (ret []types.CandlePrice) {
@@ -161,9 +162,9 @@ func ConvertTickersToUSD(
 	tickers provider.AggregatedProviderPrices,
 	providerPairs map[provider.Name][]types.CurrencyPair,
 	deviationThresholds map[string]sdk.Dec,
-) (provider.AggregatedProviderPrices, error) {
+) provider.AggregatedProviderPrices {
 	if len(tickers) == 0 {
-		return tickers, nil
+		return tickers
 	}
 
 	conversionRates := make(map[string]sdk.Dec)
@@ -177,7 +178,8 @@ func ConvertTickersToUSD(
 				// Get valid providers and use them to generate a USD-based price for this asset.
 				validProviders, err := getUSDBasedProviders(pair.Quote, providerPairs)
 				if err != nil {
-					return nil, err
+					logger.Error().Err(err).Msg("error on getting USD based providers")
+					continue
 				}
 
 				// Find valid candles, and then let's re-compute the tvwap.
@@ -211,26 +213,11 @@ func ConvertTickersToUSD(
 				if err != nil {
 					logger.Error().Err(err).Msg("error on filtering candle deviations")
 					continue
-					return nil, err
 				}
 
 				vwap := ComputeVWAP(filteredTickers)
 
 				conversionRates[pair.Quote] = vwap[pair.Quote]
-			}
-		}
-	}
-
-	// Convert assets to USD.
-	for providerName, assetMap := range tickers {
-		for asset := range assetMap {
-			if requiredConversions[providerName].Base == asset {
-				assetMap[asset] = types.TickerPrice{
-					Price: assetMap[asset].Price.Mul(
-						conversionRates[requiredConversions[providerName].Quote],
-					),
-					Volume: assetMap[asset].Volume,
-				}
 			}
 		}
 	}
@@ -244,7 +231,7 @@ func ConvertTickersToUSD(
 			for _, requiredConversion := range requiredConversions[provider] {
 				if requiredConversion.Base == asset {
 					conversionAttempted = true
-					// candles are filtered out when conversion rate is not found
+					// ticker is filtered out when conversion rate is not found
 					if conversionRate, ok := conversionRates[requiredConversion.Quote]; ok {
 						ticker.Price = ticker.Price.Mul(conversionRate)
 						convertedTickers[provider][asset] = ticker
@@ -258,5 +245,5 @@ func ConvertTickersToUSD(
 		}
 	}
 
-	return tickers, nil
+	return tickers
 }

@@ -99,13 +99,12 @@ func TestConvertCandlesToUSD(t *testing.T) {
 		provider.ProviderKraken:  {usdtPair},
 	}
 
-	convertedCandles, err := ConvertCandlesToUSD(
+	convertedCandles := ConvertCandlesToUSD(
 		zerolog.Nop(),
 		providerCandles,
 		providerPairs,
 		make(map[string]sdk.Dec),
 	)
-	require.NoError(t, err)
 
 	require.Equal(
 		t,
@@ -160,13 +159,12 @@ func TestConvertCandlesToUSDFiltering(t *testing.T) {
 		provider.ProviderOkx:     {usdtPair},
 	}
 
-	convertedCandles, err := ConvertCandlesToUSD(
+	convertedCandles := ConvertCandlesToUSD(
 		zerolog.Nop(),
 		providerCandles,
 		providerPairs,
 		make(map[string]sdk.Dec),
 	)
-	require.NoError(t, err)
 
 	require.Equal(
 		t,
@@ -194,13 +192,12 @@ func TestConvertCandlesToUSDNotFound(t *testing.T) {
 		provider.ProviderOkx:     {usdtPair},
 	}
 
-	convertedCandles, err := ConvertCandlesToUSD(
+	convertedCandles := ConvertCandlesToUSD(
 		zerolog.Nop(),
 		providerCandles,
 		providerPairs,
 		make(map[string]sdk.Dec),
 	)
-	require.NoError(t, err)
 
 	require.Empty(
 		t,
@@ -232,13 +229,12 @@ func TestConvertTickersToUSD(t *testing.T) {
 		provider.ProviderKraken:  {usdtPair},
 	}
 
-	convertedTickers, err := ConvertTickersToUSD(
+	convertedTickers := ConvertTickersToUSD(
 		zerolog.Nop(),
 		providerPrices,
 		providerPairs,
 		make(map[string]sdk.Dec),
 	)
-	require.NoError(t, err)
 
 	require.Equal(
 		t,
@@ -286,13 +282,12 @@ func TestConvertTickersToUSDFiltering(t *testing.T) {
 		provider.ProviderHuobi:   {usdtPair},
 	}
 
-	covertedDeviation, err := ConvertTickersToUSD(
+	covertedDeviation := ConvertTickersToUSD(
 		zerolog.Nop(),
 		providerPrices,
 		providerPairs,
 		make(map[string]sdk.Dec),
 	)
-	require.NoError(t, err)
 
 	require.Equal(
 		t,
