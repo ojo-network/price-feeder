@@ -86,6 +86,10 @@ threshold = "1.5"
 base = "stkATOM"
 threshold = "1.5"
 
+[[deviation_thresholds]]
+base = "qATOM"
+threshold = "1.5"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -318,6 +322,13 @@ quote = "USDT"
 
 [[currency_pairs]]
 base = "stkATOM"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "qATOM"
 providers = [
   "osmosisv2",
 ]
