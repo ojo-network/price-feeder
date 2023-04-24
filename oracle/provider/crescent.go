@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	crescentV2WSHost   = ""
+	crescentV2WSHost   = "api.cresc-api.staging.ojo.network"
 	crescentV2WSPath   = "ws"
-	crescentV2RestHost = ""
+	crescentV2RestHost = "https://api.cresc-api.staging.ojo.network"
 	crescentV2RestPath = "/assetpairs"
 )
 

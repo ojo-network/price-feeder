@@ -17,7 +17,7 @@ const (
 	coinGeckoTickersEndpoint    = "tickers"
 	osmosisV2RestURL            = "https://api.osmo-api.prod.network.umee.cc"
 	osmosisV2AssetPairsEndpoint = "assetpairs"
-	crescentRestURL             = ""
+	crescentRestURL             = "https://api.cresc-api.staging.ojo.network"
 	crescentAssetPairsEndpoint  = "assetpairs"
 	requestTimeout              = time.Second * 2
 	trackingPeriod              = time.Hour * 24
