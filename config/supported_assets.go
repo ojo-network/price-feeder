@@ -25,7 +25,6 @@ var (
 		provider.ProviderCrypto:    false,
 		provider.ProviderPolygon:   true,
 		provider.ProviderMock:      false,
-		provider.ProviderFin:       false,
 	}
 
 	// SupportedQuotes defines a lookup table for which assets we support
