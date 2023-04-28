@@ -13,6 +13,7 @@ var (
 		provider.ProviderKraken:    false,
 		provider.ProviderBinance:   false,
 		provider.ProviderBinanceUS: false,
+		provider.ProviderCrescent:  false,
 		provider.ProviderOsmosis:   false,
 		provider.ProviderOsmosisV2: false,
 		provider.ProviderOkx:       false,
@@ -38,6 +39,7 @@ var (
 		"ETH":    {},
 		"ATOM":   {},
 		"OSMO":   {},
+		"BCRE":   {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported

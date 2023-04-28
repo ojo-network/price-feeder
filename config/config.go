@@ -203,7 +203,7 @@ func ParseConfig(configPath string) (Config, error) {
 		if _, ok := pairs[cp.Base]; !ok {
 			pairs[cp.Base] = make(map[provider.Name]struct{})
 		}
-		if strings.ToUpper(cp.Quote) != DenomUSD {
+		if strings.ToUpper(cp.Quote) != DenomUSD && strings.ToUpper(cp.Quote) != "BCRE" {
 			coinQuotes[cp.Quote] = struct{}{}
 		}
 		if _, ok := SupportedQuotes[strings.ToUpper(cp.Quote)]; !ok {

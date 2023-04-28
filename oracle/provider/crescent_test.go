@@ -16,6 +16,7 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 		zerolog.Nop(),
 		Endpoint{},
 		types.CurrencyPair{Base: "CRE", Quote: "ATOM"},
+		types.CurrencyPair{Base: "CRE", Quote: "BCRE"},
 	)
 	require.NoError(t, err)
 
@@ -36,6 +37,26 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 		require.Len(t, prices, 1)
 		require.Equal(t, lastPrice, prices["CREATOM"].Price)
 		require.Equal(t, volume, prices["CREATOM"].Volume)
+	})
+
+	t.Run("valid_cre/bcre_ticker", func(t *testing.T) {
+		lastPrice := sdk.MustNewDecFromStr("34.69000000")
+		volume := sdk.MustNewDecFromStr("2396974.02000000")
+
+		tickerMap := map[string]types.TickerPrice{}
+		tickerMap["BCRE/CRE"] = types.TickerPrice{
+			Price:  lastPrice,
+			Volume: volume,
+		}
+
+		p.tickers = tickerMap
+
+		// BCRE/CRE should get flipped to CRE/BCRE
+		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "BCRE", Quote: "CRE"})
+		require.NoError(t, err)
+		require.Len(t, prices, 1)
+		require.Equal(t, sdk.OneDec().Quo(lastPrice), prices["CREBCRE"].Price)
+		require.Equal(t, volume, prices["CREBCRE"].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -81,6 +102,7 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 		zerolog.Nop(),
 		Endpoint{},
 		types.CurrencyPair{Base: "CRE", Quote: "ATOM"},
+		types.CurrencyPair{Base: "CRE", Quote: "BCRE"},
 	)
 	require.NoError(t, err)
 
@@ -103,6 +125,28 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 		require.Equal(t, sdk.MustNewDecFromStr(price), prices["CREATOM"][0].Price)
 		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["CREATOM"][0].Volume)
 		require.Equal(t, time, prices["CREATOM"][0].TimeStamp)
+	})
+
+	t.Run("valid_cre/bcre_candle", func(t *testing.T) {
+		price := "34.689998626708984000"
+		volume := "2396974.000000000000000000"
+		time := int64(1000000)
+
+		candle := CrescentCandle{
+			Volume:  volume,
+			Close:   price,
+			EndTime: time,
+		}
+
+		p.setCandlePair("BCRE/CRE", candle)
+
+		// BCRE/CRE should get flipped to CRE/BCRE
+		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "BCRE", Quote: "CRE"})
+		require.NoError(t, err)
+		require.Len(t, prices, 1)
+		require.Equal(t, sdk.OneDec().Quo(sdk.MustNewDecFromStr(price)), prices["CREBCRE"][0].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["CREBCRE"][0].Volume)
+		require.Equal(t, time, prices["CREBCRE"][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {

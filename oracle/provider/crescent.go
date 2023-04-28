@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	crescentV2WSHost   = "api.cresc-api.staging.ojo.network"
+	crescentV2WSHost   = "api.cresc-api.prod.ojo.network"
 	crescentV2WSPath   = "ws"
-	crescentV2RestHost = "https://api.cresc-api.staging.ojo.network"
+	crescentV2RestHost = "https://api.cresc-api.prod.ojo.network"
 	crescentV2RestPath = "/assetpairs"
 )
 
@@ -95,6 +95,15 @@ func NewCrescentProvider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
+	// flip CRE/BCRE to BCRE/CRE since that is the pair provided by the crescent api.
+	for i := range pairs {
+		if pairs[i].String() == "CREBCRE" {
+			base := pairs[i].Base
+			pairs[i].Base = pairs[i].Quote
+			pairs[i].Quote = base
+		}
+	}
+
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
 		provider.endpoints.Name,
@@ -157,6 +166,13 @@ func (p *CrescentProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[str
 			tickerErrs++
 			continue
 		}
+		// Flip BCRE/CRE back to CRE/BCRE
+		if cp.String() == "BCRECRE" {
+			base := cp.Base
+			cp.Base = cp.Quote
+			cp.Quote = base
+			price.Price = sdk.OneDec().Quo(price.Price)
+		}
 		tickerPrices[cp.String()] = price
 	}
 
@@ -182,6 +198,15 @@ func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[str
 			p.logger.Warn().Err(err)
 			candleErrs++
 			continue
+		}
+		// Flip BCRE/CRE back to CRE/BCRE
+		if cp.String() == "BCRECRE" {
+			base := cp.Base
+			cp.Base = cp.Quote
+			cp.Quote = base
+			for i := range prices {
+				prices[i].Price = sdk.OneDec().Quo(prices[i].Price)
+			}
 		}
 		candlePrices[cp.String()] = prices
 	}

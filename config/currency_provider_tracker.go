@@ -17,17 +17,17 @@ const (
 	coinGeckoTickersEndpoint    = "tickers"
 	osmosisV2RestURL            = "https://api.osmo-api.prod.network.umee.cc"
 	osmosisV2AssetPairsEndpoint = "assetpairs"
-	crescentRestURL             = "https://api.cresc-api.staging.ojo.network"
+	crescentRestURL             = "https://api.cresc-api.prod.ojo.network"
 	crescentAssetPairsEndpoint  = "assetpairs"
 	requestTimeout              = time.Second * 2
 	trackingPeriod              = time.Hour * 24
 )
 
 type (
-	// CurrencyProviderTracker queries the CoinGecko API and OJO's osmosis-api for all
-	// the exchanges that support the currency pairs set in the price feeder config. It
-	// will poll the APIs every 24 hours to log any new exchanges that were added for a
-	// given currency.
+	// CurrencyProviderTracker queries the CoinGecko API and OJO's indexers for all
+	// the exchanges that support the currency pairs set in the price feeder config.
+	// It will poll the APIs every 24 hours to log any new exchanges that were added
+	// for a given currency.
 	//
 	// REF: https://www.coingecko.com/en/api/documentation
 	// REF: https://github.com/ojo-network/osmosis-api
@@ -59,7 +59,7 @@ type (
 		Name string `json:"name"` // ex: Binance
 	}
 
-	// Response from the osmosis-api REST server.
+	// Response from an OJO indexer's REST server.
 	assetPair struct {
 		Base  string `json:"base"`
 		Quote string `json:"quote"`
