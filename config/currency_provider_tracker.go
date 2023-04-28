@@ -184,7 +184,10 @@ func (t *CurrencyProviderTracker) getCrescentAPIPairs() (map[string]string, erro
 
 // setCurrencyProviders queries CoinGecko's tickers endpoint to get all the exchanges
 // that support each price feeder currency pair and store it in the CurrencyProviders map.
-func (t *CurrencyProviderTracker) setCurrencyProviders(osmosisAPIPairs map[string]string, crescentAPIPairs map[string]string) error {
+func (t *CurrencyProviderTracker) setCurrencyProviders(
+	osmosisAPIPairs map[string]string,
+	crescentAPIPairs map[string]string,
+) error {
 	client := &http.Client{
 		Timeout: requestTimeout,
 	}

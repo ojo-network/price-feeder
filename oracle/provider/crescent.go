@@ -98,9 +98,7 @@ func NewCrescentProvider(
 	// flip CRE/BCRE to BCRE/CRE since that is the pair provided by the crescent api.
 	for i := range pairs {
 		if pairs[i].String() == "CREBCRE" {
-			base := pairs[i].Base
-			pairs[i].Base = pairs[i].Quote
-			pairs[i].Quote = base
+			pairs[i].Base, pairs[i].Quote = pairs[i].Quote, pairs[i].Base
 		}
 	}
 
@@ -168,9 +166,7 @@ func (p *CrescentProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[str
 		}
 		// Flip BCRE/CRE back to CRE/BCRE
 		if cp.String() == "BCRECRE" {
-			base := cp.Base
-			cp.Base = cp.Quote
-			cp.Quote = base
+			cp.Base, cp.Quote = cp.Quote, cp.Base
 			price.Price = sdk.OneDec().Quo(price.Price)
 		}
 		tickerPrices[cp.String()] = price
@@ -201,9 +197,7 @@ func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[str
 		}
 		// Flip BCRE/CRE back to CRE/BCRE
 		if cp.String() == "BCRECRE" {
-			base := cp.Base
-			cp.Base = cp.Quote
-			cp.Quote = base
+			cp.Base, cp.Quote = cp.Quote, cp.Base
 			for i := range prices {
 				prices[i].Price = sdk.OneDec().Quo(prices[i].Price)
 			}
