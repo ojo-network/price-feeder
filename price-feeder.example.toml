@@ -90,6 +90,10 @@ threshold = "1.5"
 base = "qATOM"
 threshold = "1.5"
 
+[[deviation_thresholds]]
+base = "CBETH"
+threshold = "1.5"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -333,6 +337,11 @@ providers = [
   "osmosisv2",
 ]
 quote = "ATOM"
+
+[[currency_pairs]]
+base = "CBETH"
+quote = "USD"
+providers = [ "coinbase",]
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
