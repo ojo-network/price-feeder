@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	crescentV2WSHost   = "0.0.0.0:5005"
+	crescentV2WSHost   = "api.cresc-api.prod.ojo.network"
 	crescentV2WSPath   = "ws"
-	crescentV2RestHost = "http://0.0.0.0:5005"
+	crescentV2RestHost = "https://api.cresc-api.prod.ojo.network"
 	crescentV2RestPath = "/assetpairs"
 	reversedPair       = "CREBCRE"
 )
