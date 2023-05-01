@@ -41,9 +41,9 @@ var (
 		"BCRE":   {},
 	}
 
-	// NonUSDQuotedPriceQuotes maps quotes that do not have an existing USD
-	// quoted price feed. The quote is mapped to the quote asset that does
-	// have a USD price feed used for converting the original quote to USD.
+	// NonUSDQuotedPriceQuotes maps quotes that do not have an existing
+	// USD quoted price feed to a quote that does have one to be used for
+	// converting the first quote to USD.
 	NonUSDQuotedPriceQuotes = map[string]string{
 		"BCRE": "USDC",
 	}
