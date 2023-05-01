@@ -27,7 +27,7 @@ func getUSDBasedProviders(
 			// If asset is known to not have a USD price feed, include it if its accepted USD quoted quote is
 			// set e.g. BCRE/USDC.
 			if _, ok := config.NonUSDQuotedPriceQuotes[asset]; ok {
-				if (strings.ToUpper(pair.Base) == asset && strings.ToUpper(pair.Quote) == config.NonUSDQuotedPriceQuotes[asset]) {
+				if strings.ToUpper(pair.Base) == asset && strings.ToUpper(pair.Quote) == config.NonUSDQuotedPriceQuotes[asset] {
 					conversionProviders[provider] = struct{}{}
 				}
 			}
@@ -83,7 +83,7 @@ func ConvertCandlesToUSD(
 								// If asset does not have a USD feed, use latest USD quoted quote asset's candle price
 								// to convert candle price to USD e.g. BCRE/USDC to BCRE/USD.
 								if _, ok := config.NonUSDQuotedPriceQuotes[base]; ok {
-									if candles, ok := candleSet[config.NonUSDQuotedPriceQuotes[base]]; (!ok || len(candles) == 0) {
+									if candles, ok := candleSet[config.NonUSDQuotedPriceQuotes[base]]; !ok || len(candles) == 0 {
 										logger.Error().Err(fmt.Errorf(
 											"%s candle cannot be converted to USD without a %s/%s feed",
 											base,

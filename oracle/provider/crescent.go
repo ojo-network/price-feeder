@@ -20,6 +20,7 @@ const (
 	crescentV2WSPath   = "ws"
 	crescentV2RestHost = "http://0.0.0.0:5005"
 	crescentV2RestPath = "/assetpairs"
+	reversedPair       = "CREBCRE"
 )
 
 var _ Provider = (*CrescentProvider)(nil)
@@ -98,7 +99,7 @@ func NewCrescentProvider(
 	// flip CRE/BCRE to BCRE/CRE since that is the pair provided by the crescent api.
 	adjustedPairs := make([]types.CurrencyPair, len(pairs))
 	for i, pair := range pairs {
-		if pair.String() == "CREBCRE" {
+		if pair.String() == reversedPair {
 			adjustedPairs[i] = pair.Reversed()
 		}
 	}
@@ -160,7 +161,7 @@ func (p *CrescentProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[str
 	for _, cp := range pairs {
 		key := currencyPairToCrescentPair(cp)
 		// Flip CRE/BCRE to get price for BCRE/CRE
-		if cp.String() == "CREBCRE" {
+		if cp.String() == reversedPair {
 			key = currencyPairToCrescentPair(cp.Reversed())
 		}
 		price, err := p.getTickerPrice(key)
@@ -170,7 +171,7 @@ func (p *CrescentProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[str
 			continue
 		}
 		// Convert BCRE/CRE price to CRE/BCRE price
-		if cp.String() == "CREBCRE" {
+		if cp.String() == reversedPair {
 			price.Price = sdk.OneDec().Quo(price.Price)
 		}
 		tickerPrices[cp.String()] = price
@@ -194,7 +195,7 @@ func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[str
 	for _, cp := range pairs {
 		key := currencyPairToCrescentPair(cp)
 		// Flip CRE/BCRE to get prices for BCRE/CRE
-		if cp.String() == "CREBCRE" {
+		if cp.String() == reversedPair {
 			key = currencyPairToCrescentPair(cp.Reversed())
 		}
 		prices, err := p.getCandlePrices(key)
@@ -204,7 +205,7 @@ func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[str
 			continue
 		}
 		// Flip BCRE/CRE back to CRE/BCRE
-		if cp.String() == "CREBCRE" {
+		if cp.String() == reversedPair {
 			for i := range prices {
 				prices[i].Price = sdk.OneDec().Quo(prices[i].Price)
 			}
