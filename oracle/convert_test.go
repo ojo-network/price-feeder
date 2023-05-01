@@ -53,13 +53,6 @@ func TestGetUSDBasedProviders(t *testing.T) {
 			Quote: "USD",
 		},
 	}
-	// Known non USD quoted asset
-	providerPairs[provider.ProviderCrescent] = []types.CurrencyPair{
-		{
-			Base:  "BCRE",
-			Quote: "USDC",
-		},
-	}
 
 	pairs, err := getUSDBasedProviders("FOO", providerPairs)
 	require.NoError(t, err)
@@ -73,13 +66,6 @@ func TestGetUSDBasedProviders(t *testing.T) {
 	require.NoError(t, err)
 	expectedPairs = map[provider.Name]struct{}{
 		provider.ProviderBinance: {},
-	}
-	require.Equal(t, pairs, expectedPairs)
-
-	pairs, err = getUSDBasedProviders("BCRE", providerPairs)
-	require.NoError(t, err)
-	expectedPairs = map[provider.Name]struct{}{
-		provider.ProviderCrescent: {},
 	}
 	require.Equal(t, pairs, expectedPairs)
 

@@ -38,14 +38,6 @@ var (
 		"ETH":    {},
 		"ATOM":   {},
 		"OSMO":   {},
-		"BCRE":   {},
-	}
-
-	// NonUSDQuotedPriceQuotes maps quotes that do not have an existing
-	// USD quoted price feed to a quote that does have one to be used for
-	// converting the first quote to USD.
-	NonUSDQuotedPriceQuotes = map[string]string{
-		"BCRE": "USDC",
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported

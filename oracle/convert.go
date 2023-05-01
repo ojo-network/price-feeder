@@ -24,17 +24,10 @@ func getUSDBasedProviders(
 			if strings.ToUpper(pair.Quote) == config.DenomUSD && strings.ToUpper(pair.Base) == asset {
 				conversionProviders[provider] = struct{}{}
 			}
-			// If asset is known to not have a USD price feed, include it if its accepted USD quoted quote is
-			// set e.g. BCRE/USDC.
-			if _, ok := config.NonUSDQuotedPriceQuotes[asset]; ok {
-				if strings.ToUpper(pair.Base) == asset && strings.ToUpper(pair.Quote) == config.NonUSDQuotedPriceQuotes[asset] {
-					conversionProviders[provider] = struct{}{}
-				}
-			}
 		}
 	}
 	if len(conversionProviders) == 0 {
-		return nil, fmt.Errorf("no providers have a usd conversion for %s", asset)
+		return nil, fmt.Errorf("no providers have a usd conversion for this asset")
 	}
 
 	return conversionProviders, nil
@@ -78,23 +71,6 @@ func ConvertCandlesToUSD(
 							if base == pair.Quote {
 								if _, ok := validCandleList[providerName]; !ok {
 									validCandleList[providerName] = make(map[string][]types.CandlePrice)
-								}
-
-								// If asset does not have a USD feed, use latest USD quoted quote asset's candle price
-								// to convert candle price to USD e.g. BCRE/USDC to BCRE/USD.
-								if _, ok := config.NonUSDQuotedPriceQuotes[base]; ok {
-									if candles, ok := candleSet[config.NonUSDQuotedPriceQuotes[base]]; !ok || len(candles) == 0 {
-										logger.Error().Err(fmt.Errorf(
-											"%s candle cannot be converted to USD without a %s/%s feed",
-											base,
-											base,
-											config.NonUSDQuotedPriceQuotes[base],
-										))
-										continue
-									}
-									for i := range candles {
-										candles[i].Price = candles[i].Price.Mul(candleSet[config.NonUSDQuotedPriceQuotes[base]][0].Price)
-									}
 								}
 
 								validCandleList[providerName][base] = candles
@@ -215,21 +191,6 @@ func ConvertTickersToUSD(
 							if base == pair.Quote {
 								if _, ok := validTickerList[providerName]; !ok {
 									validTickerList[providerName] = make(map[string]types.TickerPrice)
-								}
-
-								// If asset does not have a USD feed, use the USD quoted quote asset's ticker price
-								// to convert ticker price to USD e.g. BCRE/USDC to BCRE/USD.
-								if _, ok := config.NonUSDQuotedPriceQuotes[base]; ok {
-									if _, ok := tickerSet[config.NonUSDQuotedPriceQuotes[base]]; !ok {
-										logger.Error().Err(fmt.Errorf(
-											"%s ticker cannot be converted to USD without a %s/%s feed",
-											base,
-											base,
-											config.NonUSDQuotedPriceQuotes[base],
-										))
-										continue
-									}
-									ticker.Price = ticker.Price.Mul(tickerSet[config.NonUSDQuotedPriceQuotes[base]].Price)
 								}
 
 								validTickerList[providerName][base] = ticker

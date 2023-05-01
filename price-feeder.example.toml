@@ -56,13 +56,6 @@ providers = [
 quote = "USD"
 
 [[currency_pairs]]
-base = "CRE"
-providers = [
-  "crescent"
-]
-quote = "BCRE"
-
-[[currency_pairs]]
 base = "BCRE"
 providers = [
   "crescent"

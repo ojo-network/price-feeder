@@ -20,7 +20,6 @@ const (
 	crescentV2WSPath   = "ws"
 	crescentV2RestHost = "https://api.cresc-api.prod.ojo.network"
 	crescentV2RestPath = "/assetpairs"
-	reversedPair       = "CREBCRE"
 )
 
 var _ Provider = (*CrescentProvider)(nil)
@@ -96,19 +95,11 @@ func NewCrescentProvider(
 		subscribedPairs: map[string]types.CurrencyPair{},
 	}
 
-	// flip CRE/BCRE to BCRE/CRE since that is the pair provided by the crescent api.
-	adjustedPairs := make([]types.CurrencyPair, len(pairs))
-	for i, pair := range pairs {
-		if pair.String() == reversedPair {
-			adjustedPairs[i] = pair.Reversed()
-		}
-	}
-
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
 		provider.endpoints.Name,
 		provider.logger,
-		adjustedPairs...,
+		pairs...,
 	)
 	if err != nil {
 		return nil, err
@@ -160,19 +151,11 @@ func (p *CrescentProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[str
 	tickerErrs := 0
 	for _, cp := range pairs {
 		key := currencyPairToCrescentPair(cp)
-		// Flip CRE/BCRE to get price for BCRE/CRE
-		if cp.String() == reversedPair {
-			key = currencyPairToCrescentPair(cp.Reversed())
-		}
 		price, err := p.getTickerPrice(key)
 		if err != nil {
 			p.logger.Warn().Err(err)
 			tickerErrs++
 			continue
-		}
-		// Convert BCRE/CRE price to CRE/BCRE price
-		if cp.String() == reversedPair {
-			price.Price = sdk.OneDec().Quo(price.Price)
 		}
 		tickerPrices[cp.String()] = price
 	}
@@ -194,21 +177,11 @@ func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[str
 	candleErrs := 0
 	for _, cp := range pairs {
 		key := currencyPairToCrescentPair(cp)
-		// Flip CRE/BCRE to get prices for BCRE/CRE
-		if cp.String() == reversedPair {
-			key = currencyPairToCrescentPair(cp.Reversed())
-		}
 		prices, err := p.getCandlePrices(key)
 		if err != nil {
 			p.logger.Warn().Err(err)
 			candleErrs++
 			continue
-		}
-		// Flip BCRE/CRE back to CRE/BCRE
-		if cp.String() == reversedPair {
-			for i := range prices {
-				prices[i].Price = sdk.OneDec().Quo(prices[i].Price)
-			}
 		}
 		candlePrices[cp.String()] = prices
 	}
