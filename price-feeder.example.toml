@@ -26,10 +26,6 @@ threshold = "1.5"
 base = "BCRE"
 threshold = "2"
 
-[[deviation_thresholds]]
-base = "CRE"
-threshold = "2"
-
 [[currency_pairs]]
 base = "USDT"
 providers = [
