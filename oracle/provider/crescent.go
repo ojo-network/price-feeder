@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	crescentV2WSHost   = "api.cresc-api.prod.ojo.network"
+	crescentV2WSHost   = "0.0.0.0:5005"
 	crescentV2WSPath   = "ws"
-	crescentV2RestHost = "https://api.cresc-api.prod.ojo.network"
+	crescentV2RestHost = "http://0.0.0.0:5005"
 	crescentV2RestPath = "/assetpairs"
 )
 
@@ -96,9 +96,10 @@ func NewCrescentProvider(
 	}
 
 	// flip CRE/BCRE to BCRE/CRE since that is the pair provided by the crescent api.
-	for i := range pairs {
-		if pairs[i].String() == "CREBCRE" {
-			pairs[i].Base, pairs[i].Quote = pairs[i].Quote, pairs[i].Base
+	adjustedPairs := make([]types.CurrencyPair, len(pairs))
+	for i, pair := range pairs {
+		if pair.String() == "CREBCRE" {
+			adjustedPairs[i] = pair.Reversed()
 		}
 	}
 
@@ -106,7 +107,7 @@ func NewCrescentProvider(
 		provider,
 		provider.endpoints.Name,
 		provider.logger,
-		pairs...,
+		adjustedPairs...,
 	)
 	if err != nil {
 		return nil, err
@@ -158,15 +159,18 @@ func (p *CrescentProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[str
 	tickerErrs := 0
 	for _, cp := range pairs {
 		key := currencyPairToCrescentPair(cp)
+		// Flip CRE/BCRE to get price for BCRE/CRE
+		if cp.String() == "CREBCRE" {
+			key = currencyPairToCrescentPair(cp.Reversed())
+		}
 		price, err := p.getTickerPrice(key)
 		if err != nil {
 			p.logger.Warn().Err(err)
 			tickerErrs++
 			continue
 		}
-		// Flip BCRE/CRE back to CRE/BCRE
-		if cp.String() == "BCRECRE" {
-			cp.Base, cp.Quote = cp.Quote, cp.Base
+		// Convert BCRE/CRE price to CRE/BCRE price
+		if cp.String() == "CREBCRE" {
 			price.Price = sdk.OneDec().Quo(price.Price)
 		}
 		tickerPrices[cp.String()] = price
@@ -189,6 +193,10 @@ func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[str
 	candleErrs := 0
 	for _, cp := range pairs {
 		key := currencyPairToCrescentPair(cp)
+		// Flip CRE/BCRE to get prices for BCRE/CRE
+		if cp.String() == "CREBCRE" {
+			key = currencyPairToCrescentPair(cp.Reversed())
+		}
 		prices, err := p.getCandlePrices(key)
 		if err != nil {
 			p.logger.Warn().Err(err)
@@ -196,8 +204,7 @@ func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[str
 			continue
 		}
 		// Flip BCRE/CRE back to CRE/BCRE
-		if cp.String() == "BCRECRE" {
-			cp.Base, cp.Quote = cp.Quote, cp.Base
+		if cp.String() == "CREBCRE" {
 			for i := range prices {
 				prices[i].Price = sdk.OneDec().Quo(prices[i].Price)
 			}

@@ -52,7 +52,7 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 		p.tickers = tickerMap
 
 		// BCRE/CRE should get flipped to CRE/BCRE
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "BCRE", Quote: "CRE"})
+		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "CRE", Quote: "BCRE"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
 		require.Equal(t, sdk.OneDec().Quo(lastPrice), prices["CREBCRE"].Price)
@@ -141,7 +141,7 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 		p.setCandlePair("BCRE/CRE", candle)
 
 		// BCRE/CRE should get flipped to CRE/BCRE
-		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "BCRE", Quote: "CRE"})
+		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "CRE", Quote: "BCRE"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
 		require.Equal(t, sdk.OneDec().Quo(sdk.MustNewDecFromStr(price)), prices["CREBCRE"][0].Price)

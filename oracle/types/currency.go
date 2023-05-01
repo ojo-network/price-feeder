@@ -14,6 +14,12 @@ func (cp CurrencyPair) String() string {
 	return cp.Base + cp.Quote
 }
 
+// Reversed returns the currency pair with its Base and Quote reversed.
+func (cp CurrencyPair) Reversed() (reversedCP CurrencyPair) {
+	reversedCP.Base, reversedCP.Quote = cp.Quote, cp.Base
+	return reversedCP
+}
+
 // MapPairsToSlice returns the map of currency pairs as slice.
 func MapPairsToSlice(mapPairs map[string]CurrencyPair) []CurrencyPair {
 	currencyPairs := make([]CurrencyPair, len(mapPairs))

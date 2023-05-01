@@ -203,7 +203,7 @@ func ParseConfig(configPath string) (Config, error) {
 		if _, ok := pairs[cp.Base]; !ok {
 			pairs[cp.Base] = make(map[provider.Name]struct{})
 		}
-		if strings.ToUpper(cp.Quote) != DenomUSD && strings.ToUpper(cp.Quote) != "BCRE" {
+		if _, ok := NonUSDQuotedPriceQuotes[cp.Quote]; (!ok && strings.ToUpper(cp.Quote) != DenomUSD) {
 			coinQuotes[cp.Quote] = struct{}{}
 		}
 		if _, ok := SupportedQuotes[strings.ToUpper(cp.Quote)]; !ok {
@@ -228,7 +228,7 @@ func ParseConfig(configPath string) (Config, error) {
 				break
 			}
 			if index == len(cfg.CurrencyPairs)-1 {
-				return cfg, fmt.Errorf("all non-usd quotes require a conversion rate feed")
+				return cfg, fmt.Errorf("all non-USD quotes not listed in NonUSDQuotedPriceQuotes require a USD conversion rate feed")
 			}
 		}
 	}
