@@ -81,7 +81,7 @@ func NewCrescentProvider(
 	wsURL := url.URL{
 		Scheme: "wss",
 		Host:   endpoints.Websocket,
-		Path:   crescentV2WSHost,
+		Path:   crescentV2WSPath,
 	}
 
 	crescentV2Logger := logger.With().Str("provider", "crescent").Logger()
