@@ -27,8 +27,6 @@ var _ Provider = (*CrescentProvider)(nil)
 type (
 	// CrescentProvider defines an Oracle provider implemented by OJO's
 	// Crescent API.
-	//
-	// REF: https://github.com/ojo-network/crescent-api
 	CrescentProvider struct {
 		wsc             *WebsocketController
 		wsURL           url.URL

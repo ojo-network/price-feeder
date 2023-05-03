@@ -15,8 +15,7 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "CRE", Quote: "ATOM"},
-		types.CurrencyPair{Base: "CRE", Quote: "BCRE"},
+		types.CurrencyPair{Base: "BCRE", Quote: "ATOM"},
 	)
 	require.NoError(t, err)
 
@@ -25,18 +24,18 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 		volume := sdk.MustNewDecFromStr("2396974.02000000")
 
 		tickerMap := map[string]types.TickerPrice{}
-		tickerMap["CRE/ATOM"] = types.TickerPrice{
+		tickerMap["BCRE/ATOM"] = types.TickerPrice{
 			Price:  lastPrice,
 			Volume: volume,
 		}
 
 		p.tickers = tickerMap
 
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "CRE", Quote: "ATOM"})
+		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "BCRE", Quote: "ATOM"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, lastPrice, prices["CREATOM"].Price)
-		require.Equal(t, volume, prices["CREATOM"].Volume)
+		require.Equal(t, lastPrice, prices["BCREATOM"].Price)
+		require.Equal(t, volume, prices["BCREATOM"].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -81,8 +80,7 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "CRE", Quote: "ATOM"},
-		types.CurrencyPair{Base: "CRE", Quote: "BCRE"},
+		types.CurrencyPair{Base: "BCRE", Quote: "ATOM"},
 	)
 	require.NoError(t, err)
 
@@ -97,14 +95,14 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 			EndTime: time,
 		}
 
-		p.setCandlePair("CRE/ATOM", candle)
+		p.setCandlePair("BCRE/ATOM", candle)
 
-		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "CRE", Quote: "ATOM"})
+		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "BCRE", Quote: "ATOM"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(price), prices["CREATOM"][0].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["CREATOM"][0].Volume)
-		require.Equal(t, time, prices["CREATOM"][0].TimeStamp)
+		require.Equal(t, sdk.MustNewDecFromStr(price), prices["BCREATOM"][0].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["BCREATOM"][0].Volume)
+		require.Equal(t, time, prices["BCREATOM"][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {
@@ -115,7 +113,7 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 }
 
 func TestCrescentCurrencyPairToCrescentPair(t *testing.T) {
-	cp := types.CurrencyPair{Base: "CRE", Quote: "USDT"}
+	cp := types.CurrencyPair{Base: "BCRE", Quote: "USDT"}
 	crescentSymbol := currencyPairToCrescentPair(cp)
-	require.Equal(t, crescentSymbol, "CRE/USDT")
+	require.Equal(t, crescentSymbol, "BCRE/USDT")
 }
