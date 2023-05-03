@@ -67,13 +67,13 @@ func ConvertCandlesToUSD(
 				validCandleList := provider.AggregatedProviderCandles{}
 				for providerName, candleSet := range candles {
 					if _, ok := validProviders[providerName]; ok {
-						for base, candle := range candleSet {
+						for base, candles := range candleSet {
 							if base == pair.Quote {
 								if _, ok := validCandleList[providerName]; !ok {
 									validCandleList[providerName] = make(map[string][]types.CandlePrice)
 								}
 
-								validCandleList[providerName][base] = candle
+								validCandleList[providerName][base] = candles
 							}
 						}
 					}
@@ -183,11 +183,11 @@ func ConvertTickersToUSD(
 
 				// Find valid candles, and then let's re-compute the tvwap.
 				validTickerList := provider.AggregatedProviderPrices{}
-				for providerName, candleSet := range tickers {
+				for providerName, tickerSet := range tickers {
 					// Find tickers which we can use for conversion, and calculate the vwap
 					// to find the conversion rate.
 					if _, ok := validProviders[providerName]; ok {
-						for base, ticker := range candleSet {
+						for base, ticker := range tickerSet {
 							if base == pair.Quote {
 								if _, ok := validTickerList[providerName]; !ok {
 									validTickerList[providerName] = make(map[string]types.TickerPrice)
