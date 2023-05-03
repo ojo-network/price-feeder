@@ -14,18 +14,6 @@ threshold = "1.5"
 base = "ATOM"
 threshold = "1.5"
 
-[[deviation_thresholds]]
-base = "USDC"
-threshold = "1.5"
-
-[[deviation_thresholds]]
-base = "USDT"
-threshold = "1.5"
-
-[[deviation_thresholds]]
-base = "BCRE"
-threshold = "2"
-
 [[currency_pairs]]
 base = "USDT"
 providers = [
@@ -47,37 +35,6 @@ quote = "USDT"
 base = "ATOM"
 providers = [
   "kraken",
-  "binanceus",
-]
-quote = "USD"
-
-[[currency_pairs]]
-base = "BCRE"
-providers = [
-  "crescent"
-]
-quote = "USDC"
-
-[[currency_pairs]]
-base = "USDC"
-providers = [
-  "okx",
-  "bitget",
-]
-quote = "USDT"
-
-[[currency_pairs]]
-base = "USDC"
-providers = [
-  "kraken",
-]
-quote = "USD"
-
-[[currency_pairs]]
-base = "USDT"
-providers = [
-  "kraken",
-  "coinbase",
   "binanceus",
 ]
 quote = "USD"
