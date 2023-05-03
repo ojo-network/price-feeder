@@ -478,6 +478,9 @@ func NewProvider(
 	case provider.ProviderPolygon:
 		return provider.NewPolygonProvider(ctx, logger, endpoint, providerPairs...)
 
+	case provider.ProviderCrescent:
+		return provider.NewCrescentProvider(ctx, logger, endpoint, providerPairs...)
+
 	case provider.ProviderMock:
 		return provider.NewMockProvider(), nil
 	}

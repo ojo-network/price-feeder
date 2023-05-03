@@ -33,6 +33,7 @@ The list of current supported providers:
 - [Binance](https://www.binance.com/en)
 - [Bitget](https://www.bitget.com/)
 - [Coinbase](https://www.coinbase.com/)
+- [Crescent](https://github.com/ojo-network/crescent-api)
 - [Crypto](https://crypto.com/)
 - [Gate](https://www.gate.io/)
 - [Huobi](https://www.huobi.com/en-us/)

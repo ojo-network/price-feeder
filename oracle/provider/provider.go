@@ -25,6 +25,7 @@ const (
 	ProviderMexc      Name = "mexc"
 	ProviderCrypto    Name = "crypto"
 	ProviderPolygon   Name = "polygon"
+	ProviderCrescent  Name = "crescent"
 	ProviderMock      Name = "mock"
 )
 

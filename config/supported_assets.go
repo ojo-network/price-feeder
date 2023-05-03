@@ -13,6 +13,7 @@ var (
 		provider.ProviderKraken:    false,
 		provider.ProviderBinance:   false,
 		provider.ProviderBinanceUS: false,
+		provider.ProviderCrescent:  false,
 		provider.ProviderOsmosis:   false,
 		provider.ProviderOsmosisV2: false,
 		provider.ProviderOkx:       false,
