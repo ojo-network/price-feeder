@@ -11,9 +11,9 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 10
+    target_branch: "main"
     reviewers:
       - ojo-network/core-devs
     labels:
       - "A:Automerge"
       - "T:Dependencies"
-      - "S:backport/umee"
