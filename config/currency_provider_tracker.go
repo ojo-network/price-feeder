@@ -15,7 +15,7 @@ const (
 	coinGeckoRestURL            = "https://api.coingecko.com/api/v3/coins"
 	coinGeckoListEndpoint       = "list"
 	coinGeckoTickersEndpoint    = "tickers"
-	osmosisV2RestURL            = "https://api.osmo-api.prod.network.umee.cc"
+	osmosisV2RestURL            = "https://api.osmo-api.prod.ojo.network"
 	osmosisV2AssetPairsEndpoint = "assetpairs"
 	crescentRestURL             = "https://api.cresc-api.prod.ojo.network"
 	crescentAssetPairsEndpoint  = "assetpairs"
