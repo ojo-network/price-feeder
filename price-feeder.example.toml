@@ -94,10 +94,6 @@ threshold = "1.5"
 base = "CBETH"
 threshold = "1.5"
 
-[[deviation_thresholds]]
-base = "BCRE"
-threshold = "2"
-
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -231,6 +227,7 @@ quote = "USD"
 base = "stATOM"
 providers = [
   "osmosisv2",
+  "crescent",
 ]
 quote = "ATOM"
 
@@ -247,6 +244,20 @@ providers = [
   "osmosisv2",
 ]
 quote = "OSMO"
+
+[[currency_pairs]]
+base = "IST"
+providers = [
+  "crescent",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+]
+quote = "USD"
 
 [[currency_pairs]]
 base = "AKT"
@@ -332,6 +343,7 @@ quote = "USDT"
 base = "stkATOM"
 providers = [
   "osmosisv2",
+  "crescent",
 ]
 quote = "ATOM"
 
@@ -346,20 +358,6 @@ quote = "ATOM"
 base = "CBETH"
 quote = "USD"
 providers = [ "coinbase",]
-
-[[currency_pairs]]
-base = "BCRE"
-providers = [
-  "crescent",
-]
-quote = "USDC"
-
-[[currency_pairs]]
-base = "USDC"
-providers = [
-  "kraken",
-]
-quote = "USD"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
