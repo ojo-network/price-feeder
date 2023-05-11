@@ -19,6 +19,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
+
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -480,6 +481,9 @@ func NewProvider(
 
 	case provider.ProviderCrescent:
 		return provider.NewCrescentProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderUniswap:
+		return provider.NewUniswapProvider(endpoint), nil
 
 	case provider.ProviderMock:
 		return provider.NewMockProvider(), nil

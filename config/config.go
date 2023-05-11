@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/go-playground/validator/v10"
+
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 
@@ -42,6 +43,7 @@ type (
 	Config struct {
 		Server              Server              `mapstructure:"server"`
 		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs" validate:"required,gt=0,dive,required"`
+		AddressPairs        []AddressPair       `mapstructure:"address_pairs" validate:"required,gt=0,dive,required"`
 		Deviations          []Deviation         `mapstructure:"deviation_thresholds"`
 		Account             Account             `mapstructure:"account" validate:"required,gt=0,dive,required"`
 		Keyring             Keyring             `mapstructure:"keyring" validate:"required,gt=0,dive,required"`
@@ -68,6 +70,13 @@ type (
 		Base      string          `mapstructure:"base" validate:"required"`
 		Quote     string          `mapstructure:"quote" validate:"required"`
 		Providers []provider.Name `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+	}
+
+	// AddressPair defines a price quote of the exchange rate for two different
+	// currencies and the supported providers for getting the exchange rate.
+	AddressPair struct {
+		CurrencyPair
+		Address string `mapstructure:"address" validate:"required"`
 	}
 
 	// Deviation defines a maximum amount of standard deviations that a given asset can
@@ -150,6 +159,23 @@ func (c Config) ProviderPairs() map[provider.Name][]types.CurrencyPair {
 		}
 	}
 	return providerPairs
+}
+
+func (c Config) AddressProviderPairs() map[provider.Name][]types.AddressPair {
+	addressProviderPairs := make(map[provider.Name][]types.AddressPair)
+
+	for _, pair := range c.AddressPairs {
+		for _, provider := range pair.Providers {
+			addressProviderPairs[provider] = append(addressProviderPairs[provider], types.AddressPair{
+				CurrencyPair: types.CurrencyPair{
+					Base:  pair.Base,
+					Quote: pair.Quote,
+				},
+				Address: pair.Address,
+			})
+		}
+	}
+	return addressProviderPairs
 }
 
 // ProviderEndpointsMap converts the provider_endpoints from the config

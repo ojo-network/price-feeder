@@ -10,6 +10,7 @@ require (
 	github.com/golangci/golangci-lint v1.52.2
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
+	github.com/hasura/go-graphql-client v0.9.3
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ojo-network/ojo v0.1.2
@@ -293,7 +294,7 @@ require (
 	mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed // indirect
 	mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b // indirect
 	mvdan.cc/unparam v0.0.0-20221223090309-7455f1af531d // indirect
-	nhooyr.io/websocket v1.8.6 // indirect
+	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 

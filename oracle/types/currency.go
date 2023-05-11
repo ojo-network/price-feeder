@@ -8,6 +8,11 @@ type CurrencyPair struct {
 	Quote string
 }
 
+type AddressPair struct {
+	CurrencyPair
+	Address string
+}
+
 // String implements the Stringer interface and defines a ticker symbol for
 // querying the exchange rate.
 func (cp CurrencyPair) String() string {
