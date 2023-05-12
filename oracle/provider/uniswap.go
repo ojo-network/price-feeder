@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gql "github.com/hasura/go-graphql-client"
 	"github.com/ojo-network/ojo/util/decmath"
 
@@ -57,7 +58,7 @@ type (
 			High            string `graphql:"high"`
 			Low             string `graphql:"low"`
 			Close           string `graphql:"close"`
-		} `graphql:"poolMinuteDatas(first: 10, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gt: $start})"`
+		} `graphql:"poolMinuteDatas(first: 1, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs})"`
 	}
 
 	Pools struct {
@@ -68,6 +69,18 @@ type (
 			Token0Price string `graphql:"token0Price"`
 			Token1Price string `graphql:"token1Price"`
 		} `graphql:"pools(where: {ID_in: $poolIDs})"`
+	}
+
+	PoolDayDataQuery struct {
+		PoolDayDatas []struct {
+			ID                 string  `graphql:"id"`
+			PoolID             string  `graphql:"poolID"`
+			PeriodStartUnix    int     `graphql:"periodStartUnix"`
+			Token0             Token   `graphql:"token0"`
+			Token1             Token   `graphql:"token1"`
+			VolumeUSDTracked   string `graphql:"volumeUSDTracked"`
+			VolumeUSDUntracked string `graphql:"volumeUSDUntracked"`
+		} `graphql:"poolDayDatas(first: 1, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $ids})"`
 	}
 
 	// UniswapProvider defines an Oracle provider implemented by the Uniswap public
@@ -134,22 +147,36 @@ func (p UniswapProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
 	// create token ids
 	var poolIDS []string
+	var poolIDtoPool map[string]string{}
 	for _, pair := range pairs {
 		if _, found := p.poolAddressMap[pair.String()]; !found {
 			return nil, fmt.Errorf("pool id for %s not found", pair.String())
 		}
 
-		poolIDS = append(poolIDS, p.poolAddressMap[pair.String()])
+		pairID:= p.poolAddressMap[pair.String()]
+		poolIDtoPool[pairID] = pair.String()
+		poolIDS = append(poolIDS, pairID)
+	}
+
+	idMap := map[string]interface{}{
+		"poolIDS": poolIDS,
 	}
 
 	var poolsData Pools
-	err := p.client.Query(context.Background(), &poolsData, map[string]interface{}{
-		"poolIDs": poolIDS,
-	})
+	err := p.client.Query(context.Background(), &poolsData, idMap)
 
 	if err != nil {
 		return nil, err
 	}
+
+	// query volume from day data
+	var poolVolume PoolDayDataQuery
+	err = p.client.Query(context.Background(), &poolVolume, idMap)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: length and token order validation
 
 	baseDenomIdx := make(map[string]types.CurrencyPair)
 	for _, cp := range pairs {
@@ -157,7 +184,6 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	}
 
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-
 	for _, poolData := range poolsData.Pools {
 		symbol := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
 
@@ -168,7 +194,7 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 		}
 
 		if _, ok := tickerPrices[symbol]; ok {
-			return nil, fmt.Errorf("duplicate token found in Osmosis response: %s", symbol)
+			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", symbol)
 		}
 
 		token0Price, err := strconv.ParseFloat(poolData.Token0Price, 64)
@@ -176,23 +202,26 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 
 		price, err := decmath.NewDecFromFloat(token0Price / token1Price)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read Osmosis price (%f) for %s", price, symbol)
+			return nil, fmt.Errorf("failed to read Uniswap price (%f) for %s", price, symbol)
 		}
 
-		// TODO: fix in indexer
-		////volume, err := decmath.NewDecFromFloat(tr.Volume)
-		//if err != nil {
-		//	return nil, fmt.Errorf("failed to read Osmosis volume (%f) for %s", tr.Volume, symbol)
-		//}
-		tickerPrices[cp.String()] = types.TickerPrice{Price: price, Volume: 0}
+		tickerPrices[cp.String()] = types.TickerPrice{Price: price}
 	}
-	// fetch pools
 
-	return nil, nil
+	for _, poolDayData := range poolVolume.PoolDayDatas {
+		tickerPrice:= tickerPrices[poolIDtoPool[poolDayData.PoolID]]
+		tickerPrice.Volume=sdk.MustNewDecFromStr(poolDayData.VolumeUSDTracked)
+		tickerPrices[poolIDtoPool[poolDayData.PoolID]]=tickerPrice
+	}
+
+	return tickerPrices,nil
 }
 
 func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	return nil, nil
+
+
+
+	return nil,nil
 }
 
 // GetAvailablePairs return all available pairs symbol to susbscribe.
