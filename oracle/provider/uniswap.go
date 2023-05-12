@@ -41,9 +41,7 @@ type (
 			High            float64 `graphql:"high"`
 			Low             float64 `graphql:"low"`
 			PeriodStartUnix int     `graphql:"periodStartUnix"`
-			Token           struct {
-				Name string `graphql:"name"`
-			} `graphql:"token"`
+			Token           Token   `graphql:"token"`
 		} `graphql:"tokenMinuteDatas(first: 2, orderBy: periodStartUnix, orderDirection: desc, where: {token_in: $ids, periodStartUnix_gt: $start})"`
 	}
 
@@ -59,6 +57,23 @@ type (
 			Low             string `graphql:"low"`
 			Close           string `graphql:"close"`
 		} `graphql:"poolMinuteDatas(first: 1, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs})"`
+	}
+
+	PoolMinuteDataCandleQuery struct {
+		PoolMinuteDatas []struct {
+			ID               string  `graphql:"id"`
+			PoolID           string  `graphql:"poolID"`
+			PeriodStartUnix  int     `graphql:"periodStartUnix"`
+			Token0           Token   `graphql:"token0"`
+			Token1           Token   `graphql:"token1"`
+			Token0Price      string  `graphql:"token0Price"`
+			Token1Price      string  `graphql:"token1Price"`
+			VolumeUSDTracked float64 `graphql:"volumeUSDTracked"`
+			Open             string  `graphql:"open"`
+			High             string  `graphql:"high"`
+			Low              string  `graphql:"low"`
+			Close            string  `graphql:"close"`
+		} `graphql:"poolMinuteDatas(orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gt: $start})"`
 	}
 
 	Pools struct {
@@ -78,9 +93,9 @@ type (
 			PeriodStartUnix    int     `graphql:"periodStartUnix"`
 			Token0             Token   `graphql:"token0"`
 			Token1             Token   `graphql:"token1"`
-			VolumeUSDTracked   string `graphql:"volumeUSDTracked"`
-			VolumeUSDUntracked string `graphql:"volumeUSDUntracked"`
-		} `graphql:"poolDayDatas(first: 1, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $ids})"`
+			VolumeUSDTracked   float64 `graphql:"volumeUSDTracked"`
+			VolumeUSDUntracked string  `graphql:"volumeUSDUntracked"`
+		} `graphql:"poolDayDatas(first: 2, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $ids})"`
 	}
 
 	// UniswapProvider defines an Oracle provider implemented by the Uniswap public
@@ -147,13 +162,13 @@ func (p UniswapProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
 	// create token ids
 	var poolIDS []string
-	var poolIDtoPool map[string]string{}
+	var poolIDtoPool map[string]string
 	for _, pair := range pairs {
 		if _, found := p.poolAddressMap[pair.String()]; !found {
 			return nil, fmt.Errorf("pool id for %s not found", pair.String())
 		}
 
-		pairID:= p.poolAddressMap[pair.String()]
+		pairID := p.poolAddressMap[pair.String()]
 		poolIDtoPool[pairID] = pair.String()
 		poolIDS = append(poolIDS, pairID)
 	}
@@ -197,10 +212,11 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", symbol)
 		}
 
-		token0Price, err := strconv.ParseFloat(poolData.Token0Price, 64)
-		token1Price, err := strconv.ParseFloat(poolData.Token1Price, 64)
+		price, err := formatTokenPriceData(poolData.Token0Price, poolData.Token1Price)
+		if err != nil {
+			return nil, err
+		}
 
-		price, err := decmath.NewDecFromFloat(token0Price / token1Price)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read Uniswap price (%f) for %s", price, symbol)
 		}
@@ -209,22 +225,92 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	}
 
 	for _, poolDayData := range poolVolume.PoolDayDatas {
-		tickerPrice:= tickerPrices[poolIDtoPool[poolDayData.PoolID]]
-		tickerPrice.Volume=sdk.MustNewDecFromStr(poolDayData.VolumeUSDTracked)
-		tickerPrices[poolIDtoPool[poolDayData.PoolID]]=tickerPrice
+		volume, err := decmath.NewDecFromFloat(poolDayData.VolumeUSDTracked)
+		if err != nil {
+			return nil, err
+		}
+		tickerPrices[poolIDtoPool[poolDayData.PoolID]].Volume.Add(volume)
 	}
 
-	return tickerPrices,nil
+	return tickerPrices, nil
 }
 
 func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
+	// create token ids
+	var poolIDS []string
+	var poolIDtoPool map[string]string
+	for _, pair := range pairs {
+		if _, found := p.poolAddressMap[pair.String()]; !found {
+			return nil, fmt.Errorf("pool id for %s not found", pair.String())
+		}
 
+		pairID := p.poolAddressMap[pair.String()]
+		poolIDtoPool[pairID] = pair.String()
+		poolIDS = append(poolIDS, pairID)
+	}
 
+	idMap := map[string]interface{}{
+		"poolIDS": poolIDS,
+		"start":   PastUnixTime(providerCandlePeriod),
+	}
 
-	return nil,nil
+	// should return 10 queries at max
+	var poolsData PoolMinuteDataCandleQuery
+	err := p.client.Query(context.Background(), &poolsData, idMap)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: length and token order validation
+	baseDenomIdx := make(map[string]types.CurrencyPair)
+	for _, cp := range pairs {
+		baseDenomIdx[strings.ToUpper(cp.Base)] = cp
+	}
+
+	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
+	for _, poolData := range poolsData.PoolMinuteDatas {
+		symbol := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
+		cp, ok := baseDenomIdx[symbol]
+		if !ok {
+			// skip tokens that are not requested
+			continue
+		}
+
+		if _, ok := candlePrices[symbol]; ok {
+			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", symbol)
+		}
+
+		price, err := formatTokenPriceData(poolData.Token0Price, poolData.Token1Price)
+		if err != nil {
+			return nil, err
+		}
+
+		volume, err := decmath.NewDecFromFloat(poolData.VolumeUSDTracked)
+		if err != nil {
+			return nil, err
+		}
+
+		candlePrices[cp.String()] = append(candlePrices[cp.String()], types.CandlePrice{Price: price, Volume: volume})
+	}
+
+	return candlePrices, nil
 }
 
 // GetAvailablePairs return all available pairs symbol to susbscribe.
 func (p UniswapProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return nil, nil
+}
+
+func formatTokenPriceData(token0Price, token1Price string) (sdk.Dec, error) {
+	price0, err := strconv.ParseFloat(token0Price, 64)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+	price1, err := strconv.ParseFloat(token1Price, 64)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	return decmath.NewDecFromFloat(price0 / price1)
 }
