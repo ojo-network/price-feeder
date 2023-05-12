@@ -13,7 +13,8 @@ import (
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
-// var _ Provider = (*UniswapProvider)(nil)
+var _ Provider = (*UniswapProvider)(nil)
+
 var (
 	uniswapURL = "https://api.studio.thegraph.com/query/46403/unidexer/test20"
 )
@@ -98,57 +99,38 @@ type (
 		} `graphql:"poolDayDatas(first: 2, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $ids})"`
 	}
 
-	// UniswapProvider defines an Oracle provider implemented by the Uniswap public
-	// API.
-	//
-	// REF: https://api-Uniswap.imperator.co/swagger/
+	// UniswapProvider defines an Oracle provider implemented to consume data from Uniswap graphql
 	UniswapProvider struct {
-		baseURL string
-		//client  *http.Client
+		baseURL        string
 		client         *gql.Client
-		poolAddressMap map[string]string
-	}
-
-	// UniswapTokenResponse defines the response structure for an Uniswap token
-	// request.
-	UniswapTokenResponse struct {
-		Price  float64 `json:"price"`
-		Symbol string  `json:"symbol"`
-		Volume float64 `json:"volume_24h"`
-	}
-
-	// UniswapCandleResponse defines the response structure for an Uniswap candle
-	// request.
-	UniswapCandleResponse struct {
-		Time   int64   `json:"time"`
-		Close  float64 `json:"close"`
-		Volume float64 `json:"volume"`
-	}
-
-	// UniswapPairsSummary defines the response structure for an Uniswap pairs
-	// summary.
-	UniswapPairsSummary struct {
-		Data []UniswapPairData `json:"data"`
-	}
-
-	// UniswapPairData defines the data response structure for an Uniswap pair.
-	UniswapPairData struct {
-		Base  string `json:"base_symbol"`
-		Quote string `json:"quote_symbol"`
+		addressToDenom map[string]string
+		denomToAddress map[string]string
 	}
 )
 
-func NewUniswapProvider(endpoint Endpoint, poolAddressMap map[string]string) *UniswapProvider {
+func NewUniswapProvider(endpoint Endpoint, addressPairs []types.AddressPair) *UniswapProvider {
+	// create address denom and reverse map
+	addressToDenom := make(map[string]string)
+	denomToAddress := make(map[string]string)
+	for _, pair := range addressPairs {
+		p := pair.String()
+		addressToDenom[pair.Address] = p
+		denomToAddress[p] = pair.Address
+	}
+
 	if endpoint.Name == ProviderUniswap {
 		return &UniswapProvider{
 			baseURL:        endpoint.Rest,
 			client:         gql.NewClient(endpoint.Rest, nil),
-			poolAddressMap: poolAddressMap,
+			addressToDenom: addressToDenom,
+			denomToAddress: denomToAddress,
 		}
 	}
 	return &UniswapProvider{
-		baseURL: uniswapURL,
-		client:  gql.NewClient(uniswapURL, nil),
+		baseURL:        uniswapURL,
+		client:         gql.NewClient(uniswapURL, nil),
+		addressToDenom: addressToDenom,
+		denomToAddress: denomToAddress,
 	}
 }
 

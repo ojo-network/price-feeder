@@ -72,8 +72,7 @@ type (
 		Providers []provider.Name `mapstructure:"providers" validate:"required,gt=0,dive,required"`
 	}
 
-	// AddressPair defines a price quote of the exchange rate for two different
-	// currencies and the supported providers for getting the exchange rate.
+	// AddressPair is pool address for supporting uniswap v3 assets
 	AddressPair struct {
 		CurrencyPair
 		Address string `mapstructure:"address" validate:"required"`
@@ -165,8 +164,8 @@ func (c Config) AddressProviderPairs() map[provider.Name][]types.AddressPair {
 	addressProviderPairs := make(map[provider.Name][]types.AddressPair)
 
 	for _, pair := range c.AddressPairs {
-		for _, provider := range pair.Providers {
-			addressProviderPairs[provider] = append(addressProviderPairs[provider], types.AddressPair{
+		for _, pairProvider := range pair.Providers {
+			addressProviderPairs[pairProvider] = append(addressProviderPairs[pairProvider], types.AddressPair{
 				CurrencyPair: types.CurrencyPair{
 					Base:  pair.Base,
 					Quote: pair.Quote,

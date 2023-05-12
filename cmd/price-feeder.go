@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	input "github.com/cosmos/cosmos-sdk/client/input"
+	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/gorilla/mux"
@@ -23,6 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ojo-network/ojo/app/params"
+
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
@@ -174,6 +175,7 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		logger,
 		oracleClient,
 		cfg.ProviderPairs(),
+		cfg.AddressProviderPairs(),
 		providerTimeout,
 		deviations,
 		cfg.ProviderEndpointsMap(),
