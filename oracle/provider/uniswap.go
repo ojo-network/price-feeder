@@ -38,34 +38,34 @@ type (
 
 	PoolMinuteDataCandleQuery struct {
 		PoolMinuteDatas []struct {
-			ID               string  `graphql:"id"`
-			PoolID           string  `graphql:"poolID"`
-			PeriodStartUnix  string  `graphql:"periodStartUnix"`
-			Token0           Token   `graphql:"token0"`
-			Token1           Token   `graphql:"token1"`
-			Token0Price      string  `graphql:"token0Price"`
-			Token1Price      string  `graphql:"token1Price"`
-			Timestamp        int64   `graphql:"timestamp"`
-			VolumeUSDTracked float64 `graphql:"volumeUSDTracked"`
-			Open             string  `graphql:"open"`
-			High             string  `graphql:"high"`
-			Low              string  `graphql:"low"`
-			Close            string  `graphql:"close"`
-		} `graphql:"poolMinuteDatas(first:1, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gte: $start})"`
+			ID              string  `graphql:"id"`
+			PoolID          string  `graphql:"poolID"`
+			PeriodStartUnix float64 `graphql:"periodStartUnix"`
+			Token0          Token   `graphql:"token0"`
+			Token1          Token   `graphql:"token1"`
+			Token0Price     string  `graphql:"token0Price"`
+			Token1Price     string  `graphql:"token1Price"`
+			//Timestamp        string  `graphql:"timestamp"`
+			VolumeUSDTracked string `graphql:"volumeUSDTracked"`
+			Open             string `graphql:"open"`
+			High             string `graphql:"high"`
+			Low              string `graphql:"low"`
+			Close            string `graphql:"close"`
+		} `graphql:"poolMinuteDatas(first:$first, after:$after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gte: $start,periodStartUnix_lte:$stop})"`
 	}
 
 	PoolHourDataQuery struct {
 		PoolHourDatas []struct {
-			ID                 string `graphql:"id"`
-			PoolID             string `graphql:"poolID"`
-			PeriodStartUnix    string `graphql:"periodStartUnix"`
-			Token0             Token  `graphql:"token0"`
-			Token1             Token  `graphql:"token1"`
-			Token0Price        string `graphql:"token0price"`
-			Token1Price        string `graphql:"token1price"`
-			VolumeUSDTracked   string `graphql:"volumeUSDTracked"`
-			VolumeUSDUntracked string `graphql:"volumeUSDUntracked"`
-		} `graphql:"poolHourDatas(first: $first, after: $after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $ids ,periodStartUnix_gte: $oneDayAgo, periodStartUnix_lte: $currentTimestamp})"`
+			ID                 string  `graphql:"id"`
+			PoolID             string  `graphql:"poolID"`
+			PeriodStartUnix    float64 `graphql:"periodStartUnix"`
+			Token0             Token   `graphql:"token0"`
+			Token1             Token   `graphql:"token1"`
+			Token0Price        string  `graphql:"token0Price"`
+			Token1Price        string  `graphql:"token1Price"`
+			VolumeUSDTracked   string  `graphql:"volumeUSDTracked"`
+			VolumeUSDUntracked string  `graphql:"volumeUSDUntracked"`
+		} `graphql:"poolHourDatas(first: $first,after: $after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gte:$start,periodStartUnix_lte:$stop})"`
 	}
 
 	// UniswapProvider defines an Oracle provider implemented to consume data from Uniswap graphql
@@ -113,7 +113,7 @@ func (p UniswapProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
 	// create token ids
 	var poolIDS []string
-	var poolIDtoPool map[string]string
+	poolIDtoPool := make(map[string]string)
 	for _, pair := range pairs {
 		if _, found := p.addressToDenom[pair.String()]; !found {
 			return nil, fmt.Errorf("pool id for %s not found", pair.String())
@@ -125,9 +125,9 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	}
 
 	idMap := map[string]interface{}{
-		"poolIDS":          poolIDS,
-		"oneDayAgo":        PastUnixTime(24 * time.Hour),
-		"currentTimestamp": time.Now().Unix(),
+		"poolIDS": poolIDS,
+		"start":   time.Now().Unix() - 86400,
+		"stop":    time.Now().Unix(),
 	}
 
 	// TODO: length verification
@@ -174,39 +174,28 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", symbol)
 		}
 
-		price, err := formatTokenPriceData(poolData.Token0Price, poolData.Token1Price)
+		price, err := toSdkDec(poolData.Token1Price)
 		if err != nil {
 			return nil, err
 		}
 
-		timestamp, err := strconv.ParseFloat(poolData.PeriodStartUnix, 64)
-		if err != nil {
-			return nil, err
-		}
-
+		timestamp := poolData.PeriodStartUnix
 		vol, err := toSdkDec(poolData.VolumeUSDTracked)
 		if err != nil {
-			// add error
 			return nil, err
 		}
 
-		if _, found := tickerPrices[cp.String()]; !found {
+		if timestamp > latestTimestamp[cp.String()] {
+			// update to most latest price recorded
 			latestTimestamp[cp.String()] = timestamp
-			tickerPrices[cp.String()] = types.TickerPrice{Price: price, Volume: sdk.ZeroDec()}
-		} else {
-			if timestamp > latestTimestamp[cp.String()] {
-
-				// update to most latest price recorded
-				latestTimestamp[cp.String()] = timestamp
-				prevVolume := tickerPrices[cp.String()].Volume
-				tickerPrices[cp.String()] = types.TickerPrice{
-					Price:  price,
-					Volume: prevVolume,
-				}
+			if _, found := tickerPrices[cp.String()]; !found {
+				tickerPrices[cp.String()] = types.TickerPrice{Price: price, Volume: sdk.ZeroDec()}
+			} else {
+				tickerPrices[cp.String()].Price.Set(price)
 			}
 		}
 
-		tickerPrices[cp.String()].Volume.Add(vol)
+		tickerPrices[cp.String()].Volume.Set(tickerPrices[cp.String()].Volume.Add(vol))
 	}
 
 	return tickerPrices, nil
@@ -215,7 +204,7 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
 	// create token ids
 	var poolIDS []string
-	var poolIDtoPool map[string]string
+	poolIDtoPool := make(map[string]string)
 	for _, pair := range pairs {
 		if _, found := p.addressToDenom[pair.String()]; !found {
 			return nil, fmt.Errorf("pool id for %s not found", pair.String())
@@ -229,6 +218,7 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	idMap := map[string]interface{}{
 		"poolIDS": poolIDS,
 		"start":   PastUnixTime(providerCandlePeriod),
+		"stop":    time.Now().Unix(),
 	}
 
 	var lastID string
@@ -280,17 +270,22 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", symbol)
 		}
 
-		price, err := formatTokenPriceData(poolData.Token0Price, poolData.Token1Price)
+		priceFloat, err := strconv.ParseFloat(poolData.Token0Price, 64)
 		if err != nil {
 			return nil, err
 		}
 
-		volume, err := decmath.NewDecFromFloat(poolData.VolumeUSDTracked)
+		price, err := decmath.NewDecFromFloat(1 / priceFloat)
 		if err != nil {
 			return nil, err
 		}
 
-		candlePrices[cp.String()] = append(candlePrices[cp.String()], types.CandlePrice{Price: price, Volume: volume, TimeStamp: poolData.Timestamp})
+		vol, err := toSdkDec(poolData.VolumeUSDTracked)
+		if err != nil {
+			return nil, err
+		}
+
+		candlePrices[cp.String()] = append(candlePrices[cp.String()], types.CandlePrice{Price: price, Volume: vol, TimeStamp: int64(poolData.PeriodStartUnix)})
 	}
 
 	return candlePrices, nil
@@ -318,24 +313,11 @@ func (p UniswapProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return availablePairs, nil
 }
 
-func formatTokenPriceData(token0Price, token1Price string) (sdk.Dec, error) {
-	price0, err := strconv.ParseFloat(token0Price, 64)
-	if err != nil {
-		return sdk.ZeroDec(), err
-	}
-	price1, err := strconv.ParseFloat(token1Price, 64)
+func toSdkDec(value string) (sdk.Dec, error) {
+	valueFloat, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return sdk.ZeroDec(), err
 	}
 
-	return decmath.NewDecFromFloat(price0 / price1)
-}
-
-func toSdkDec(volume string) (sdk.Dec, error) {
-	vol, err := strconv.ParseFloat(volume, 64)
-	if err != nil {
-		return sdk.ZeroDec(), err
-	}
-
-	return decmath.NewDecFromFloat(vol)
+	return decmath.NewDecFromFloat(valueFloat)
 }
