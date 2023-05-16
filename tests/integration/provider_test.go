@@ -7,13 +7,14 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
-	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type IntegrationTestSuite struct {
@@ -47,7 +48,7 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 		s.T().Run(string(providerName), func(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := context.WithCancel(context.Background())
-			pvd, _ := oracle.NewProvider(ctx, providerName, getLogger(), endpoint, currencyPairs...)
+			pvd, _ := oracle.NewProvider(ctx, providerName, getLogger(), endpoint, []types.AddressPair{}, currencyPairs...)
 			pvd.StartConnections()
 			time.Sleep(60 * time.Second) // wait for provider to connect and receive some prices
 			checkForPrices(t, pvd, currencyPairs, providerName.String())

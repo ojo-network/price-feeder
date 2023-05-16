@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gql "github.com/hasura/go-graphql-client"
@@ -16,7 +17,7 @@ import (
 var _ Provider = (*UniswapProvider)(nil)
 
 var (
-	uniswapURL = "https://api.studio.thegraph.com/query/46403/unidexer/test20"
+	UNISWAP_URL = "https://api.studio.thegraph.com/query/46403/unidexer/test20"
 )
 
 type (
@@ -24,79 +25,47 @@ type (
 	// BundleQuery eth price query has fixed id of 1
 	BundleQuery struct {
 		Bundle struct {
-			EthPriceUSD float64 `graphql:"ethPriceUSD"`
-		} `graphql:"bundle(id: 1)"`
+			EthPriceUSD string `graphql:"ethPriceUSD"`
+			Id          string `graphql:"id"`
+		} `graphql:"bundle(id: \"1\")"`
 	}
 
 	Token struct {
 		Name   string `graphql:"name"`
 		Symbol string `graphql:"symbol"`
-	}
-
-	// TokenMinuteDataQuery currently minute data supports usd mapping only
-	TokenMinuteDataQuery struct {
-		TokenMinuteDatas []struct {
-			PriceUSD        float64 `graphql:"priceUSD"`
-			Open            float64 `graphql:"open"`
-			Close           float64 `graphql:"close"`
-			High            float64 `graphql:"high"`
-			Low             float64 `graphql:"low"`
-			PeriodStartUnix int     `graphql:"periodStartUnix"`
-			Token           Token   `graphql:"token"`
-		} `graphql:"tokenMinuteDatas(first: 2, orderBy: periodStartUnix, orderDirection: desc, where: {token_in: $ids, periodStartUnix_gt: $start})"`
-	}
-
-	PoolMinuteDataQuery struct {
-		PoolMinuteDatas []struct {
-			ID              string `graphql:"id"`
-			PoolID          string `graphql:"poolID"`
-			PeriodStartUnix int    `graphql:"periodStartUnix"`
-			Token0Price     string `graphql:"token0Price"`
-			Token1Price     string `graphql:"token1Price"`
-			Open            string `graphql:"open"`
-			High            string `graphql:"high"`
-			Low             string `graphql:"low"`
-			Close           string `graphql:"close"`
-		} `graphql:"poolMinuteDatas(first: 1, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs})"`
+		ID     string `graphql:"id"`
 	}
 
 	PoolMinuteDataCandleQuery struct {
 		PoolMinuteDatas []struct {
 			ID               string  `graphql:"id"`
 			PoolID           string  `graphql:"poolID"`
-			PeriodStartUnix  int     `graphql:"periodStartUnix"`
+			PeriodStartUnix  string  `graphql:"periodStartUnix"`
 			Token0           Token   `graphql:"token0"`
 			Token1           Token   `graphql:"token1"`
 			Token0Price      string  `graphql:"token0Price"`
 			Token1Price      string  `graphql:"token1Price"`
+			Timestamp        int64   `graphql:"timestamp"`
 			VolumeUSDTracked float64 `graphql:"volumeUSDTracked"`
 			Open             string  `graphql:"open"`
 			High             string  `graphql:"high"`
 			Low              string  `graphql:"low"`
 			Close            string  `graphql:"close"`
-		} `graphql:"poolMinuteDatas(orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gt: $start})"`
+		} `graphql:"poolMinuteDatas(first:1, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gte: $start})"`
 	}
 
-	Pools struct {
-		Pools []struct {
-			ID          string `graphql:"id"`
-			Token0      Token  `graphql:"token0"`
-			Token1      Token  `graphql:"token1"`
-			Token0Price string `graphql:"token0Price"`
-			Token1Price string `graphql:"token1Price"`
-		} `graphql:"pools(where: {ID_in: $poolIDs})"`
-	}
-
-	PoolDayDataQuery struct {
-		PoolDayDatas []struct {
-			ID                 string  `graphql:"id"`
-			PoolID             string  `graphql:"poolID"`
-			PeriodStartUnix    int     `graphql:"periodStartUnix"`
-			Token0             Token   `graphql:"token0"`
-			Token1             Token   `graphql:"token1"`
-			VolumeUSDTracked   float64 `graphql:"volumeUSDTracked"`
-			VolumeUSDUntracked string  `graphql:"volumeUSDUntracked"`
-		} `graphql:"poolDayDatas(first: 2, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $ids})"`
+	PoolHourDataQuery struct {
+		PoolHourDatas []struct {
+			ID                 string `graphql:"id"`
+			PoolID             string `graphql:"poolID"`
+			PeriodStartUnix    string `graphql:"periodStartUnix"`
+			Token0             Token  `graphql:"token0"`
+			Token1             Token  `graphql:"token1"`
+			Token0Price        string `graphql:"token0price"`
+			Token1Price        string `graphql:"token1price"`
+			VolumeUSDTracked   string `graphql:"volumeUSDTracked"`
+			VolumeUSDUntracked string `graphql:"volumeUSDUntracked"`
+		} `graphql:"poolHourDatas(first: $first, after: $after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $ids ,periodStartUnix_gte: $oneDayAgo, periodStartUnix_lte: $currentTimestamp})"`
 	}
 
 	// UniswapProvider defines an Oracle provider implemented to consume data from Uniswap graphql
@@ -113,9 +82,9 @@ func NewUniswapProvider(endpoint Endpoint, addressPairs []types.AddressPair) *Un
 	addressToDenom := make(map[string]string)
 	denomToAddress := make(map[string]string)
 	for _, pair := range addressPairs {
-		p := pair.String()
-		addressToDenom[pair.Address] = p
-		denomToAddress[p] = pair.Address
+		pairName := pair.String()
+		addressToDenom[pair.Address] = pairName
+		denomToAddress[pairName] = pair.Address
 	}
 
 	if endpoint.Name == ProviderUniswap {
@@ -127,8 +96,8 @@ func NewUniswapProvider(endpoint Endpoint, addressPairs []types.AddressPair) *Un
 		}
 	}
 	return &UniswapProvider{
-		baseURL:        uniswapURL,
-		client:         gql.NewClient(uniswapURL, nil),
+		baseURL:        UNISWAP_URL,
+		client:         gql.NewClient(UNISWAP_URL, nil),
 		addressToDenom: addressToDenom,
 		denomToAddress: denomToAddress,
 	}
@@ -146,42 +115,53 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	var poolIDS []string
 	var poolIDtoPool map[string]string
 	for _, pair := range pairs {
-		if _, found := p.poolAddressMap[pair.String()]; !found {
+		if _, found := p.addressToDenom[pair.String()]; !found {
 			return nil, fmt.Errorf("pool id for %s not found", pair.String())
 		}
 
-		pairID := p.poolAddressMap[pair.String()]
+		pairID := p.denomToAddress[pair.String()]
 		poolIDtoPool[pairID] = pair.String()
 		poolIDS = append(poolIDS, pairID)
 	}
 
 	idMap := map[string]interface{}{
-		"poolIDS": poolIDS,
+		"poolIDS":          poolIDS,
+		"oneDayAgo":        PastUnixTime(24 * time.Hour),
+		"currentTimestamp": time.Now().Unix(),
 	}
 
-	var poolsData Pools
-	err := p.client.Query(context.Background(), &poolsData, idMap)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// query volume from day data
-	var poolVolume PoolDayDataQuery
-	err = p.client.Query(context.Background(), &poolVolume, idMap)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: length and token order validation
-
+	// TODO: length verification
 	baseDenomIdx := make(map[string]types.CurrencyPair)
 	for _, cp := range pairs {
 		baseDenomIdx[strings.ToUpper(cp.Base)] = cp
 	}
 
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-	for _, poolData := range poolsData.Pools {
+	latestTimestamp := make(map[string]float64)
+	var lastID string
+
+	var poolsHourDatas PoolHourDataQuery
+	for {
+		idMap["first"] = 24
+		idMap["after"] = lastID
+
+		// query volume from day data
+		var poolsHourData PoolHourDataQuery
+		err := p.client.Query(context.Background(), &poolsHourData, idMap)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(poolsHourData.PoolHourDatas) == 0 {
+			break
+		}
+
+		lastID = poolsHourData.PoolHourDatas[len(poolsHourData.PoolHourDatas)-1].ID
+		// append pools
+		poolsHourDatas.PoolHourDatas = append(poolsHourDatas.PoolHourDatas, poolsHourData.PoolHourDatas...)
+	}
+
+	for _, poolData := range poolsHourDatas.PoolHourDatas {
 		symbol := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
 
 		cp, ok := baseDenomIdx[symbol]
@@ -199,19 +179,34 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, err
 		}
 
-		if err != nil {
-			return nil, fmt.Errorf("failed to read Uniswap price (%f) for %s", price, symbol)
-		}
-
-		tickerPrices[cp.String()] = types.TickerPrice{Price: price}
-	}
-
-	for _, poolDayData := range poolVolume.PoolDayDatas {
-		volume, err := decmath.NewDecFromFloat(poolDayData.VolumeUSDTracked)
+		timestamp, err := strconv.ParseFloat(poolData.PeriodStartUnix, 64)
 		if err != nil {
 			return nil, err
 		}
-		tickerPrices[poolIDtoPool[poolDayData.PoolID]].Volume.Add(volume)
+
+		vol, err := toSdkDec(poolData.VolumeUSDTracked)
+		if err != nil {
+			// add error
+			return nil, err
+		}
+
+		if _, found := tickerPrices[cp.String()]; !found {
+			latestTimestamp[cp.String()] = timestamp
+			tickerPrices[cp.String()] = types.TickerPrice{Price: price, Volume: sdk.ZeroDec()}
+		} else {
+			if timestamp > latestTimestamp[cp.String()] {
+
+				// update to most latest price recorded
+				latestTimestamp[cp.String()] = timestamp
+				prevVolume := tickerPrices[cp.String()].Volume
+				tickerPrices[cp.String()] = types.TickerPrice{
+					Price:  price,
+					Volume: prevVolume,
+				}
+			}
+		}
+
+		tickerPrices[cp.String()].Volume.Add(vol)
 	}
 
 	return tickerPrices, nil
@@ -222,11 +217,11 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	var poolIDS []string
 	var poolIDtoPool map[string]string
 	for _, pair := range pairs {
-		if _, found := p.poolAddressMap[pair.String()]; !found {
+		if _, found := p.addressToDenom[pair.String()]; !found {
 			return nil, fmt.Errorf("pool id for %s not found", pair.String())
 		}
 
-		pairID := p.poolAddressMap[pair.String()]
+		pairID := p.denomToAddress[pair.String()]
 		poolIDtoPool[pairID] = pair.String()
 		poolIDS = append(poolIDS, pairID)
 	}
@@ -234,6 +229,28 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	idMap := map[string]interface{}{
 		"poolIDS": poolIDS,
 		"start":   PastUnixTime(providerCandlePeriod),
+	}
+
+	var lastID string
+	var poolsMinuteDatas PoolMinuteDataCandleQuery
+	for {
+		idMap["first"] = 10
+		idMap["after"] = lastID
+
+		// query volume from day data
+		var poolsMinuteData PoolMinuteDataCandleQuery
+		err := p.client.Query(context.Background(), &poolsMinuteData, idMap)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(poolsMinuteData.PoolMinuteDatas) == 0 {
+			break
+		}
+
+		lastID = poolsMinuteDatas.PoolMinuteDatas[len(poolsMinuteData.PoolMinuteDatas)-1].ID
+		// append data fetches
+		poolsMinuteDatas.PoolMinuteDatas = append(poolsMinuteDatas.PoolMinuteDatas, poolsMinuteDatas.PoolMinuteDatas...)
 	}
 
 	// should return 10 queries at max
@@ -273,15 +290,32 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, err
 		}
 
-		candlePrices[cp.String()] = append(candlePrices[cp.String()], types.CandlePrice{Price: price, Volume: volume})
+		candlePrices[cp.String()] = append(candlePrices[cp.String()], types.CandlePrice{Price: price, Volume: volume, TimeStamp: poolData.Timestamp})
 	}
 
 	return candlePrices, nil
 }
 
+// GetBundle returns eth price
+func (p UniswapProvider) GetBundle() (float64, error) {
+	var bundle BundleQuery
+	err := p.client.Query(context.Background(), &bundle, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseFloat(bundle.Bundle.EthPriceUSD, 64)
+}
+
 // GetAvailablePairs return all available pairs symbol to susbscribe.
 func (p UniswapProvider) GetAvailablePairs() (map[string]struct{}, error) {
-	return nil, nil
+	availablePairs := make(map[string]struct{})
+	// return denoms that is tracked at provider init
+	for denom, _ := range p.denomToAddress {
+		availablePairs[denom] = struct{}{}
+	}
+
+	return availablePairs, nil
 }
 
 func formatTokenPriceData(token0Price, token1Price string) (sdk.Dec, error) {
@@ -295,4 +329,13 @@ func formatTokenPriceData(token0Price, token1Price string) (sdk.Dec, error) {
 	}
 
 	return decmath.NewDecFromFloat(price0 / price1)
+}
+
+func toSdkDec(volume string) (sdk.Dec, error) {
+	vol, err := strconv.ParseFloat(volume, 64)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	return decmath.NewDecFromFloat(vol)
 }
