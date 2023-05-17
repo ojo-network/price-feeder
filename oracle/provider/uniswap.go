@@ -33,24 +33,18 @@ type (
 	Token struct {
 		Name   string `graphql:"name"`
 		Symbol string `graphql:"symbol"`
-		ID     string `graphql:"id"`
 	}
 
 	PoolMinuteDataCandleQuery struct {
 		PoolMinuteDatas []struct {
-			ID              string  `graphql:"id"`
-			PoolID          string  `graphql:"poolID"`
-			PeriodStartUnix float64 `graphql:"periodStartUnix"`
-			Token0          Token   `graphql:"token0"`
-			Token1          Token   `graphql:"token1"`
-			Token0Price     string  `graphql:"token0Price"`
-			Token1Price     string  `graphql:"token1Price"`
-			//Timestamp        string  `graphql:"timestamp"`
-			VolumeUSDTracked string `graphql:"volumeUSDTracked"`
-			Open             string `graphql:"open"`
-			High             string `graphql:"high"`
-			Low              string `graphql:"low"`
-			Close            string `graphql:"close"`
+			ID               string  `graphql:"id"`
+			PoolID           string  `graphql:"poolID"`
+			PeriodStartUnix  float64 `graphql:"periodStartUnix"`
+			Token0           Token   `graphql:"token0"`
+			Token1           Token   `graphql:"token1"`
+			Token0Price      string  `graphql:"token0Price"`
+			Token1Price      string  `graphql:"token1Price"`
+			VolumeUSDTracked string  `graphql:"volumeUSDTracked"`
 		} `graphql:"poolMinuteDatas(first:$first, after:$after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gte: $start,periodStartUnix_lte:$stop})"`
 	}
 
@@ -83,8 +77,10 @@ func NewUniswapProvider(endpoint Endpoint, addressPairs []types.AddressPair) *Un
 	denomToAddress := make(map[string]string)
 	for _, pair := range addressPairs {
 		pairName := pair.String()
-		addressToDenom[pair.Address] = pairName
-		denomToAddress[pairName] = pair.Address
+		address := strings.ToLower(pair.Address)
+		addressToDenom[address] = pairName
+		// graph supports all lower case id's
+		denomToAddress[pairName] = address
 	}
 
 	if endpoint.Name == ProviderUniswap {
@@ -115,7 +111,7 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	var poolIDS []string
 	poolIDtoPool := make(map[string]string)
 	for _, pair := range pairs {
-		if _, found := p.addressToDenom[pair.String()]; !found {
+		if _, found := p.denomToAddress[pair.String()]; !found {
 			return nil, fmt.Errorf("pool id for %s not found", pair.String())
 		}
 
@@ -138,11 +134,12 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
 	latestTimestamp := make(map[string]float64)
-	var lastID string
 
+	lastID := ""
 	var poolsHourDatas PoolHourDataQuery
 	for {
-		idMap["first"] = 24
+		// limit by graph
+		idMap["first"] = 1000
 		idMap["after"] = lastID
 
 		// query volume from day data
@@ -159,19 +156,20 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 		lastID = poolsHourData.PoolHourDatas[len(poolsHourData.PoolHourDatas)-1].ID
 		// append pools
 		poolsHourDatas.PoolHourDatas = append(poolsHourDatas.PoolHourDatas, poolsHourData.PoolHourDatas...)
+		break
 	}
 
 	for _, poolData := range poolsHourDatas.PoolHourDatas {
-		symbol := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
-
-		cp, ok := baseDenomIdx[symbol]
+		//fmt.Println("data", poolData)
+		name := strings.ToUpper(poolData.Token0.Name) // symbol == base in a currency pair
+		cp, ok := baseDenomIdx[name]
 		if !ok {
 			// skip tokens that are not requested
 			continue
 		}
 
-		if _, ok := tickerPrices[symbol]; ok {
-			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", symbol)
+		if _, ok := tickerPrices[name]; ok {
+			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", name)
 		}
 
 		price, err := toSdkDec(poolData.Token1Price)
@@ -206,7 +204,7 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	var poolIDS []string
 	poolIDtoPool := make(map[string]string)
 	for _, pair := range pairs {
-		if _, found := p.addressToDenom[pair.String()]; !found {
+		if _, found := p.denomToAddress[pair.String()]; !found {
 			return nil, fmt.Errorf("pool id for %s not found", pair.String())
 		}
 
@@ -224,7 +222,8 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	var lastID string
 	var poolsMinuteDatas PoolMinuteDataCandleQuery
 	for {
-		idMap["first"] = 10
+		// limit by	graph
+		idMap["first"] = 1000
 		idMap["after"] = lastID
 
 		// query volume from day data
@@ -238,9 +237,10 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 			break
 		}
 
-		lastID = poolsMinuteDatas.PoolMinuteDatas[len(poolsMinuteData.PoolMinuteDatas)-1].ID
+		lastID = poolsMinuteData.PoolMinuteDatas[len(poolsMinuteData.PoolMinuteDatas)-1].ID
 		// append data fetches
 		poolsMinuteDatas.PoolMinuteDatas = append(poolsMinuteDatas.PoolMinuteDatas, poolsMinuteDatas.PoolMinuteDatas...)
+		break
 	}
 
 	// should return 10 queries at max
@@ -259,23 +259,18 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 
 	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
 	for _, poolData := range poolsData.PoolMinuteDatas {
-		symbol := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
-		cp, ok := baseDenomIdx[symbol]
+		name := strings.ToUpper(poolData.Token0.Name) // symbol == base in a currency pair
+		cp, ok := baseDenomIdx[name]
 		if !ok {
 			// skip tokens that are not requested
 			continue
 		}
 
-		if _, ok := candlePrices[symbol]; ok {
-			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", symbol)
+		if _, ok := candlePrices[name]; ok {
+			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", name)
 		}
 
-		priceFloat, err := strconv.ParseFloat(poolData.Token0Price, 64)
-		if err != nil {
-			return nil, err
-		}
-
-		price, err := decmath.NewDecFromFloat(1 / priceFloat)
+		price, err := toSdkDec(poolData.Token1Price)
 		if err != nil {
 			return nil, err
 		}
