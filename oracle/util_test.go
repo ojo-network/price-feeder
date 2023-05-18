@@ -231,7 +231,7 @@ func TestComputeTVWAP(t *testing.T) {
 						{
 							Price:     sdk.MustNewDecFromStr("28.168700"),
 							Volume:    sdk.MustNewDecFromStr("4749102.53314385"),
-							TimeStamp: provider.PastUnixTime(5 * time.Minute),
+							TimeStamp: provider.PastUnixTime(10 * time.Minute),
 						},
 					},
 				},
