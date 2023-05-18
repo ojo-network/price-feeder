@@ -43,7 +43,7 @@ type (
 	Config struct {
 		Server              Server              `mapstructure:"server"`
 		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs" validate:"required,gt=0,dive,required"`
-		AddressPairs        []AddressPair       `mapstructure:"address_pairs" validate:"required,gt=0,dive,required"`
+		AddressPairs        []AddressPair       `mapstructure:"address_pairs" validate:"dive,required"`
 		Deviations          []Deviation         `mapstructure:"deviation_thresholds"`
 		Account             Account             `mapstructure:"account" validate:"required,gt=0,dive,required"`
 		Keyring             Keyring             `mapstructure:"keyring" validate:"required,gt=0,dive,required"`
@@ -74,8 +74,8 @@ type (
 
 	// AddressPair is pool address for supporting uniswap v3 assets
 	AddressPair struct {
-		CurrencyPair
-		Address string `mapstructure:"address" validate:"required"`
+		CurrencyPair `mapstructure:"currency_pair" validate:"required,dive,required"`
+		Address      string `mapstructure:"address" validate:"required"`
 	}
 
 	// Deviation defines a maximum amount of standard deviations that a given asset can
