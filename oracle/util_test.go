@@ -181,7 +181,7 @@ func TestComputeTVWAP(t *testing.T) {
 						{
 							Price:     sdk.MustNewDecFromStr("28.168700"),
 							Volume:    sdk.MustNewDecFromStr("4749102.53314385"),
-							TimeStamp: provider.PastUnixTime(5 * time.Minute),
+							TimeStamp: provider.PastUnixTime(10 * time.Minute),
 						},
 					},
 				},
@@ -199,7 +199,7 @@ func TestComputeTVWAP(t *testing.T) {
 						{
 							Price:     sdk.MustNewDecFromStr("25.09183"),
 							Volume:    sdk.MustNewDecFromStr("98444.123455"),
-							TimeStamp: provider.PastUnixTime(5 * time.Minute),
+							TimeStamp: provider.PastUnixTime(10 * time.Minute),
 						},
 					},
 				},
@@ -208,21 +208,21 @@ func TestComputeTVWAP(t *testing.T) {
 						{
 							Price:     sdk.MustNewDecFromStr("28.268700"),
 							Volume:    sdk.MustNewDecFromStr("178277.53314385"),
-							TimeStamp: provider.PastUnixTime(5 * time.Minute),
+							TimeStamp: provider.PastUnixTime(10 * time.Minute),
 						},
 					},
 					"OJO": []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("1.13000000"),
 							Volume:    sdk.MustNewDecFromStr("178277.53314385"),
-							TimeStamp: provider.PastUnixTime(5 * time.Minute),
+							TimeStamp: provider.PastUnixTime(10 * time.Minute),
 						},
 					},
 					"LUNA": []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("64.87853000"),
 							Volume:    sdk.MustNewDecFromStr("458917.46353577"),
-							TimeStamp: provider.PastUnixTime(5 * time.Minute),
+							TimeStamp: provider.PastUnixTime(10 * time.Minute),
 						},
 					},
 				},
