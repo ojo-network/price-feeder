@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/hasura/go-graphql-client"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/libs/rand"
@@ -71,11 +72,13 @@ type PoolHourDataResponse struct {
 func (p *ProviderTestSuite) setMockData() {
 	p.pairAddress = []string{"0xa4e0faA58465A2D369aa21B3e42d43374C6F9613", "0x840DEEef2f115Cf50DA625F7368C24af6fE74410"}
 	p.ethPriceUSD = strconv.FormatFloat(rand.Float64()*3000, 'f', -1, 64)
-	p.totalVolume = make([]float64, len(p.pairAddress))
+	p.totalVolume = make([]sdk.Dec, len(p.pairAddress))
 
 	// generate 24 pool data for each pair
 	for i, pair := range p.pairAddress {
 		// generate address pair
+		p.totalVolume[i] = sdk.ZeroDec()
+
 		cPair := types.CurrencyPair{
 			Base:  fmt.Sprintf("TEST0%d", i),
 			Quote: fmt.Sprintf("TEST1%d", i),
@@ -89,7 +92,9 @@ func (p *ProviderTestSuite) setMockData() {
 		p.currencyPairs = append(p.currencyPairs, cPair)
 
 		for j := 0; j < 24; j++ {
-			vol := rand.Float64() * 10000
+			volFloat := strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64)
+			vol, _ := toSdkDec(volFloat)
+
 			p.hourData = append(p.hourData, PoolHourData{
 				ID:              fmt.Sprintf("%s-%d", pair, j),
 				PoolID:          pair,
@@ -104,12 +109,12 @@ func (p *ProviderTestSuite) setMockData() {
 				},
 				Token0Price:        strconv.FormatFloat(rand.Float64()*3000, 'f', -1, 64),
 				Token1Price:        strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64),
-				VolumeUSDTracked:   strconv.FormatFloat(vol, 'f', -1, 64),
+				VolumeUSDTracked:   volFloat,
 				VolumeUSDUntracked: strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64),
 			},
 			)
 
-			p.totalVolume[i] += vol
+			p.totalVolume[i].Set(p.totalVolume[i].Add(vol))
 		}
 	}
 
@@ -195,7 +200,7 @@ type ProviderTestSuite struct {
 	currencyPairs []types.CurrencyPair
 	minuteData    []PoolMinuteData
 	hourData      []PoolHourData
-	totalVolume   []float64
+	totalVolume   []sdk.Dec
 }
 
 func (p *ProviderTestSuite) SetupSuite() {
@@ -238,9 +243,7 @@ func (p *ProviderTestSuite) TestGetTickerPrices() {
 
 		ticker := data[pair.String()]
 		p.EqualValues(ticker.Price.String(), price.String())
-
-		// precision issue
-		//p.EqualValues(p.totalVolume[i], ticker.Volume)
+		p.EqualValues(ticker.Volume.String(), p.totalVolume[i].String())
 	}
 }
 
@@ -260,7 +263,11 @@ func (p *ProviderTestSuite) TestGetCandlePrices() {
 			price, err := toSdkDec(minuteData[j].Token1Price)
 			p.NoError(err)
 
+			vol, err := toSdkDec(minuteData[j].VolumeUSDTracked)
+			p.NoError(err)
+
 			p.EqualValues(candle.Price.String(), price.String())
+			p.EqualValues(candle.Volume.String(), vol.String())
 		}
 
 	}

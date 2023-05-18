@@ -17,7 +17,7 @@ import (
 var _ Provider = (*UniswapProvider)(nil)
 
 var (
-	UNISWAP_URL = "https://api.studio.thegraph.com/query/46403/unidexer/test20"
+	UniswapURL = "https://api.studio.thegraph.com/query/46403/unidexer/test32"
 )
 
 type (
@@ -26,7 +26,7 @@ type (
 	BundleQuery struct {
 		Bundle struct {
 			EthPriceUSD string `graphql:"ethPriceUSD"`
-			Id          string `graphql:"id"`
+			ID          string `graphql:"id"`
 		} `graphql:"bundle(id: \"1\")"`
 	}
 
@@ -40,12 +40,13 @@ type (
 			ID               string  `graphql:"id"`
 			PoolID           string  `graphql:"poolID"`
 			PeriodStartUnix  float64 `graphql:"periodStartUnix"`
+			Timestamp        float64 `graphql:"timestamp"`
 			Token0           Token   `graphql:"token0"`
 			Token1           Token   `graphql:"token1"`
 			Token0Price      string  `graphql:"token0Price"`
 			Token1Price      string  `graphql:"token1Price"`
 			VolumeUSDTracked string  `graphql:"volumeUSDTracked"`
-		} `graphql:"poolMinuteDatas(first:$first, after:$after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gte: $start,periodStartUnix_lte:$stop})"`
+		} `graphql:"poolMinuteDatas(first:$first, after:$after, orderBy: periodStartUnix, orderDirection: asc, where: {poolID_in: $poolIDs, periodStartUnix_gte: $start,periodStartUnix_lte:$stop})"` //nolint:lll
 	}
 
 	PoolHourDataQuery struct {
@@ -53,48 +54,43 @@ type (
 			ID                 string  `graphql:"id"`
 			PoolID             string  `graphql:"poolID"`
 			PeriodStartUnix    float64 `graphql:"periodStartUnix"`
+			Timestamp          float64 `graphql:"timestamp"`
 			Token0             Token   `graphql:"token0"`
 			Token1             Token   `graphql:"token1"`
 			Token0Price        string  `graphql:"token0Price"`
 			Token1Price        string  `graphql:"token1Price"`
 			VolumeUSDTracked   string  `graphql:"volumeUSDTracked"`
 			VolumeUSDUntracked string  `graphql:"volumeUSDUntracked"`
-		} `graphql:"poolHourDatas(first: $first,after: $after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gte:$start,periodStartUnix_lte:$stop})"`
+		} `graphql:"poolHourDatas(first: $first,after: $after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDs, periodStartUnix_gte:$start,periodStartUnix_lte:$stop})"` //nolint:lll
 	}
 
 	// UniswapProvider defines an Oracle provider implemented to consume data from Uniswap graphql
 	UniswapProvider struct {
 		baseURL        string
 		client         *gql.Client
-		addressToDenom map[string]string
 		denomToAddress map[string]string
 	}
 )
 
 func NewUniswapProvider(endpoint Endpoint, addressPairs []types.AddressPair) *UniswapProvider {
-	// create address denom and reverse map
-	addressToDenom := make(map[string]string)
+	// create pair name to address map
 	denomToAddress := make(map[string]string)
 	for _, pair := range addressPairs {
-		pairName := pair.String()
-		address := strings.ToLower(pair.Address)
-		addressToDenom[address] = pairName
 		// graph supports all lower case id's
-		denomToAddress[pairName] = address
+		address := strings.ToLower(pair.Address)
+		denomToAddress[pair.String()] = address
 	}
 
 	if endpoint.Name == ProviderUniswap {
 		return &UniswapProvider{
 			baseURL:        endpoint.Rest,
 			client:         gql.NewClient(endpoint.Rest, nil),
-			addressToDenom: addressToDenom,
 			denomToAddress: denomToAddress,
 		}
 	}
 	return &UniswapProvider{
-		baseURL:        UNISWAP_URL,
-		client:         gql.NewClient(UNISWAP_URL, nil),
-		addressToDenom: addressToDenom,
+		baseURL:        UniswapURL,
+		client:         gql.NewClient(UniswapURL, nil),
 		denomToAddress: denomToAddress,
 	}
 }
@@ -107,17 +103,10 @@ func (p *UniswapProvider) StartConnections() {
 func (p UniswapProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 
 func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	// create token ids
-	var poolIDS []string
-	poolIDtoPool := make(map[string]string)
-	for _, pair := range pairs {
-		if _, found := p.denomToAddress[pair.String()]; !found {
-			return nil, fmt.Errorf("pool id for %s not found", pair.String())
-		}
-
-		pairID := p.denomToAddress[pair.String()]
-		poolIDtoPool[pairID] = pair.String()
-		poolIDS = append(poolIDS, pairID)
+	// create pool ids
+	poolIDS, err := p.collectPoolIDS(pairs...)
+	if err != nil {
+		return nil, err
 	}
 
 	idMap := map[string]interface{}{
@@ -135,7 +124,8 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
 	latestTimestamp := make(map[string]float64)
 
-	lastID := ""
+	var lastID string
+	var firstID string
 	var poolsHourDatas PoolHourDataQuery
 	for {
 		// limit by graph
@@ -149,18 +139,19 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, err
 		}
 
-		if len(poolsHourData.PoolHourDatas) == 0 {
+		// check if no new id or repeated id
+		if len(poolsHourData.PoolHourDatas) == 0 || firstID == poolsHourData.PoolHourDatas[0].ID {
 			break
 		}
 
+		firstID = poolsHourData.PoolHourDatas[0].ID
 		lastID = poolsHourData.PoolHourDatas[len(poolsHourData.PoolHourDatas)-1].ID
+
 		// append pools
 		poolsHourDatas.PoolHourDatas = append(poolsHourDatas.PoolHourDatas, poolsHourData.PoolHourDatas...)
-		break
 	}
 
 	for _, poolData := range poolsHourDatas.PoolHourDatas {
-		//fmt.Println("data", poolData)
 		name := strings.ToUpper(poolData.Token0.Name) // symbol == base in a currency pair
 		cp, ok := baseDenomIdx[name]
 		if !ok {
@@ -200,17 +191,10 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 }
 
 func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	// create token ids
-	var poolIDS []string
-	poolIDtoPool := make(map[string]string)
-	for _, pair := range pairs {
-		if _, found := p.denomToAddress[pair.String()]; !found {
-			return nil, fmt.Errorf("pool id for %s not found", pair.String())
-		}
-
-		pairID := p.denomToAddress[pair.String()]
-		poolIDtoPool[pairID] = pair.String()
-		poolIDS = append(poolIDS, pairID)
+	// create pool ids
+	poolIDS, err := p.collectPoolIDS(pairs...)
+	if err != nil {
+		return nil, err
 	}
 
 	idMap := map[string]interface{}{
@@ -220,6 +204,7 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	}
 
 	var lastID string
+	var firstID string
 	var poolsMinuteDatas PoolMinuteDataCandleQuery
 	for {
 		// limit by	graph
@@ -233,19 +218,20 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, err
 		}
 
-		if len(poolsMinuteData.PoolMinuteDatas) == 0 {
+		// check if no new id or repeated id
+		if len(poolsMinuteData.PoolMinuteDatas) == 0 || firstID == poolsMinuteData.PoolMinuteDatas[0].ID {
 			break
 		}
 
+		firstID = poolsMinuteData.PoolMinuteDatas[0].ID
 		lastID = poolsMinuteData.PoolMinuteDatas[len(poolsMinuteData.PoolMinuteDatas)-1].ID
-		// append data fetches
+
 		poolsMinuteDatas.PoolMinuteDatas = append(poolsMinuteDatas.PoolMinuteDatas, poolsMinuteDatas.PoolMinuteDatas...)
-		break
 	}
 
 	// should return 10 queries at max
 	var poolsData PoolMinuteDataCandleQuery
-	err := p.client.Query(context.Background(), &poolsData, idMap)
+	err = p.client.Query(context.Background(), &poolsData, idMap)
 
 	if err != nil {
 		return nil, err
@@ -280,7 +266,11 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, err
 		}
 
-		candlePrices[cp.String()] = append(candlePrices[cp.String()], types.CandlePrice{Price: price, Volume: vol, TimeStamp: int64(poolData.PeriodStartUnix)})
+		candlePrices[cp.String()] = append(candlePrices[cp.String()], types.CandlePrice{
+			Price:     price,
+			Volume:    vol,
+			TimeStamp: int64(poolData.Timestamp),
+		})
 	}
 
 	return candlePrices, nil
@@ -300,9 +290,10 @@ func (p UniswapProvider) GetBundle() (float64, error) {
 // GetAvailablePairs return all available pairs symbol to susbscribe.
 func (p UniswapProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	availablePairs := make(map[string]struct{})
+
 	// return denoms that is tracked at provider init
-	for denom, _ := range p.denomToAddress {
-		availablePairs[denom] = struct{}{}
+	for denom := range p.denomToAddress {
+		availablePairs[denom] = struct{}{} //nolint:structcheck
 	}
 
 	return availablePairs, nil
@@ -315,4 +306,18 @@ func toSdkDec(value string) (sdk.Dec, error) {
 	}
 
 	return decmath.NewDecFromFloat(valueFloat)
+}
+
+func (p UniswapProvider) collectPoolIDS(pairs ...types.CurrencyPair) ([]string, error) {
+	poolIDS := make([]string, len(pairs))
+	for i, pair := range pairs {
+		if _, found := p.denomToAddress[pair.String()]; !found {
+			return nil, fmt.Errorf("pool id for %s not found", pair.String())
+		}
+
+		poolID := p.denomToAddress[pair.String()]
+		poolIDS[i] = poolID
+	}
+
+	return poolIDS, nil
 }
