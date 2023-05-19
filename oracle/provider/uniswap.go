@@ -72,8 +72,6 @@ type (
 )
 
 func NewUniswapProvider(endpoint Endpoint, addressPairs ...types.CurrencyPair) *UniswapProvider {
-
-	fmt.Println("uniswap init", endpoint, addressPairs)
 	// create pair name to address map
 	denomToAddress := make(map[string]string)
 	for _, pair := range addressPairs {
@@ -169,15 +167,11 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 			name = cp.String()
 		} else {
 			if _, found := quoteDenomIdx[symbol0]; !found {
-				return nil, fmt.Errorf("symbol returned does not match base or quote")
+				return nil, fmt.Errorf("%s returned does not match base or quote symbols", symbol0)
 			}
 
 			tokenPrice = poolData.Token0Price
 			name = quoteDenomIdx[symbol0].String()
-		}
-
-		if _, ok := tickerPrices[name]; ok {
-			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", name)
 		}
 
 		price, err := toSdkDec(tokenPrice)
@@ -270,15 +264,11 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 			name = cp.String()
 		} else {
 			if _, found := quoteDenomIdx[symbol0]; !found {
-				return nil, fmt.Errorf("symbol returned does not match base or quote")
+				return nil, fmt.Errorf("%s returned does not match base or quote symbols", symbol0)
 			}
 
 			tokenPrice = poolData.Token0Price
 			name = quoteDenomIdx[symbol0].String()
-		}
-
-		if _, ok := candlePrices[name]; ok {
-			return nil, fmt.Errorf("duplicate token found in uniswap response: %s", name)
 		}
 
 		price, err := toSdkDec(tokenPrice)

@@ -80,14 +80,9 @@ func (p *ProviderTestSuite) setMockData() {
 		p.totalVolume[i] = sdk.ZeroDec()
 
 		cPair := types.CurrencyPair{
-			Base:  fmt.Sprintf("TEST0%d", i),
-			Quote: fmt.Sprintf("TEST1%d", i),
+			Base:  fmt.Sprintf("SYBMOL0%d", i),
+			Quote: fmt.Sprintf("SYBMOL1%d", i),
 		}
-
-		p.addressPairs = append(p.addressPairs, types.AddressPair{
-			CurrencyPair: cPair,
-			Address:      pair,
-		})
 
 		p.currencyPairs = append(p.currencyPairs, cPair)
 
@@ -196,7 +191,6 @@ type ProviderTestSuite struct {
 	provider      *UniswapProvider
 	ethPriceUSD   string
 	pairAddress   []string
-	addressPairs  []types.AddressPair
 	currencyPairs []types.CurrencyPair
 	minuteData    []PoolMinuteData
 	hourData      []PoolHourData
@@ -206,7 +200,7 @@ type ProviderTestSuite struct {
 func (p *ProviderTestSuite) SetupSuite() {
 	p.setMockData()
 	p.setupMockServer()
-	p.provider = NewUniswapProvider(Endpoint{}, p.addressPairs)
+	p.provider = NewUniswapProvider(Endpoint{}, p.currencyPairs...)
 }
 
 func (suite *ProviderTestSuite) TeadDownSuite() {
@@ -233,9 +227,9 @@ func (p *ProviderTestSuite) TestGetTickerPrices() {
 
 	data, err := p.provider.GetTickerPrices(p.currencyPairs...)
 	p.NoError(err)
-	p.Len(data, len(p.addressPairs))
+	p.Len(data, len(p.currencyPairs))
 
-	for i, pair := range p.addressPairs {
+	for i, pair := range p.currencyPairs {
 		hourData := p.hourData[i*24]
 
 		price, err := toSdkDec(hourData.Token1Price)
@@ -253,9 +247,9 @@ func (p *ProviderTestSuite) TestGetCandlePrices() {
 
 	data, err := p.provider.GetCandlePrices(p.currencyPairs...)
 	p.NoError(err)
-	p.Len(data, len(p.addressPairs))
+	p.Len(data, len(p.currencyPairs))
 
-	for i, pair := range p.addressPairs {
+	for i, pair := range p.currencyPairs {
 		candleData := data[pair.String()]
 		minuteData := p.minuteData[i*10 : (i+1)*10]
 

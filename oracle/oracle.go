@@ -201,14 +201,12 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 			go func() {
 				defer close(ch)
 				prices, err = priceProvider.GetTickerPrices(currencyPairs...)
-				fmt.Println("err from ticker", err)
 				if err != nil {
 					provider.TelemetryFailure(providerName, provider.MessageTypeTicker)
 					errCh <- err
 				}
 
 				candles, err = priceProvider.GetCandlePrices(currencyPairs...)
-				fmt.Println("err from candle", err)
 				if err != nil {
 					provider.TelemetryFailure(providerName, provider.MessageTypeCandle)
 					errCh <- err

@@ -42,7 +42,7 @@ type (
 	// Config defines all necessary price-feeder configuration parameters.
 	Config struct {
 		Server              Server              `mapstructure:"server"`
-		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs"`
+		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs" validate:"required,gt=0,dive,required"`
 		Deviations          []Deviation         `mapstructure:"deviation_thresholds"`
 		Account             Account             `mapstructure:"account" validate:"required,gt=0,dive,required"`
 		Keyring             Keyring             `mapstructure:"keyring" validate:"required,gt=0,dive,required"`
