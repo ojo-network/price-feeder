@@ -11,7 +11,10 @@ core differences are as follows:
 - The `price-feeder` combines both `feeder` and `price-server` into a single
   Golang-based application for better UX, testability, and integration.
 
-This instance of the price feeder is intended to be used as a library for [Umee's Price Feeder](https://github.com/umee-network/umee/tree/main/price-feeder), in order to prevent double work.
+## Forks
+
+* [Kujira](https://github.com/team-kujira/oracle-price-feeder)
+* [Sei](https://github.com/sei-protocol/sei-chain/tree/master/oracle/price-feeder)
 
 ## Background
 
