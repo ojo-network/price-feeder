@@ -11,7 +11,7 @@ core differences are as follows:
 - The `price-feeder` combines both `feeder` and `price-server` into a single
   Golang-based application for better UX, testability, and integration.
 
-## Forks
+## Forks - Other Projects that use the Ojo Price Feeder
 
 * [Kujira](https://github.com/team-kujira/oracle-price-feeder)
 * [Sei](https://github.com/sei-protocol/sei-chain/tree/master/oracle/price-feeder)
