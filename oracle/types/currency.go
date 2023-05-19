@@ -4,12 +4,8 @@ package types
 // We primarily utilize the base for broadcasting exchange rates and use the
 // pair for querying for the ticker prices.
 type CurrencyPair struct {
-	Base  string
-	Quote string
-}
-
-type AddressPair struct {
-	CurrencyPair
+	Base    string
+	Quote   string
 	Address string
 }
 

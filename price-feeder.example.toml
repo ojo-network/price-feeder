@@ -1,4 +1,5 @@
 gas_adjustment = 1
+provider_timeout = "10000ms"
 
 [server]
 listen_addr = "0.0.0.0:7171"
@@ -38,6 +39,23 @@ providers = [
   "binanceus",
 ]
 quote = "USD"
+
+
+[[currency_pairs]]
+base = "WETH"
+providers = [
+  "uniswap"
+]
+quote = "USD"
+pair_address = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+
+[[currency_pairs]]
+base = "CBETH"
+providers = [
+  "uniswap"
+]
+quote = "WETH"
+pair_address = "0x840deeef2f115cf50da625f7368c24af6fe74410"
 
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"

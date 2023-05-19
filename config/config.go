@@ -42,8 +42,7 @@ type (
 	// Config defines all necessary price-feeder configuration parameters.
 	Config struct {
 		Server              Server              `mapstructure:"server"`
-		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs" validate:"required,gt=0,dive,required"`
-		AddressPairs        []AddressPair       `mapstructure:"address_pairs" validate:"dive,required"`
+		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs"`
 		Deviations          []Deviation         `mapstructure:"deviation_thresholds"`
 		Account             Account             `mapstructure:"account" validate:"required,gt=0,dive,required"`
 		Keyring             Keyring             `mapstructure:"keyring" validate:"required,gt=0,dive,required"`
@@ -67,15 +66,10 @@ type (
 	// CurrencyPair defines a price quote of the exchange rate for two different
 	// currencies and the supported providers for getting the exchange rate.
 	CurrencyPair struct {
-		Base      string          `mapstructure:"base" validate:"required"`
-		Quote     string          `mapstructure:"quote" validate:"required"`
-		Providers []provider.Name `mapstructure:"providers" validate:"required,gt=0,dive,required"`
-	}
-
-	// AddressPair is pool address for supporting uniswap v3 assets
-	AddressPair struct {
-		CurrencyPair `mapstructure:"currency_pair" validate:"required,dive,required"`
-		Address      string `mapstructure:"address" validate:"required"`
+		Base        string          `mapstructure:"base" validate:"required"`
+		Quote       string          `mapstructure:"quote" validate:"required"`
+		PairAddress string          `mapstructure:"pair_address"`
+		Providers   []provider.Name `mapstructure:"providers" validate:"required,gt=0,dive,required"`
 	}
 
 	// Deviation defines a maximum amount of standard deviations that a given asset can
@@ -152,29 +146,13 @@ func (c Config) ProviderPairs() map[provider.Name][]types.CurrencyPair {
 	for _, pair := range c.CurrencyPairs {
 		for _, provider := range pair.Providers {
 			providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
-				Base:  pair.Base,
-				Quote: pair.Quote,
+				Base:    pair.Base,
+				Quote:   pair.Quote,
+				Address: pair.PairAddress,
 			})
 		}
 	}
 	return providerPairs
-}
-
-func (c Config) AddressProviderPairs() map[provider.Name][]types.AddressPair {
-	addressProviderPairs := make(map[provider.Name][]types.AddressPair)
-
-	for _, pair := range c.AddressPairs {
-		for _, pairProvider := range pair.Providers {
-			addressProviderPairs[pairProvider] = append(addressProviderPairs[pairProvider], types.AddressPair{
-				CurrencyPair: types.CurrencyPair{
-					Base:  pair.Base,
-					Quote: pair.Quote,
-				},
-				Address: pair.Address,
-			})
-		}
-	}
-	return addressProviderPairs
 }
 
 // ProviderEndpointsMap converts the provider_endpoints from the config
@@ -221,6 +199,7 @@ func ParseConfig(configPath string) (Config, error) {
 	if len(cfg.ProviderTimeout) == 0 {
 		cfg.ProviderTimeout = defaultProviderTimeout.String()
 	}
+	fmt.Println(cfg.CurrencyPairs)
 
 	pairs := make(map[string]map[provider.Name]struct{})
 	coinQuotes := make(map[string]struct{})

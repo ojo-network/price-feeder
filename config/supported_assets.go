@@ -25,6 +25,7 @@ var (
 		provider.ProviderCrypto:    false,
 		provider.ProviderPolygon:   true,
 		provider.ProviderMock:      false,
+		provider.ProviderUniswap:   false,
 	}
 
 	// SupportedQuotes defines a lookup table for which assets we support
@@ -38,6 +39,7 @@ var (
 		"ETH":    {},
 		"ATOM":   {},
 		"OSMO":   {},
+		"WETH":   {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported

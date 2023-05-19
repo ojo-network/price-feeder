@@ -57,16 +57,15 @@ type Oracle struct {
 	logger zerolog.Logger
 	closer *pfsync.Closer
 
-	providerTimeout      time.Duration
-	providerPairs        map[provider.Name][]types.CurrencyPair
-	addressProviderPairs map[provider.Name][]types.AddressPair
-	previousPrevote      *PreviousPrevote
-	previousVotePeriod   float64
-	priceProviders       map[provider.Name]provider.Provider
-	oracleClient         client.OracleClient
-	deviations           map[string]sdk.Dec
-	endpoints            map[provider.Name]provider.Endpoint
-	paramCache           ParamCache
+	providerTimeout    time.Duration
+	providerPairs      map[provider.Name][]types.CurrencyPair
+	previousPrevote    *PreviousPrevote
+	previousVotePeriod float64
+	priceProviders     map[provider.Name]provider.Provider
+	oracleClient       client.OracleClient
+	deviations         map[string]sdk.Dec
+	endpoints          map[provider.Name]provider.Endpoint
+	paramCache         ParamCache
 
 	pricesMutex     sync.RWMutex
 	lastPriceSyncTS time.Time
@@ -80,23 +79,21 @@ func New(
 	logger zerolog.Logger,
 	oc client.OracleClient,
 	providerPairs map[provider.Name][]types.CurrencyPair,
-	addressProviderPairs map[provider.Name][]types.AddressPair,
 	providerTimeout time.Duration,
 	deviations map[string]sdk.Dec,
 	endpoints map[provider.Name]provider.Endpoint,
 ) *Oracle {
 	return &Oracle{
-		logger:               logger.With().Str("module", "oracle").Logger(),
-		closer:               pfsync.NewCloser(),
-		oracleClient:         oc,
-		providerPairs:        providerPairs,
-		addressProviderPairs: addressProviderPairs,
-		priceProviders:       make(map[provider.Name]provider.Provider),
-		previousPrevote:      nil,
-		providerTimeout:      providerTimeout,
-		deviations:           deviations,
-		paramCache:           ParamCache{},
-		endpoints:            endpoints,
+		logger:          logger.With().Str("module", "oracle").Logger(),
+		closer:          pfsync.NewCloser(),
+		oracleClient:    oc,
+		providerPairs:   providerPairs,
+		priceProviders:  make(map[provider.Name]provider.Provider),
+		previousPrevote: nil,
+		providerTimeout: providerTimeout,
+		deviations:      deviations,
+		paramCache:      ParamCache{},
+		endpoints:       endpoints,
 	}
 }
 
@@ -204,12 +201,14 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 			go func() {
 				defer close(ch)
 				prices, err = priceProvider.GetTickerPrices(currencyPairs...)
+				fmt.Println("err from ticker", err)
 				if err != nil {
 					provider.TelemetryFailure(providerName, provider.MessageTypeTicker)
 					errCh <- err
 				}
 
 				candles, err = priceProvider.GetCandlePrices(currencyPairs...)
+				fmt.Println("err from candle", err)
 				if err != nil {
 					provider.TelemetryFailure(providerName, provider.MessageTypeCandle)
 					errCh <- err
@@ -422,7 +421,6 @@ func (o *Oracle) getOrSetProvider(ctx context.Context, providerName provider.Nam
 			providerName,
 			o.logger,
 			o.endpoints[providerName],
-			o.addressProviderPairs[providerName],
 			o.providerPairs[providerName]...,
 		)
 		if err != nil {
@@ -441,7 +439,6 @@ func NewProvider(
 	providerName provider.Name,
 	logger zerolog.Logger,
 	endpoint provider.Endpoint,
-	addressProviderPair []types.AddressPair,
 	providerPairs ...types.CurrencyPair,
 ) (provider.Provider, error) {
 	switch providerName {
@@ -488,7 +485,7 @@ func NewProvider(
 		return provider.NewCrescentProvider(ctx, logger, endpoint, providerPairs...)
 
 	case provider.ProviderUniswap:
-		return provider.NewUniswapProvider(endpoint, addressProviderPair), nil
+		return provider.NewUniswapProvider(endpoint, providerPairs...), nil
 
 	case provider.ProviderMock:
 		return provider.NewMockProvider(), nil
