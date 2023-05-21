@@ -66,10 +66,15 @@ type (
 	// CurrencyPair defines a price quote of the exchange rate for two different
 	// currencies and the supported providers for getting the exchange rate.
 	CurrencyPair struct {
-		Base        string          `mapstructure:"base" validate:"required"`
-		Quote       string          `mapstructure:"quote" validate:"required"`
-		PairAddress string          `mapstructure:"pair_address"`
-		Providers   []provider.Name `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+		Base        string                `mapstructure:"base" validate:"required"`
+		Quote       string                `mapstructure:"quote" validate:"required"`
+		PairAddress []PairAddressProvider `mapstructure:"pair_address_providers" validate:"dive"`
+		Providers   []provider.Name       `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+	}
+
+	PairAddressProvider struct {
+		Address  string        `mapstructure:"address" validate:"required"`
+		Provider provider.Name `mapstructure:"provider" validate:"required"`
 	}
 
 	// Deviation defines a maximum amount of standard deviations that a given asset can
@@ -145,13 +150,25 @@ func (c Config) ProviderPairs() map[provider.Name][]types.CurrencyPair {
 
 	for _, pair := range c.CurrencyPairs {
 		for _, provider := range pair.Providers {
-			providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
-				Base:    pair.Base,
-				Quote:   pair.Quote,
-				Address: pair.PairAddress,
-			})
+			if len(pair.PairAddress) > 0 {
+				for _, uniPair := range pair.PairAddress {
+					if (uniPair.Provider == provider) && (uniPair.Address != "") {
+						providerPairs[uniPair.Provider] = append(providerPairs[uniPair.Provider], types.CurrencyPair{
+							Base:    pair.Base,
+							Quote:   pair.Quote,
+							Address: uniPair.Address,
+						})
+					}
+				}
+			} else {
+				providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
+					Base:  pair.Base,
+					Quote: pair.Quote,
+				})
+			}
 		}
 	}
+
 	return providerPairs
 }
 

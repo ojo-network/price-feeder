@@ -42,6 +42,10 @@ var (
 		"WETH":   {},
 	}
 
+	SupportedUniswapCurrencies = map[string]struct{}{
+		"WETH": {},
+	}
+
 	// SupportedForexCurrencies defines a lookup table for all the supported
 	// Forex currencies
 	SupportedForexCurrencies = map[string]struct{}{

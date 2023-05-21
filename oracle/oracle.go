@@ -482,7 +482,15 @@ func NewProvider(
 	case provider.ProviderCrescent:
 		return provider.NewCrescentProvider(ctx, logger, endpoint, providerPairs...)
 
-	case provider.ProviderUniswap:
+	default:
+		// check if any version of uniswap
+		name := strings.Split(providerName.String(), "-")
+
+		// provider is not of type chain-uniswap
+		if len(name) != 2 && name[1] != provider.ProviderUniswap.String() {
+			break
+		}
+
 		return provider.NewUniswapProvider(endpoint, providerPairs...), nil
 
 	case provider.ProviderMock:

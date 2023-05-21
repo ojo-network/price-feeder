@@ -71,11 +71,12 @@ type (
 	}
 )
 
-func NewUniswapProvider(endpoint Endpoint, addressPairs ...types.CurrencyPair) *UniswapProvider {
+func NewUniswapProvider(endpoint Endpoint, currencyPairs ...types.CurrencyPair) *UniswapProvider {
 	// create pair name to address map
 	denomToAddress := make(map[string]string)
-	for _, pair := range addressPairs {
+	for _, pair := range currencyPairs {
 		// graph supports all lower case id's
+		// currently supports only 1 fee tier pool per currency pair
 		address := strings.ToLower(pair.Address)
 		denomToAddress[pair.String()] = address
 	}
@@ -114,13 +115,7 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 		"stop":    time.Now().Unix(),
 	}
 
-	baseDenomIdx := make(map[string]types.CurrencyPair)
-	quoteDenomIdx := make(map[string]types.CurrencyPair)
-	for _, cp := range pairs {
-		baseDenomIdx[strings.ToUpper(cp.Base)] = cp
-		quoteDenomIdx[strings.ToUpper(cp.Quote)] = cp
-	}
-
+	baseDenomIdx, quoteDenomIdx := p.returnBaseAndQuoteMapping(pairs...)
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
 	latestTimestamp := make(map[string]float64)
 
@@ -154,7 +149,6 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 
 	for _, poolData := range poolsHourDatas.PoolHourDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
-		// TODO: temp fix for WETH pricing
 		if symbol0 == "USDC" {
 			symbol0 = "USD"
 		}
@@ -210,17 +204,11 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 
 	idMap := map[string]interface{}{
 		"poolIDS": poolIDS,
-		"start":   time.Now().Unix() - int64(providerCandlePeriod.Seconds()),
+		"start":   time.Now().Unix() - int64((5 * time.Minute).Seconds()),
 		"stop":    time.Now().Unix(),
 	}
 
-	baseDenomIdx := make(map[string]types.CurrencyPair)
-	quoteDenomIdx := make(map[string]types.CurrencyPair)
-	for _, cp := range pairs {
-		baseDenomIdx[strings.ToUpper(cp.Base)] = cp
-		quoteDenomIdx[strings.ToUpper(cp.Quote)] = cp
-	}
-
+	baseDenomIdx, quoteDenomIdx := p.returnBaseAndQuoteMapping(pairs...)
 	var lastID string
 	var firstID string
 	var poolsMinuteDatas PoolMinuteDataCandleQuery
@@ -251,10 +239,6 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
 	for _, poolData := range poolsMinuteDatas.PoolMinuteDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
-		// TODO: temp fix for WETH pricing
-		if symbol0 == "USDC" {
-			symbol0 = "USD"
-		}
 
 		// flip price based on returned quote or denom
 		var tokenPrice string
@@ -335,4 +319,24 @@ func (p UniswapProvider) collectPoolIDS(pairs ...types.CurrencyPair) ([]string, 
 	}
 
 	return poolIDS, nil
+}
+
+func (p UniswapProvider) returnBaseAndQuoteMapping(pairs ...types.CurrencyPair) (map[string]types.CurrencyPair, map[string]types.CurrencyPair) {
+	baseDenomIdx := make(map[string]types.CurrencyPair)
+	quoteDenomIdx := make(map[string]types.CurrencyPair)
+	for _, cp := range pairs {
+		base := strings.ToUpper(cp.Base)
+		quote := strings.ToUpper(cp.Quote)
+
+		if base == "WETH" {
+			cp.Base = "ETH"
+		} else if quote == "WETH" {
+			cp.Quote = "ETH"
+		}
+
+		baseDenomIdx[base] = cp
+		quoteDenomIdx[quote] = cp
+	}
+
+	return baseDenomIdx, quoteDenomIdx
 }
