@@ -321,13 +321,17 @@ func (p UniswapProvider) collectPoolIDS(pairs ...types.CurrencyPair) ([]string, 
 	return poolIDS, nil
 }
 
-func (p UniswapProvider) returnBaseAndQuoteMapping(pairs ...types.CurrencyPair) (map[string]types.CurrencyPair, map[string]types.CurrencyPair) {
+func (p UniswapProvider) returnBaseAndQuoteMapping(pairs ...types.CurrencyPair) (
+	map[string]types.CurrencyPair,
+	map[string]types.CurrencyPair,
+) {
 	baseDenomIdx := make(map[string]types.CurrencyPair)
 	quoteDenomIdx := make(map[string]types.CurrencyPair)
 	for _, cp := range pairs {
 		base := strings.ToUpper(cp.Base)
 		quote := strings.ToUpper(cp.Quote)
 
+		// Replace weth with eth for all pairs
 		if base == "WETH" {
 			cp.Base = "ETH"
 		} else if quote == "WETH" {

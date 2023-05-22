@@ -293,14 +293,18 @@ func CheckProviderMins(ctx context.Context, logger zerolog.Logger, cfg Config) e
 	}
 
 	for base, providers := range pairs {
+		var minProviders int
+		_, isForexBase := SupportedForexCurrencies[base]
+		_, isUniBase := SupportedUniswapCurrencies[base]
+
 		// If currency provider tracker errored, default to three providers as
 		// the minimum.
-		var minProviders int
-		if currencyProviderTracker != nil {
+		switch {
+		case currencyProviderTracker != nil:
 			minProviders = currencyProviderTracker.CurrencyProviderMin[base]
-		} else if _, ok := SupportedForexCurrencies[base]; ok {
+		case isForexBase || isUniBase:
 			minProviders = 1
-		} else {
+		default:
 			minProviders = 3
 		}
 

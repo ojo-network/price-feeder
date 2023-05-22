@@ -482,6 +482,9 @@ func NewProvider(
 	case provider.ProviderCrescent:
 		return provider.NewCrescentProvider(ctx, logger, endpoint, providerPairs...)
 
+	case provider.ProviderMock:
+		return provider.NewMockProvider(), nil
+
 	default:
 		// check if any version of uniswap
 		name := strings.Split(providerName.String(), "-")
@@ -492,9 +495,6 @@ func NewProvider(
 		}
 
 		return provider.NewUniswapProvider(endpoint, providerPairs...), nil
-
-	case provider.ProviderMock:
-		return provider.NewMockProvider(), nil
 	}
 
 	return nil, fmt.Errorf("provider %s not found", providerName)

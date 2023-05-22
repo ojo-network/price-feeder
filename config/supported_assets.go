@@ -43,7 +43,9 @@ var (
 	}
 
 	SupportedUniswapCurrencies = map[string]struct{}{
-		"WETH": {},
+		"WETH":  {},
+		"CBETH": {},
+		"RETH":  {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported
