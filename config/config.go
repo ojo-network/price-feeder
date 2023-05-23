@@ -216,7 +216,6 @@ func ParseConfig(configPath string) (Config, error) {
 	if len(cfg.ProviderTimeout) == 0 {
 		cfg.ProviderTimeout = defaultProviderTimeout.String()
 	}
-	fmt.Println(cfg.CurrencyPairs)
 
 	pairs := make(map[string]map[provider.Name]struct{})
 	coinQuotes := make(map[string]struct{})

@@ -10,22 +10,22 @@ var (
 	// SupportedProviders defines a lookup table of all the supported currency API
 	// providers and whether or not they require an API key to be passed in.
 	SupportedProviders = map[provider.Name]APIKeyRequired{
-		provider.ProviderKraken:    false,
-		provider.ProviderBinance:   false,
-		provider.ProviderBinanceUS: false,
-		provider.ProviderCrescent:  false,
-		provider.ProviderOsmosis:   false,
-		provider.ProviderOsmosisV2: false,
-		provider.ProviderOkx:       false,
-		provider.ProviderHuobi:     false,
-		provider.ProviderGate:      false,
-		provider.ProviderCoinbase:  false,
-		provider.ProviderBitget:    false,
-		provider.ProviderMexc:      false,
-		provider.ProviderCrypto:    false,
-		provider.ProviderPolygon:   true,
-		provider.ProviderMock:      false,
-		provider.ProviderUniswap:   false,
+		provider.ProviderKraken:     false,
+		provider.ProviderBinance:    false,
+		provider.ProviderBinanceUS:  false,
+		provider.ProviderCrescent:   false,
+		provider.ProviderOsmosis:    false,
+		provider.ProviderOsmosisV2:  false,
+		provider.ProviderOkx:        false,
+		provider.ProviderHuobi:      false,
+		provider.ProviderGate:       false,
+		provider.ProviderCoinbase:   false,
+		provider.ProviderBitget:     false,
+		provider.ProviderMexc:       false,
+		provider.ProviderCrypto:     false,
+		provider.ProviderPolygon:    true,
+		provider.ProviderMock:       false,
+		provider.ProviderEthUniswap: false,
 	}
 
 	// SupportedQuotes defines a lookup table for which assets we support

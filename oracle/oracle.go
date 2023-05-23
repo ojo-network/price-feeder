@@ -490,7 +490,7 @@ func NewProvider(
 		name := strings.Split(providerName.String(), "-")
 
 		// provider is not of type chain-uniswap
-		if len(name) != 2 && name[1] != provider.ProviderUniswap.String() {
+		if len(name) != 2 && name[1] != "uniswap" {
 			break
 		}
 

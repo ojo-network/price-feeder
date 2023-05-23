@@ -40,22 +40,17 @@ providers = [
 ]
 quote = "USD"
 
-
+# remove W in case of wrapped default native assets (WETH -> ETH)
 [[currency_pairs]]
-base = "WETH"
+base = "ETH"
 providers = [
-  "uniswap"
+  "eth-uniswap"
 ]
-quote = "USD"
-pair_address = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
 
-[[currency_pairs]]
-base = "CBETH"
-providers = [
-  "uniswap"
-]
-quote = "WETH"
-pair_address = "0x840deeef2f115cf50da625f7368c24af6fe74410"
+quote = "USDC"
+[[currency_pairs.pair_address_providers]]
+address = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+provider = "eth-uniswap"
 
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
@@ -84,3 +79,8 @@ prometheus-retention-time = 100
 name = "binance"
 rest = "https://api1.binance.com"
 websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "eth-uniswap"
+rest = "https://api.studio.thegraph.com/query/46403/unidexer/test33"
+websocket = "not supported"

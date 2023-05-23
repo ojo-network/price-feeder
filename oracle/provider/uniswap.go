@@ -16,7 +16,13 @@ import (
 var _ Provider = (*UniswapProvider)(nil)
 
 var (
+	WethSymbol = "WETH"
 	UniswapURL = "https://api.studio.thegraph.com/query/46403/unidexer/test33"
+)
+
+const (
+	WETH = "WETH"
+	ETH  = "ETH"
 )
 
 type (
@@ -81,13 +87,15 @@ func NewUniswapProvider(endpoint Endpoint, currencyPairs ...types.CurrencyPair) 
 		denomToAddress[pair.String()] = address
 	}
 
-	if endpoint.Name == ProviderUniswap {
+	// default provider to eth uniswap
+	if endpoint.Name == ProviderEthUniswap {
 		return &UniswapProvider{
 			baseURL:        endpoint.Rest,
 			client:         gql.NewClient(endpoint.Rest, nil),
 			denomToAddress: denomToAddress,
 		}
 	}
+
 	return &UniswapProvider{
 		baseURL:        UniswapURL,
 		client:         gql.NewClient(UniswapURL, nil),
@@ -149,8 +157,9 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 
 	for _, poolData := range poolsHourDatas.PoolHourDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
-		if symbol0 == "USDC" {
-			symbol0 = "USD"
+		// change weth to eth for compatibility with other price providers
+		if symbol0 == WETH {
+			symbol0 = ETH
 		}
 
 		// flip price based on returned quote or denom
@@ -239,6 +248,10 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
 	for _, poolData := range poolsMinuteDatas.PoolMinuteDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
+		// change weth to eth for compatibility with other price providers
+		if symbol0 == WETH {
+			symbol0 = ETH
+		}
 
 		// flip price based on returned quote or denom
 		var tokenPrice string
@@ -321,6 +334,7 @@ func (p UniswapProvider) collectPoolIDS(pairs ...types.CurrencyPair) ([]string, 
 	return poolIDS, nil
 }
 
+// returnBaseAndQuoteMapping return base and quote denom and replace either of weth with eth
 func (p UniswapProvider) returnBaseAndQuoteMapping(pairs ...types.CurrencyPair) (
 	map[string]types.CurrencyPair,
 	map[string]types.CurrencyPair,
@@ -332,10 +346,10 @@ func (p UniswapProvider) returnBaseAndQuoteMapping(pairs ...types.CurrencyPair) 
 		quote := strings.ToUpper(cp.Quote)
 
 		// Replace weth with eth for all pairs
-		if base == "WETH" {
-			cp.Base = "ETH"
-		} else if quote == "WETH" {
-			cp.Quote = "ETH"
+		if base == WETH {
+			cp.Base = ETH
+		} else if quote == WETH {
+			cp.Quote = ETH
 		}
 
 		baseDenomIdx[base] = cp
