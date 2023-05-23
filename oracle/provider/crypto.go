@@ -16,6 +16,10 @@ import (
 )
 
 const (
+	// cryptoCandlePeriod is a change from the default to support older
+	// crypto.com candles.
+	cryptoCandlePeriod = 10 * time.Minute
+
 	cryptoWSHost             = "stream.crypto.com"
 	cryptoWSPath             = "/v2/market"
 	cryptoReconnectTime      = time.Second * 30
@@ -401,7 +405,7 @@ func (p *CryptoProvider) setCandlePair(symbol string, candlePair CryptoCandle) {
 		return
 	}
 
-	staleTime := PastUnixTime(providerCandlePeriod)
+	staleTime := PastUnixTime(cryptoCandlePeriod)
 	candleList := []types.CandlePrice{}
 	candleList = append(candleList, candle)
 
