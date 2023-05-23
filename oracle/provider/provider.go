@@ -10,7 +10,7 @@ import (
 
 const (
 	defaultTimeout       = 10 * time.Second
-	providerCandlePeriod = 10 * time.Minute
+	providerCandlePeriod = 5 * time.Minute
 
 	ProviderKraken     Name = "kraken"
 	ProviderBinance    Name = "binance"
