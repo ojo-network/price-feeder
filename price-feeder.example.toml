@@ -40,9 +40,8 @@ providers = [
 ]
 quote = "USD"
 
-# remove W in case of wrapped default native assets (WETH -> ETH)
 [[currency_pairs]]
-base = "ETH"
+base = "WETH"
 providers = [
   "eth-uniswap"
 ]
