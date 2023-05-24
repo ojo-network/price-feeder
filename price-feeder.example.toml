@@ -7,6 +7,10 @@ verbose_cors = true
 write_timeout = "20s"
 
 [[deviation_thresholds]]
+base = "CMST"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "USDT"
 threshold = "1.5"
 
@@ -358,6 +362,13 @@ base = "CBETH"
 quote = "USD"
 providers = [ "coinbase",]
 
+[[currency_pairs]]
+base = "CMST"
+providers = [
+  "crescent",
+]
+quote = "USDC"
+
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
 chain_id = "umee-local-testnet"
@@ -390,3 +401,9 @@ websocket = "stream.binance.com:9443"
 name = "osmosisv2"
 rest = "https://api.osmo-api.prod.ojo.network"
 websocket = "api.osmo-api.prod.ojo.network"
+
+# TODO: Remove once price feed test on canon-2
+[[provider_endpoints]]
+name = "crescent"
+rest = "https://api.cresc-api.staging.ojo.network"
+websocket = "api.cresc-api.staging.ojo.network"
