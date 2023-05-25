@@ -7,6 +7,10 @@ verbose_cors = true
 write_timeout = "20s"
 
 [[deviation_thresholds]]
+base = "MARS"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "CMST"
 threshold = "1.5"
 
@@ -368,6 +372,13 @@ providers = [
   "crescent",
 ]
 quote = "USDC"
+
+[[currency_pairs]]
+base = "MARS"
+providers = [
+  "osmosisv2",
+]
+quote = "OSMO"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
