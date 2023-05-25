@@ -67,6 +67,12 @@ test-unit:
 
 .PHONY: test-unit
 
+test-integration:
+	@echo "--> Running Integration Tests"
+	@go test -mod=readonly -tags=integration ./tests/integration/... -v
+
+.PHONY: test-integration
+
 lint:
 	@echo "--> Running linter"
 	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --fix --timeout=8m

@@ -12,21 +12,22 @@ const (
 	defaultTimeout       = 10 * time.Second
 	providerCandlePeriod = 5 * time.Minute
 
-	ProviderKraken    Name = "kraken"
-	ProviderBinance   Name = "binance"
-	ProviderBinanceUS Name = "binanceus"
-	ProviderOsmosis   Name = "osmosis"
-	ProviderOsmosisV2 Name = "osmosisv2"
-	ProviderHuobi     Name = "huobi"
-	ProviderOkx       Name = "okx"
-	ProviderGate      Name = "gate"
-	ProviderCoinbase  Name = "coinbase"
-	ProviderBitget    Name = "bitget"
-	ProviderMexc      Name = "mexc"
-	ProviderCrypto    Name = "crypto"
-	ProviderPolygon   Name = "polygon"
-	ProviderCrescent  Name = "crescent"
-	ProviderMock      Name = "mock"
+	ProviderKraken        Name = "kraken"
+	ProviderBinance       Name = "binance"
+	ProviderBinanceUS     Name = "binanceus"
+	ProviderOsmosis       Name = "osmosis"
+	ProviderOsmosisV2     Name = "osmosisv2"
+	ProviderHuobi         Name = "huobi"
+	ProviderOkx           Name = "okx"
+	ProviderGate          Name = "gate"
+	ProviderCoinbase      Name = "coinbase"
+	ProviderBitget        Name = "bitget"
+	ProviderMexc          Name = "mexc"
+	ProviderCrypto        Name = "crypto"
+	ProviderPolygon       Name = "polygon"
+	ProviderCrescent      Name = "crescent"
+	ProviderMock          Name = "mock"
+	ProviderCoinMarketCap Name = "coinmarketcap"
 )
 
 var ping = []byte("ping")
