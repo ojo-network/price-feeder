@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	osmosisV2WSHost   = "api.osmo-api.staging.ojo.network"
+	osmosisV2WSHost   = "api.osmo-api.prod.ojo.network"
 	osmosisV2WSPath   = "ws"
-	osmosisV2RestHost = "https://api.osmo-api.staging.ojo.network"
+	osmosisV2RestHost = "https://api.osmo-api.prod.ojo.network"
 	osmosisV2RestPath = "/assetpairs"
 )
 

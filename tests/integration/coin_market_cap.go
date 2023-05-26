@@ -6,22 +6,24 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
-func getCoinMarketCapPrices(symbols []string, apiURL string, apiKey string) (map[string]float64, error) {
-	if apiKey == "$COINMARKETCAP_API_KEY" {
-		return nil, fmt.Errorf("coinmarketcap.com API key not set")
-	}
-
+func getCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
 	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/v1/cryptocurrency/quotes/latest", apiURL), nil)
+	req, err := http.NewRequest(http.MethodGet, "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	q := url.Values{}
 	q.Add("symbol", strings.Join(symbols, ","))
+
+	apiKey := os.Getenv("COINMARKETCAP_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("COINMARKETCAP_API_KEY env var not set")
+	}
 
 	req.Header.Set("Accepts", "application/json")
 	req.Header.Add("X-CMC_PRO_API_KEY", apiKey)

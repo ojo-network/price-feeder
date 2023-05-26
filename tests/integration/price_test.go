@@ -47,11 +47,7 @@ func TestPriceAccuracy(t *testing.T) {
 	oracle.SetPrices(context.Background())
 	oraclePrices := oracle.GetPrices()
 
-	apiPrices, err := getCoinMarketCapPrices(
-		symbols,
-		cfg.ProviderEndpointsMap()["coinmarketcap"].Rest,
-		cfg.ProviderEndpointsMap()["coinmarketcap"].APIKey,
-	)
+	apiPrices, err := getCoinMarketCapPrices(symbols)
 	require.NoError(t, err)
 
 	for _, k := range symbols {

@@ -69,7 +69,7 @@ test-unit:
 
 test-integration:
 	@echo "--> Running Integration Tests"
-	@go test -mod=readonly -tags=integration ./tests/integration/... -v
+	@go test -mod=readonly ./tests/integration/... -v
 
 .PHONY: test-integration
 
