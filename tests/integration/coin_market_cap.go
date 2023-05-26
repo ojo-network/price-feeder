@@ -36,7 +36,6 @@ func getCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
 	}
 	defer resp.Body.Close()
 
-	fmt.Println(resp.Status)
 	var target map[string]interface{}
 	respBody, _ := io.ReadAll(resp.Body)
 	err = json.Unmarshal(respBody, &target)

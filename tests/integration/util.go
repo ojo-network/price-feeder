@@ -27,6 +27,7 @@ func calculateStandardDeviation(numbers []float64) float64 {
 	return math.Sqrt(variance)
 }
 
+//lint:ignore U1000 helper function for integration tests
 func getLogger() zerolog.Logger {
 	logWriter := zerolog.ConsoleWriter{Out: os.Stderr}
 	logLvl := zerolog.DebugLevel
