@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+//lint:ignore U1000 helper function for integration tests
 func getCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(http.MethodGet, "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", nil)

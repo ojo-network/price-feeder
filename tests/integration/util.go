@@ -10,6 +10,7 @@ func calculateMean(numbers []float64) float64 {
 	return sum / float64(len(numbers))
 }
 
+//lint:ignore U1000 helper function for integration tests
 func calculateStandardDeviation(numbers []float64) float64 {
 	mean := calculateMean(numbers)
 	variance := 0.0
