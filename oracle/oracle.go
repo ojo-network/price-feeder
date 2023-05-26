@@ -494,7 +494,7 @@ func NewProvider(
 			break
 		}
 
-		return provider.NewUniswapProvider(endpoint, providerPairs...), nil
+		return provider.NewUniswapProvider(ctx, logger, providerName.String(), endpoint, providerPairs...), nil
 	}
 
 	return nil, fmt.Errorf("provider %s not found", providerName)

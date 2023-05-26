@@ -2,9 +2,10 @@ package oracle
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/rs/zerolog"
+
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
-	"github.com/rs/zerolog"
 )
 
 // defaultDeviationThreshold defines how many 𝜎 a provider can be away

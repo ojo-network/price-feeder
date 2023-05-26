@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gql "github.com/hasura/go-graphql-client"
+	"github.com/rs/zerolog"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 var _ Provider = (*UniswapProvider)(nil)
-
-var (
-	UniswapURL = "https://api.studio.thegraph.com/query/46403/unidexer/test33"
-)
 
 type (
 
@@ -65,13 +65,22 @@ type (
 
 	// UniswapProvider defines an Oracle provider implemented to consume data from Uniswap graphql
 	UniswapProvider struct {
-		baseURL        string
-		client         *gql.Client
-		denomToAddress map[string]string
+		logger  zerolog.Logger
+		baseURL string
+		client  *gql.Client
+		mut     sync.Mutex
+
+		poolIDS          []string
+		pairs            []types.CurrencyPair
+		baseDenomIdx     map[string]types.CurrencyPair
+		quoteDenomIdx    map[string]types.CurrencyPair
+		denomToAddress   map[string]string
+		poolsHoursDatas  PoolHourDataQuery
+		poolsMinuteDatas PoolMinuteDataCandleQuery
 	}
 )
 
-func NewUniswapProvider(endpoint Endpoint, currencyPairs ...types.CurrencyPair) *UniswapProvider {
+func NewUniswapProvider(ctx context.Context, logger zerolog.Logger, providerName string, endpoint Endpoint, currencyPairs ...types.CurrencyPair) *UniswapProvider {
 	// create pair name to address map
 	denomToAddress := make(map[string]string)
 	for _, pair := range currencyPairs {
@@ -82,89 +91,169 @@ func NewUniswapProvider(endpoint Endpoint, currencyPairs ...types.CurrencyPair) 
 	}
 
 	// default provider to eth uniswap
-	if endpoint.Name == ProviderEthUniswap {
-		return &UniswapProvider{
-			baseURL:        endpoint.Rest,
-			client:         gql.NewClient(endpoint.Rest, nil),
-			denomToAddress: denomToAddress,
-		}
+	uniswapLogger := logger.With().Str("provider", providerName).Logger()
+	provider := &UniswapProvider{
+		baseURL:        endpoint.Rest,
+		client:         gql.NewClient(endpoint.Rest, nil),
+		denomToAddress: denomToAddress,
+		logger:         uniswapLogger,
+		pairs:          currencyPairs,
+		mut:            sync.Mutex{},
 	}
 
-	return &UniswapProvider{
-		baseURL:        UniswapURL,
-		client:         gql.NewClient(UniswapURL, nil),
-		denomToAddress: denomToAddress,
-	}
+	go provider.startPooling(ctx)
+
+	return provider
 }
 
+func (p *UniswapProvider) startPooling(ctx context.Context) {
+	// no-op
+	tick := 0
+	p.setBaseAndQuoteMapping()
+	err := p.setPoolIDS()
+	if err != nil {
+		p.logger.Err(err).Msg("error generating pool ids")
+		return
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		default:
+			if err := p.getHourAndMinuteData(ctx); err != nil {
+				p.logger.Err(err).Msgf("failed to get hour and minute data")
+			}
+
+			tick += 1
+			p.logger.Log().Int("uniswap tick", tick)
+
+			time.Sleep(time.Second * 5)
+		}
+	}
+}
 func (p *UniswapProvider) StartConnections() {
 	// no-op Uniswap v1 does not use websockets
+}
+
+func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
+	g, ctx := errgroup.WithContext(ctx)
+
+	//ticker prices
+	g.Go(func() error {
+		idMap := map[string]interface{}{
+			"poolIDS": p.poolIDS,
+			"start":   time.Now().Unix() - 86400,
+			"stop":    time.Now().Unix(),
+		}
+
+		var lastID string
+		var firstID string
+		var poolsHourDatas PoolHourDataQuery
+		for {
+			// limit by graph
+			idMap["first"] = 1000
+			idMap["after"] = lastID
+
+			// query volume from day data
+			var poolsHourData PoolHourDataQuery
+			err := p.client.Query(context.Background(), &poolsHourData, idMap)
+
+			if err != nil {
+				return err
+			}
+
+			// check if no new id or repeated id
+			if len(poolsHourData.PoolHourDatas) == 0 || firstID == poolsHourData.PoolHourDatas[0].ID {
+				break
+			}
+
+			firstID = poolsHourData.PoolHourDatas[0].ID
+			lastID = poolsHourData.PoolHourDatas[len(poolsHourData.PoolHourDatas)-1].ID
+
+			// append poolsHourDatas
+			poolsHourDatas.PoolHourDatas = append(poolsHourDatas.PoolHourDatas, poolsHourData.PoolHourDatas...)
+		}
+
+		p.mut.Lock()
+		p.poolsHoursDatas = poolsHourDatas
+		p.mut.Unlock()
+
+		return nil
+	})
+
+	//candle prices
+	g.Go(func() error {
+
+		idMap := map[string]interface{}{
+			"poolIDS": p.poolIDS,
+			"start":   time.Now().Unix() - int64((10 * time.Minute).Seconds()),
+			"stop":    time.Now().Unix(),
+		}
+
+		var lastID string
+		var firstID string
+		var poolsMinuteDatas PoolMinuteDataCandleQuery
+		for {
+			// limit by	graph
+			idMap["first"] = 1000
+			idMap["after"] = lastID
+
+			// query volume from day data
+			var poolsMinuteData PoolMinuteDataCandleQuery
+			err := p.client.Query(context.Background(), &poolsMinuteData, idMap)
+
+			if err != nil {
+				return err
+			}
+
+			// check if no new id or repeated id
+			if len(poolsMinuteData.PoolMinuteDatas) == 0 || firstID == poolsMinuteData.PoolMinuteDatas[0].ID {
+				break
+			}
+
+			firstID = poolsMinuteData.PoolMinuteDatas[0].ID
+			lastID = poolsMinuteData.PoolMinuteDatas[len(poolsMinuteData.PoolMinuteDatas)-1].ID
+
+			poolsMinuteDatas.PoolMinuteDatas = append(poolsMinuteDatas.PoolMinuteDatas, poolsMinuteData.PoolMinuteDatas...)
+		}
+
+		p.mut.Lock()
+		p.poolsMinuteDatas = poolsMinuteDatas
+		p.mut.Unlock()
+
+		return nil
+	})
+
+	return g.Wait()
 }
 
 // SubscribeCurrencyPairs performs a no-op since Uniswap does not use websockets
 func (p UniswapProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 
 func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	// create pool ids
-	poolIDS, err := p.collectPoolIDS(pairs...)
-	if err != nil {
-		return nil, err
-	}
-
-	idMap := map[string]interface{}{
-		"poolIDS": poolIDS,
-		"start":   time.Now().Unix() - 86400,
-		"stop":    time.Now().Unix(),
-	}
-
-	baseDenomIdx, quoteDenomIdx := p.returnBaseAndQuoteMapping(pairs...)
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
 	latestTimestamp := make(map[string]float64)
 
-	var lastID string
-	var firstID string
-	var poolsHourDatas PoolHourDataQuery
-	for {
-		// limit by graph
-		idMap["first"] = 1000
-		idMap["after"] = lastID
-
-		// query volume from day data
-		var poolsHourData PoolHourDataQuery
-		err := p.client.Query(context.Background(), &poolsHourData, idMap)
-
-		if err != nil {
-			return nil, err
-		}
-
-		// check if no new id or repeated id
-		if len(poolsHourData.PoolHourDatas) == 0 || firstID == poolsHourData.PoolHourDatas[0].ID {
-			break
-		}
-
-		firstID = poolsHourData.PoolHourDatas[0].ID
-		lastID = poolsHourData.PoolHourDatas[len(poolsHourData.PoolHourDatas)-1].ID
-
-		// append pools
-		poolsHourDatas.PoolHourDatas = append(poolsHourDatas.PoolHourDatas, poolsHourData.PoolHourDatas...)
-	}
-
-	for _, poolData := range poolsHourDatas.PoolHourDatas {
+	p.mut.Lock()
+	defer p.mut.Unlock()
+	for _, poolData := range p.poolsHoursDatas.PoolHourDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
 
 		// flip price based on returned quote or denom
 		var tokenPrice string
 		var name string
-		if cp, found := baseDenomIdx[symbol0]; found {
+		if cp, found := p.baseDenomIdx[symbol0]; found {
 			tokenPrice = poolData.Token1Price
 			name = cp.String()
 		} else {
-			if _, found := quoteDenomIdx[symbol0]; !found {
+			if _, found := p.quoteDenomIdx[symbol0]; !found {
 				return nil, fmt.Errorf("%s returned does not match base or quote symbols", symbol0)
 			}
 
 			tokenPrice = poolData.Token0Price
-			name = quoteDenomIdx[symbol0].String()
+			name = p.quoteDenomIdx[symbol0].String()
 		}
 
 		price, err := toSdkDec(tokenPrice)
@@ -195,63 +284,25 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 }
 
 func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	// create pool ids
-	poolIDS, err := p.collectPoolIDS(pairs...)
-	if err != nil {
-		return nil, err
-	}
-
-	idMap := map[string]interface{}{
-		"poolIDS": poolIDS,
-		"start":   time.Now().Unix() - int64((5 * time.Minute).Seconds()),
-		"stop":    time.Now().Unix(),
-	}
-
-	baseDenomIdx, quoteDenomIdx := p.returnBaseAndQuoteMapping(pairs...)
-	var lastID string
-	var firstID string
-	var poolsMinuteDatas PoolMinuteDataCandleQuery
-	for {
-		// limit by	graph
-		idMap["first"] = 1000
-		idMap["after"] = lastID
-
-		// query volume from day data
-		var poolsMinuteData PoolMinuteDataCandleQuery
-		err := p.client.Query(context.Background(), &poolsMinuteData, idMap)
-
-		if err != nil {
-			return nil, err
-		}
-
-		// check if no new id or repeated id
-		if len(poolsMinuteData.PoolMinuteDatas) == 0 || firstID == poolsMinuteData.PoolMinuteDatas[0].ID {
-			break
-		}
-
-		firstID = poolsMinuteData.PoolMinuteDatas[0].ID
-		lastID = poolsMinuteData.PoolMinuteDatas[len(poolsMinuteData.PoolMinuteDatas)-1].ID
-
-		poolsMinuteDatas.PoolMinuteDatas = append(poolsMinuteDatas.PoolMinuteDatas, poolsMinuteData.PoolMinuteDatas...)
-	}
-
+	p.mut.Lock()
+	defer p.mut.Unlock()
 	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
-	for _, poolData := range poolsMinuteDatas.PoolMinuteDatas {
+	for _, poolData := range p.poolsMinuteDatas.PoolMinuteDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
 
 		// flip price based on returned quote or denom
 		var tokenPrice string
 		var name string
-		if cp, found := baseDenomIdx[symbol0]; found {
+		if cp, found := p.baseDenomIdx[symbol0]; found {
 			tokenPrice = poolData.Token1Price
 			name = cp.String()
 		} else {
-			if _, found := quoteDenomIdx[symbol0]; !found {
+			if _, found := p.quoteDenomIdx[symbol0]; !found {
 				return nil, fmt.Errorf("%s returned does not match base or quote symbols", symbol0)
 			}
 
 			tokenPrice = poolData.Token0Price
-			name = quoteDenomIdx[symbol0].String()
+			name = p.quoteDenomIdx[symbol0].String()
 		}
 
 		price, err := toSdkDec(tokenPrice)
@@ -264,10 +315,11 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 			return nil, err
 		}
 
+		// second to millisecond for filtering
 		candlePrices[name] = append(candlePrices[name], types.CandlePrice{
 			Price:     price,
 			Volume:    vol,
-			TimeStamp: int64(poolData.Timestamp),
+			TimeStamp: int64(poolData.Timestamp * 1000),
 		})
 	}
 
@@ -306,27 +358,25 @@ func toSdkDec(value string) (sdk.Dec, error) {
 	return sdk.NewDecFromStr(fmt.Sprintf("%.18f", valueFloat))
 }
 
-func (p UniswapProvider) collectPoolIDS(pairs ...types.CurrencyPair) ([]string, error) {
-	poolIDS := make([]string, len(pairs))
-	for i, pair := range pairs {
+func (p *UniswapProvider) setPoolIDS() error {
+	poolIDS := make([]string, len(p.pairs))
+	for i, pair := range p.pairs {
 		if _, found := p.denomToAddress[pair.String()]; !found {
-			return nil, fmt.Errorf("pool id for %s not found", pair.String())
+			return fmt.Errorf("pool id for %s not found", pair.String())
 		}
 
 		poolID := p.denomToAddress[pair.String()]
 		poolIDS[i] = poolID
 	}
 
-	return poolIDS, nil
+	p.poolIDS = poolIDS
+	return nil
 }
 
-func (p UniswapProvider) returnBaseAndQuoteMapping(pairs ...types.CurrencyPair) (
-	map[string]types.CurrencyPair,
-	map[string]types.CurrencyPair,
-) {
+func (p *UniswapProvider) setBaseAndQuoteMapping() {
 	baseDenomIdx := make(map[string]types.CurrencyPair)
 	quoteDenomIdx := make(map[string]types.CurrencyPair)
-	for _, cp := range pairs {
+	for _, cp := range p.pairs {
 		base := strings.ToUpper(cp.Base)
 		quote := strings.ToUpper(cp.Quote)
 
@@ -334,5 +384,6 @@ func (p UniswapProvider) returnBaseAndQuoteMapping(pairs ...types.CurrencyPair) 
 		quoteDenomIdx[quote] = cp
 	}
 
-	return baseDenomIdx, quoteDenomIdx
+	p.baseDenomIdx = baseDenomIdx
+	p.quoteDenomIdx = quoteDenomIdx
 }

@@ -81,5 +81,5 @@ websocket = "stream.binance.com:9443"
 
 [[provider_endpoints]]
 name = "eth-uniswap"
-rest = "https://api.studio.thegraph.com/query/46403/unidexer/test33"
+rest = "https://api.studio.thegraph.com/query/46403/unidexer/test37"
 websocket = "not supported"

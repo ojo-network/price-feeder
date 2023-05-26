@@ -5,10 +5,11 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/rs/zerolog"
+
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
-	"github.com/rs/zerolog"
 )
 
 // getUSDBasedProviders retrieves which providers for an asset have a USD-based pair,
