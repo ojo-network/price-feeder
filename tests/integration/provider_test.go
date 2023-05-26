@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -117,11 +116,4 @@ func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.C
 			currencyPairKey,
 		)
 	}
-}
-
-func getLogger() zerolog.Logger {
-	logWriter := zerolog.ConsoleWriter{Out: os.Stderr}
-	logLvl := zerolog.DebugLevel
-	zerolog.SetGlobalLevel(logLvl)
-	return zerolog.New(logWriter).Level(logLvl).With().Timestamp().Logger()
 }

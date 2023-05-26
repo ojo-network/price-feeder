@@ -193,7 +193,7 @@ func (conn *WebsocketConnection) SendJSON(msg interface{}) error {
 	defer conn.mtx.Unlock()
 
 	if conn.client == nil {
-		return fmt.Errorf("unable to send JSON on a closed connection")
+		return nil
 	}
 	if err := conn.client.WriteJSON(msg); err != nil {
 		return fmt.Errorf(types.ErrWebsocketSend.Error(), conn.providerName, err)

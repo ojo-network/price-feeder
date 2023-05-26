@@ -1,6 +1,11 @@
 package integration
 
-import "math"
+import (
+	"math"
+	"os"
+
+	"github.com/rs/zerolog"
+)
 
 func calculateMean(numbers []float64) float64 {
 	sum := 0.0
@@ -20,4 +25,11 @@ func calculateStandardDeviation(numbers []float64) float64 {
 	}
 	variance /= float64(len(numbers))
 	return math.Sqrt(variance)
+}
+
+func getLogger() zerolog.Logger {
+	logWriter := zerolog.ConsoleWriter{Out: os.Stderr}
+	logLvl := zerolog.DebugLevel
+	zerolog.SetGlobalLevel(logLvl)
+	return zerolog.New(logWriter).Level(logLvl).With().Timestamp().Logger()
 }
