@@ -27,17 +27,19 @@ var (
 		provider.ProviderMock:      false,
 	}
 
-	// SupportedQuotes defines a lookup table for which assets we support
-	// using as quotes.
-	SupportedQuotes = map[string]struct{}{
-		DenomUSD: {},
-		"USDC":   {},
-		"USDT":   {},
-		"DAI":    {},
-		"BTC":    {},
-		"ETH":    {},
-		"ATOM":   {},
-		"OSMO":   {},
+	// SupportedConversions defines a lookup table for which currency pairs we
+	// support converting prices with.
+	SupportedConversions = map[types.CurrencyPair]struct{}{
+		{Base: "USDC", Quote: "USD"}: {},
+		{Base: "USDT", Quote: "USD"}: {},
+		{Base: "DAI", Quote: "USD"}:  {},
+		{Base: "BTC", Quote: "USD"}:  {},
+		{Base: "ETH", Quote: "USD"}:  {},
+		{Base: "ATOM", Quote: "USD"}: {},
+		{Base: "OSMO", Quote: "USD"}: {},
+
+		{Base: "OSMO", Quote: "USDT"}: {},
+		{Base: "JUNO", Quote: "USDT"}: {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported
@@ -202,3 +204,11 @@ var (
 		"ZWL": {},
 	}
 )
+
+func SupportedConversionSlice() []types.CurrencyPair {
+	var pairs []types.CurrencyPair
+	for pair := range SupportedConversions {
+		pairs = append(pairs, pair)
+	}
+	return pairs
+}

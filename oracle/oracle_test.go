@@ -488,12 +488,11 @@ func (ots *OracleTestSuite) TestSuccessGetComputedPricesCandles() {
 	providerPair := map[types.ProviderName][]types.CurrencyPair{
 		provider.ProviderBinance: {pair},
 	}
+	ots.oracle.providerPairs = providerPair
 
 	prices, err := ots.oracle.GetComputedPrices(
 		providerCandles,
 		make(types.AggregatedProviderPrices, 1),
-		providerPair,
-		make(map[string]sdk.Dec),
 	)
 
 	require.NoError(ots.T(), err, "It should successfully get computed candle prices")
@@ -520,12 +519,11 @@ func (ots *OracleTestSuite) TestSuccessGetComputedPricesTickers() {
 	providerPair := map[types.ProviderName][]types.CurrencyPair{
 		provider.ProviderBinance: {pair},
 	}
+	ots.oracle.providerPairs = providerPair
 
 	prices, err := ots.oracle.GetComputedPrices(
 		make(types.AggregatedProviderCandles, 1),
 		providerPrices,
-		providerPair,
-		make(map[string]sdk.Dec),
 	)
 
 	require.NoError(ots.T(), err, "It should successfully get computed ticker prices")
@@ -611,16 +609,15 @@ func (ots *OracleTestSuite) TestGetComputedPricesCandlesConversion() {
 
 	providerPair := map[types.ProviderName][]types.CurrencyPair{
 		provider.ProviderBinance: {btcPair, ethPair},
-		provider.ProviderGate:    {ethPair},
+		provider.ProviderGate:    {ethPair, btcUSDPair},
 		provider.ProviderOkx:     {ethPair},
 		provider.ProviderKraken:  {btcUSDPair},
 	}
+	ots.oracle.providerPairs = providerPair
 
 	prices, err := ots.oracle.GetComputedPrices(
 		providerCandles,
 		make(types.AggregatedProviderPrices, 1),
-		providerPair,
-		make(map[string]sdk.Dec),
 	)
 
 	require.NoError(ots.T(), err,
@@ -687,12 +684,11 @@ func (ots *OracleTestSuite) TestGetComputedPricesTickersConversion() {
 		provider.ProviderOkx:     {ETHUSD},
 		provider.ProviderKraken:  {BTCUSD},
 	}
+	ots.oracle.providerPairs = providerPair
 
 	prices, err := ots.oracle.GetComputedPrices(
 		make(types.AggregatedProviderCandles, 1),
 		providerPrices,
-		providerPair,
-		make(map[string]sdk.Dec),
 	)
 
 	require.NoError(ots.T(), err,
@@ -810,13 +806,11 @@ func (ots *OracleTestSuite) TestGetComputedPricesEmptyTvwap() {
 		tc := tc
 
 		ots.Run(name, func() {
+			ots.oracle.providerPairs = tc.pairs
 			prices, _ := ots.oracle.GetComputedPrices(
 				tc.candles,
 				tc.prices,
-				tc.pairs,
-				make(map[string]sdk.Dec),
 			)
-
 			require.Equal(ots.T(), tc.numPrices, len(prices))
 		})
 	}

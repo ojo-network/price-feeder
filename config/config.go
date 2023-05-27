@@ -224,41 +224,7 @@ func ParseConfig(configPath string) (Config, error) {
 		cfg.ProviderTimeout = defaultProviderTimeout.String()
 	}
 
-	pairs := make(map[string]map[types.ProviderName]struct{})
-	coinQuotes := make(map[string]struct{})
-	for _, cp := range cfg.CurrencyPairs {
-		if _, ok := pairs[cp.Base]; !ok {
-			pairs[cp.Base] = make(map[types.ProviderName]struct{})
-		}
-		if strings.ToUpper(cp.Quote) != DenomUSD {
-			coinQuotes[cp.Quote] = struct{}{}
-		}
-		if _, ok := SupportedQuotes[strings.ToUpper(cp.Quote)]; !ok {
-			return cfg, fmt.Errorf("unsupported quote: %s", cp.Quote)
-		}
-
-		for _, prov := range cp.Providers {
-			if _, ok := SupportedProviders[prov]; !ok {
-				return cfg, fmt.Errorf("unsupported provider: %s", prov)
-			}
-			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, cfg.ProviderEndpoints) {
-				return cfg, fmt.Errorf("provider %s requires an API Key", prov)
-			}
-			pairs[cp.Base][prov] = struct{}{}
-		}
-	}
-
-	// Use coinQuotes to ensure that any quotes can be converted to USD.
-	for quote := range coinQuotes {
-		for index, pair := range cfg.CurrencyPairs {
-			if pair.Base == quote && pair.Quote == DenomUSD {
-				break
-			}
-			if index == len(cfg.CurrencyPairs)-1 {
-				return cfg, fmt.Errorf("all non-usd quotes require a conversion rate feed")
-			}
-		}
-	}
+	cfg.validateCurrencyPairs()
 
 	for _, deviation := range cfg.Deviations {
 		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
@@ -272,6 +238,38 @@ func ParseConfig(configPath string) (Config, error) {
 	}
 
 	return cfg, cfg.Validate()
+}
+
+func (c Config) validateCurrencyPairs() error {
+	for _, pair := range c.CurrencyPairs {
+		if pair.Base == "" {
+			return fmt.Errorf("currency pair base cannot be empty")
+		}
+		if pair.Quote == "" {
+			return fmt.Errorf("currency pair quote cannot be empty")
+		}
+		if pair.Base == pair.Quote {
+			return fmt.Errorf("currency pair base and quote cannot be the same")
+		}
+		if len(pair.Providers) == 0 {
+			return fmt.Errorf("currency pair must have at least one provider")
+		}
+		if pair.Quote == DenomUSD {
+			continue
+		}
+		// verify a conversion pair exists for the quote currency
+		for _, conversionPair := range c.CurrencyPairs {
+			if pair.Quote == conversionPair.Base {
+				conversionCP := types.CurrencyPair{Base: conversionPair.Base, Quote: conversionPair.Quote}
+				// verify the conversion pair is supported
+				if _, ok := SupportedConversions[conversionCP]; ok {
+					break
+				}
+			}
+		}
+		return fmt.Errorf("currency pair quote %s is not supported", pair.Quote)
+	}
+	return nil
 }
 
 // CheckProviderMins starts the currency provider tracker to check the amount of
