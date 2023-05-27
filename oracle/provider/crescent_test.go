@@ -15,7 +15,7 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "BCRE", Quote: "ATOM"},
+		BCREATOM,
 	)
 	require.NoError(t, err)
 
@@ -31,11 +31,11 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 
 		p.tickers = tickerMap
 
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "BCRE", Quote: "ATOM"})
+		prices, err := p.GetTickerPrices(BCREATOM)
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, lastPrice, prices["BCREATOM"].Price)
-		require.Equal(t, volume, prices["BCREATOM"].Volume)
+		require.Equal(t, lastPrice, prices[BCREATOM].Price)
+		require.Equal(t, volume, prices[BCREATOM].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -56,15 +56,15 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 
 		p.tickers = tickerMap
 		prices, err := p.GetTickerPrices(
-			types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
-			types.CurrencyPair{Base: "LUNA", Quote: "USDT"},
+			ATOMUSDT,
+			LUNAUSDT,
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, lastPriceAtom, prices["ATOMUSDT"].Price)
-		require.Equal(t, volume, prices["ATOMUSDT"].Volume)
-		require.Equal(t, lastPriceLuna, prices["LUNAUSDT"].Price)
-		require.Equal(t, volume, prices["LUNAUSDT"].Volume)
+		require.Equal(t, lastPriceAtom, prices[ATOMUSDT].Price)
+		require.Equal(t, volume, prices[ATOMUSDT].Volume)
+		require.Equal(t, lastPriceLuna, prices[LUNAUSDT].Price)
+		require.Equal(t, volume, prices[LUNAUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "BCRE", Quote: "ATOM"},
+		BCREATOM,
 	)
 	require.NoError(t, err)
 
@@ -97,12 +97,12 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 
 		p.setCandlePair("BCRE/ATOM", candle)
 
-		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "BCRE", Quote: "ATOM"})
+		prices, err := p.GetCandlePrices(BCREATOM)
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(price), prices["BCREATOM"][0].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["BCREATOM"][0].Volume)
-		require.Equal(t, time, prices["BCREATOM"][0].TimeStamp)
+		require.Equal(t, sdk.MustNewDecFromStr(price), prices[BCREATOM][0].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[BCREATOM][0].Volume)
+		require.Equal(t, time, prices[BCREATOM][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {

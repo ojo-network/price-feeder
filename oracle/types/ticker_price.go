@@ -13,15 +13,15 @@ type TickerPrice struct {
 }
 
 // NewTickerPrice parses the lastPrice and volume to a decimal and returns a TickerPrice
-func NewTickerPrice(provider, symbol, lastPrice, volume string) (TickerPrice, error) {
+func NewTickerPrice(lastPrice, volume string) (TickerPrice, error) {
 	price, err := sdk.NewDecFromStr(lastPrice)
 	if err != nil {
-		return TickerPrice{}, fmt.Errorf("failed to parse %s price (%s) for %s: %w", provider, lastPrice, symbol, err)
+		return TickerPrice{}, fmt.Errorf("failed to parse ticker price (%s): %w", lastPrice, err)
 	}
 
 	volumeDec, err := sdk.NewDecFromStr(volume)
 	if err != nil {
-		return TickerPrice{}, fmt.Errorf("failed to parse %s volume (%s) for %s: %w", provider, volume, symbol, err)
+		return TickerPrice{}, fmt.Errorf("failed to parse ticker volume (%s): %w", volume, err)
 	}
 
 	return TickerPrice{Price: price, Volume: volumeDec}, nil

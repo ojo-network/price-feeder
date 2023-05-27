@@ -16,7 +16,7 @@ func TestPolygonProvider_GetTickerPrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "EUR", Quote: "USD"},
+		EURUSD,
 	)
 	require.NoError(t, err)
 
@@ -32,11 +32,11 @@ func TestPolygonProvider_GetTickerPrices(t *testing.T) {
 
 		p.tickers = tickerMap
 
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "EUR", Quote: "USD"})
+		prices, err := p.GetTickerPrices(EURUSD)
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, lastPrice, prices["EURUSD"].Price)
-		require.Equal(t, volume, prices["EURUSD"].Volume)
+		require.Equal(t, lastPrice, prices[EURUSD].Price)
+		require.Equal(t, volume, prices[EURUSD].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -57,15 +57,15 @@ func TestPolygonProvider_GetTickerPrices(t *testing.T) {
 
 		p.tickers = tickerMap
 		prices, err := p.GetTickerPrices(
-			types.CurrencyPair{Base: "EUR", Quote: "USD"},
+			EURUSD,
 			types.CurrencyPair{Base: "JPY", Quote: "USD"},
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, lastPriceEUR, prices["EURUSD"].Price)
-		require.Equal(t, volume, prices["EURUSD"].Volume)
-		require.Equal(t, lastPriceJPY, prices["JPYUSD"].Price)
-		require.Equal(t, volume, prices["JPYUSD"].Volume)
+		require.Equal(t, lastPriceEUR, prices[EURUSD].Price)
+		require.Equal(t, volume, prices[EURUSD].Volume)
+		require.Equal(t, lastPriceJPY, prices[JPYUSD].Price)
+		require.Equal(t, volume, prices[JPYUSD].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestPolygonProvider_GetCandlePrices(t *testing.T) {
 			Timestamp: timeStamp,
 		}
 
-		p.setCandlePair(data)
+		p.setCandlePair(data, data.Pair)
 
 		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "EUR", Quote: "USD"})
 		require.NoError(t, err)
@@ -106,9 +106,9 @@ func TestPolygonProvider_GetCandlePrices(t *testing.T) {
 		priceDec, _ := sdk.NewDecFromStr(fmt.Sprintf("%f", price))
 		volumeDec, _ := sdk.NewDecFromStr(fmt.Sprintf("%f", volume))
 
-		require.Equal(t, priceDec, prices["EURUSD"][0].Price)
-		require.Equal(t, volumeDec, prices["EURUSD"][0].Volume)
-		require.Equal(t, timeStamp, prices["EURUSD"][0].TimeStamp)
+		require.Equal(t, priceDec, prices[EURUSD][0].Price)
+		require.Equal(t, volumeDec, prices[EURUSD][0].Volume)
+		require.Equal(t, timeStamp, prices[EURUSD][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {

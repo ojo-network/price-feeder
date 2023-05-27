@@ -24,8 +24,7 @@ func TestBitgetProvider_GetTickerPrices(t *testing.T) {
 		volume := "2396974.02000000"
 		instId := "ATOMUSDT"
 
-		tickerMap := map[string]BitgetTicker{}
-		tickerMap[instId] = BitgetTicker{
+		bitgetTicker := BitgetTicker{
 			Arg: BitgetSubscriptionArg{
 				Channel: "tickers",
 				InstID:  instId,
@@ -38,14 +37,13 @@ func TestBitgetProvider_GetTickerPrices(t *testing.T) {
 				},
 			},
 		}
+		p.setTickerPair(bitgetTicker, instId)
 
-		p.tickers = tickerMap
-
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
+		prices, err := p.GetTickerPrices(ATOMUSDT)
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPrice), prices["ATOMUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["ATOMUSDT"].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr(lastPrice), prices[ATOMUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -82,7 +80,11 @@ func TestBitgetProvider_GetTickerPrices(t *testing.T) {
 				},
 			},
 		}
-		p.tickers = tickerMap
+
+		for _, bitgetTicker := range tickerMap {
+			p.setTickerPair(bitgetTicker, bitgetTicker.Arg.InstID)
+		}
+
 		prices, err := p.GetTickerPrices(
 			types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
 			types.CurrencyPair{Base: "LUNA", Quote: "USDT"},
@@ -90,10 +92,10 @@ func TestBitgetProvider_GetTickerPrices(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, sdk.MustNewDecFromStr(atomLastPrice), prices["ATOMUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["ATOMUSDT"].Volume)
-		require.Equal(t, sdk.MustNewDecFromStr(lunaLastPrice), prices["LUNAUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["LUNAUSDT"].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr(atomLastPrice), prices[ATOMUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr(lunaLastPrice), prices[LUNAUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[LUNAUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
@@ -117,7 +119,7 @@ func TestBitgetProvider_GetCandlePrices(t *testing.T) {
 		volume := "2396974.000000000000000000"
 		timeStamp := int64(1000000)
 
-		candle := BitgetCandle{
+		bitgetCandle := BitgetCandle{
 			TimeStamp: timeStamp,
 			Close:     price,
 			Volume:    volume,
@@ -126,15 +128,14 @@ func TestBitgetProvider_GetCandlePrices(t *testing.T) {
 				InstID:  "ATOMUSDT",
 			},
 		}
-
-		p.setCandlePair(candle)
+		p.setCandlePair(bitgetCandle, bitgetCandle.Arg.InstID)
 
 		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(price), prices["ATOMUSDT"][0].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["ATOMUSDT"][0].Volume)
-		require.Equal(t, timeStamp, prices["ATOMUSDT"][0].TimeStamp)
+		require.Equal(t, sdk.MustNewDecFromStr(price), prices[ATOMUSDT][0].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[ATOMUSDT][0].Volume)
+		require.Equal(t, timeStamp, prices[ATOMUSDT][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {

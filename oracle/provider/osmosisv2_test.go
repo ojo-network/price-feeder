@@ -15,7 +15,7 @@ func TestOsmosisV2Provider_GetTickerPrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "OSMO", Quote: "ATOM"},
+		OSMOATOM,
 	)
 	require.NoError(t, err)
 
@@ -31,11 +31,11 @@ func TestOsmosisV2Provider_GetTickerPrices(t *testing.T) {
 
 		p.tickers = tickerMap
 
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "OSMO", Quote: "ATOM"})
+		prices, err := p.GetTickerPrices(OSMOATOM)
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, lastPrice, prices["OSMOATOM"].Price)
-		require.Equal(t, volume, prices["OSMOATOM"].Volume)
+		require.Equal(t, lastPrice, prices[OSMOATOM].Price)
+		require.Equal(t, volume, prices[OSMOATOM].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -56,15 +56,15 @@ func TestOsmosisV2Provider_GetTickerPrices(t *testing.T) {
 
 		p.tickers = tickerMap
 		prices, err := p.GetTickerPrices(
-			types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
-			types.CurrencyPair{Base: "LUNA", Quote: "USDT"},
+			ATOMUSDT,
+			LUNAUSDT,
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, lastPriceAtom, prices["ATOMUSDT"].Price)
-		require.Equal(t, volume, prices["ATOMUSDT"].Volume)
-		require.Equal(t, lastPriceLuna, prices["LUNAUSDT"].Price)
-		require.Equal(t, volume, prices["LUNAUSDT"].Volume)
+		require.Equal(t, lastPriceAtom, prices[ATOMUSDT].Price)
+		require.Equal(t, volume, prices[ATOMUSDT].Volume)
+		require.Equal(t, lastPriceLuna, prices[LUNAUSDT].Price)
+		require.Equal(t, volume, prices[LUNAUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
@@ -95,14 +95,14 @@ func TestOsmosisV2Provider_GetCandlePrices(t *testing.T) {
 			EndTime: time,
 		}
 
-		p.setCandlePair("OSMO/ATOM", candle)
+		p.setCandlePair(candle, "OSMO/ATOM")
 
 		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "OSMO", Quote: "ATOM"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(price), prices["OSMOATOM"][0].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["OSMOATOM"][0].Volume)
-		require.Equal(t, time, prices["OSMOATOM"][0].TimeStamp)
+		require.Equal(t, sdk.MustNewDecFromStr(price), prices[OSMOATOM][0].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[OSMOATOM][0].Volume)
+		require.Equal(t, time, prices[OSMOATOM][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {

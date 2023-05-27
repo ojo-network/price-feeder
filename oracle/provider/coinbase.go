@@ -3,10 +3,8 @@ package provider
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -14,7 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
@@ -35,14 +32,13 @@ type (
 	//
 	// REF: https://www.coinbase.io/docs/websocket/index.html
 	CoinbaseProvider struct {
-		wsc             *WebsocketController
-		logger          zerolog.Logger
-		reconnectTimer  *time.Ticker
-		mtx             sync.RWMutex
-		endpoints       Endpoint
-		trades          map[string][]CoinbaseTrade    // Symbol => []CoinbaseTrade
-		tickers         map[string]CoinbaseTicker     // Symbol => CoinbaseTicker
-		subscribedPairs map[string]types.CurrencyPair // Symbol => types.CurrencyPair
+		wsc            *WebsocketController
+		logger         zerolog.Logger
+		reconnectTimer *time.Ticker
+		mtx            sync.RWMutex
+		endpoints      Endpoint
+
+		priceStore
 	}
 
 	// CoinbaseSubscriptionMsg Msg to subscribe to all channels.
@@ -111,13 +107,12 @@ func NewCoinbaseProvider(
 	coinbaseLogger := logger.With().Str("provider", string(ProviderCoinbase)).Logger()
 
 	provider := &CoinbaseProvider{
-		logger:          coinbaseLogger,
-		reconnectTimer:  time.NewTicker(coinbasePingCheck),
-		endpoints:       endpoints,
-		trades:          map[string][]CoinbaseTrade{},
-		tickers:         map[string]CoinbaseTicker{},
-		subscribedPairs: map[string]types.CurrencyPair{},
+		logger:         coinbaseLogger,
+		reconnectTimer: time.NewTicker(coinbasePingCheck),
+		endpoints:      endpoints,
+		priceStore:     newPriceStore(coinbaseLogger),
 	}
+	provider.translateCurrencyPair = currencyPairToCoinbasePair
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
@@ -197,108 +192,6 @@ func (p *CoinbaseProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-// GetTickerPrices returns the tickerPrices based on the provided pairs.
-func (p *CoinbaseProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-
-	tickerErrs := 0
-	for _, cp := range pairs {
-		price, err := p.getTickerPrice(cp)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			tickerErrs++
-			continue
-		}
-		tickerPrices[cp.String()] = price
-	}
-
-	if tickerErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoTickers.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return tickerPrices, nil
-}
-
-// GetCandlePrices returns candles based off of the saved trades map.
-// Candles need to be cut up into one-minute intervals.
-func (p *CoinbaseProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	tradeMap := make(map[string][]CoinbaseTrade, len(pairs))
-
-	tradeErrs := 0
-	for _, cp := range pairs {
-		key := currencyPairToCoinbasePair(cp)
-		tradeSet, err := p.getTradePrices(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			tradeErrs++
-			continue
-		}
-		tradeMap[key] = tradeSet
-	}
-	if tradeErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoTickers.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-
-	candles := make(map[string][]types.CandlePrice)
-
-	for cp := range tradeMap {
-		trades := tradeMap[cp]
-		// sort oldest -> newest
-		sort.Slice(trades, func(i, j int) bool {
-			return time.Unix(trades[i].Time, 0).Before(time.Unix(trades[j].Time, 0))
-		})
-
-		candleSlice := []types.CandlePrice{
-			{
-				Price:  sdk.ZeroDec(),
-				Volume: sdk.ZeroDec(),
-			},
-		}
-		startTime := trades[0].Time
-		index := 0
-
-		// divide into chunks by minute
-		for _, trade := range trades {
-			// every minute, reset the time period
-			if trade.Time-startTime > unixMinute {
-				index++
-				startTime = trade.Time
-				candleSlice = append(candleSlice, types.CandlePrice{
-					Price:  sdk.ZeroDec(),
-					Volume: sdk.ZeroDec(),
-				})
-			}
-
-			size, err := sdk.NewDecFromStr(trade.Size)
-			if err != nil {
-				return nil, err
-			}
-			price, err := sdk.NewDecFromStr(trade.Price)
-			if err != nil {
-				return nil, err
-			}
-
-			volume := candleSlice[index].Volume.Add(size)
-			candleSlice[index] = types.CandlePrice{
-				Volume:    volume,     // aggregate size
-				Price:     price,      // most recent price
-				TimeStamp: trade.Time, // most recent timestamp
-			}
-		}
-
-		candles[coinbasePairToCurrencyPair(cp)] = candleSlice
-	}
-
-	return candles, nil
-}
-
 // GetAvailablePairs returns all pairs to which the provider can subscribe.
 func (p *CoinbaseProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	resp, err := http.Get(p.endpoints.Rest + coinbaseRestPath)
@@ -322,34 +215,6 @@ func (p *CoinbaseProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
-}
-
-func (p *CoinbaseProvider) getTickerPrice(cp types.CurrencyPair) (types.TickerPrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	gp := currencyPairToCoinbasePair(cp)
-	if tickerPair, ok := p.tickers[gp]; ok {
-		return tickerPair.toTickerPrice()
-	}
-
-	return types.TickerPrice{}, fmt.Errorf(
-		types.ErrTickerNotFound.Error(),
-		p.endpoints.Name,
-		gp,
-	)
-}
-
-func (p *CoinbaseProvider) getTradePrices(key string) ([]CoinbaseTrade, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	trades, ok := p.trades[key]
-	if !ok {
-		return []CoinbaseTrade{}, fmt.Errorf("failed to get trades for %s", key)
-	}
-
-	return trades, nil
 }
 
 func (p *CoinbaseProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
@@ -379,7 +244,7 @@ func (p *CoinbaseProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 			return
 		}
 
-		p.setTickerPair(coinbaseTicker)
+		p.setTickerPair(coinbaseTicker, coinbaseTicker.ProductID)
 		telemetryWebsocketMessage(ProviderCoinbase, MessageTypeTicker)
 		return
 	}
@@ -397,52 +262,21 @@ func (tr CoinbaseTradeResponse) timeToUnix() int64 {
 	return t.UnixMilli()
 }
 
-func (tr CoinbaseTradeResponse) toTrade() CoinbaseTrade {
-	return CoinbaseTrade{
-		Time:      tr.timeToUnix(),
-		Price:     tr.Price,
-		ProductID: tr.ProductID,
-		Size:      tr.Size,
+func (tr CoinbaseTradeResponse) toTrade() types.Trade {
+	return types.Trade{
+		Time:  tr.timeToUnix(),
+		Price: tr.Price,
+		Size:  tr.Size,
 	}
 }
 
-func (p *CoinbaseProvider) setTickerPair(ticker CoinbaseTicker) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	p.tickers[ticker.ProductID] = ticker
-}
-
-// setTradePair takes a CoinbaseTradeResponse, converts its date into unix epoch,
-// and then will add it to a copy of the trade slice. Then it filters out any
-// "stale" trades, and sets the trade slice in memory to the copy.
 func (p *CoinbaseProvider) setTradePair(tradeResponse CoinbaseTradeResponse) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-	staleTime := PastUnixTime(providerCandlePeriod)
-	tradeList := []CoinbaseTrade{
-		tradeResponse.toTrade(),
-	}
-
-	for _, t := range p.trades[tradeResponse.ProductID] {
-		if staleTime < t.Time {
-			tradeList = append(tradeList, t)
-		}
-	}
-	p.trades[tradeResponse.ProductID] = tradeList
-}
-
-// setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
-func (p *CoinbaseProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
-	for _, cp := range cps {
-		p.subscribedPairs[cp.String()] = cp
-	}
+	trade := tradeResponse.toTrade()
+	p.addTradeToCandles(trade, tradeResponse.ProductID)
 }
 
 func (ticker CoinbaseTicker) toTickerPrice() (types.TickerPrice, error) {
 	return types.NewTickerPrice(
-		string(ProviderCoinbase),
-		coinbasePairToCurrencyPair(ticker.ProductID),
 		ticker.Price,
 		ticker.Volume,
 	)
@@ -452,12 +286,6 @@ func (ticker CoinbaseTicker) toTickerPrice() (types.TickerPrice, error) {
 // ex.: "ATOM-USDT".
 func currencyPairToCoinbasePair(pair types.CurrencyPair) string {
 	return pair.Base + "-" + pair.Quote
-}
-
-// coinbasePairToCurrencyPair returns the currency pair string
-// ex.: "ATOMUSDT".
-func coinbasePairToCurrencyPair(coinbasePair string) string {
-	return strings.ReplaceAll(coinbasePair, "-", "")
 }
 
 // newCoinbaseSubscription returns a new subscription topic for matches/tickers.

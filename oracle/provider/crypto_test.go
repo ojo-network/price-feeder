@@ -15,7 +15,7 @@ func TestCryptoProvider_GetTickerPrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
+		ATOMUSDT,
 	)
 	require.NoError(t, err)
 
@@ -31,11 +31,11 @@ func TestCryptoProvider_GetTickerPrices(t *testing.T) {
 
 		p.tickers = tickerMap
 
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
+		prices, err := p.GetTickerPrices(ATOMUSDT)
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, lastPrice, prices["ATOMUSDT"].Price)
-		require.Equal(t, volume, prices["ATOMUSDT"].Volume)
+		require.Equal(t, lastPrice, prices[ATOMUSDT].Price)
+		require.Equal(t, volume, prices[ATOMUSDT].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -56,15 +56,15 @@ func TestCryptoProvider_GetTickerPrices(t *testing.T) {
 
 		p.tickers = tickerMap
 		prices, err := p.GetTickerPrices(
-			types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
-			types.CurrencyPair{Base: "LUNA", Quote: "USDT"},
+			ATOMUSDT,
+			LUNAUSDT,
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, lastPriceAtom, prices["ATOMUSDT"].Price)
-		require.Equal(t, volume, prices["ATOMUSDT"].Volume)
-		require.Equal(t, lastPriceLuna, prices["LUNAUSDT"].Price)
-		require.Equal(t, volume, prices["LUNAUSDT"].Volume)
+		require.Equal(t, lastPriceAtom, prices[ATOMUSDT].Price)
+		require.Equal(t, volume, prices[ATOMUSDT].Volume)
+		require.Equal(t, lastPriceLuna, prices[LUNAUSDT].Price)
+		require.Equal(t, volume, prices[LUNAUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestCryptoProvider_GetCandlePrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
+		ATOMUSDT,
 	)
 	require.NoError(t, err)
 
@@ -95,17 +95,17 @@ func TestCryptoProvider_GetCandlePrices(t *testing.T) {
 			Timestamp: timeStamp,
 		}
 
-		p.setCandlePair("ATOM_USDT", candle)
+		p.setCandlePair(candle, "ATOM_USDT")
 
-		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
+		prices, err := p.GetCandlePrices(ATOMUSDT)
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
 		priceDec, _ := sdk.NewDecFromStr(price)
 		volumeDec, _ := sdk.NewDecFromStr(volume)
 
-		require.Equal(t, priceDec, prices["ATOMUSDT"][0].Price)
-		require.Equal(t, volumeDec, prices["ATOMUSDT"][0].Volume)
-		require.Equal(t, timeStamp, prices["ATOMUSDT"][0].TimeStamp)
+		require.Equal(t, priceDec, prices[ATOMUSDT][0].Price)
+		require.Equal(t, volumeDec, prices[ATOMUSDT][0].Volume)
+		require.Equal(t, timeStamp, prices[ATOMUSDT][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestCryptoProvider_GetCandlePrices(t *testing.T) {
 }
 
 func TestCryptoCurrencyPairToCryptoPair(t *testing.T) {
-	cp := types.CurrencyPair{Base: "ATOM", Quote: "USDT"}
+	cp := ATOMUSDT
 	cryptoSymbol := currencyPairToCryptoPair(cp)
 	require.Equal(t, cryptoSymbol, "ATOM_USDT")
 }

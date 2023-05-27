@@ -35,13 +35,12 @@ type (
 	//
 	// REF: https://polygon.io/docs/forex/getting-started
 	PolygonProvider struct {
-		wsc             *WebsocketController
-		logger          zerolog.Logger
-		mtx             sync.RWMutex
-		endpoints       Endpoint
-		tickers         map[string]types.TickerPrice   // Symbol => TickerPrice
-		candles         map[string][]types.CandlePrice // Symbol => CandlePrice
-		subscribedPairs map[string]types.CurrencyPair  // Symbol => types.CurrencyPair
+		wsc       *WebsocketController
+		logger    zerolog.Logger
+		mtx       sync.RWMutex
+		endpoints Endpoint
+
+		priceStore
 	}
 
 	// Status response send back when connecting and authenticating with polygon's
@@ -97,12 +96,11 @@ func NewPolygonProvider(
 	polygonLogger := logger.With().Str("provider", "polygon").Logger()
 
 	provider := &PolygonProvider{
-		logger:          polygonLogger,
-		endpoints:       endpoints,
-		tickers:         map[string]types.TickerPrice{},
-		candles:         map[string][]types.CandlePrice{},
-		subscribedPairs: map[string]types.CurrencyPair{},
+		logger:     polygonLogger,
+		endpoints:  endpoints,
+		priceStore: newPriceStore(polygonLogger),
 	}
+	provider.priceStore.translateCurrencyPair = currencyPairToPolygonPair
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
@@ -185,93 +183,6 @@ func (p *PolygonProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-// GetTickerPrices returns the tickerPrices based on the saved map.
-func (p *PolygonProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-
-	tickerErrs := 0
-	for _, cp := range pairs {
-		key := currencyPairToPolygonPair(cp)
-		price, err := p.getTickerPrice(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			tickerErrs++
-			continue
-		}
-		tickerPrices[cp.String()] = price
-	}
-
-	if tickerErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoTickers.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return tickerPrices, nil
-}
-
-// GetCandlePrices returns the candlePrices based on the saved map
-func (p *PolygonProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
-
-	candleErrs := 0
-	for _, cp := range pairs {
-		key := currencyPairToPolygonPair(cp)
-		prices, err := p.getCandlePrices(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			candleErrs++
-			continue
-		}
-		candlePrices[cp.String()] = prices
-	}
-
-	if candleErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoCandles.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return candlePrices, nil
-}
-
-func (p *PolygonProvider) getTickerPrice(key string) (types.TickerPrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	ticker, ok := p.tickers[key]
-	if !ok {
-		return types.TickerPrice{}, fmt.Errorf(
-			types.ErrTickerNotFound.Error(),
-			p.endpoints.Name,
-			key,
-		)
-	}
-
-	return ticker, nil
-}
-
-func (p *PolygonProvider) getCandlePrices(key string) ([]types.CandlePrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	candles, ok := p.candles[key]
-	if !ok {
-		return []types.CandlePrice{}, fmt.Errorf(
-			types.ErrCandleNotFound.Error(),
-			p.endpoints.Name,
-			key,
-		)
-	}
-
-	candleList := []types.CandlePrice{}
-	candleList = append(candleList, candles...)
-
-	return candleList, nil
-}
-
 // GetAvailablePairs return all available pairs symbol to susbscribe.
 func (p *PolygonProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	// request for first 1000 tickers (request limit)
@@ -335,8 +246,8 @@ func (p *PolygonProvider) messageReceived(messageType int, _ *WebsocketConnectio
 
 	aggregatesErr = json.Unmarshal(bz, &aggregatesResp)
 	if aggregatesResp[0].EV == polygonAggregatesEvent {
-		p.setTickerPair(aggregatesResp[0])
-		p.setCandlePair(aggregatesResp[0])
+		p.setTickerPair(aggregatesResp[0], aggregatesResp[0].Pair)
+		p.setCandlePair(aggregatesResp[0], aggregatesResp[0].Pair)
 		return
 	}
 
@@ -347,51 +258,19 @@ func (p *PolygonProvider) messageReceived(messageType int, _ *WebsocketConnectio
 		Msg("Error on receive message")
 }
 
-func (p *PolygonProvider) setTickerPair(data PolygonAggregatesResponse) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	tickerPrice, err := types.NewTickerPrice(
-		string(ProviderPolygon),
-		data.Pair,
-		fmt.Sprintf("%f", data.Close),
-		fmt.Sprintf("%f", data.Volume),
+func (par PolygonAggregatesResponse) toTickerPrice() (types.TickerPrice, error) {
+	return types.NewTickerPrice(
+		fmt.Sprintf("%f", par.Close),
+		fmt.Sprintf("%f", par.Volume),
 	)
-	if err != nil {
-		p.logger.Warn().Err(err).Msg("failed to parse ticker")
-		return
-	}
-
-	p.tickers[data.Pair] = tickerPrice
 }
 
-func (p *PolygonProvider) setCandlePair(data PolygonAggregatesResponse) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	candle, err := types.NewCandlePrice(
-		string(ProviderPolygon),
-		data.Pair,
-		fmt.Sprintf("%f", data.Close),
-		fmt.Sprintf("%f", data.Volume),
-		data.Timestamp,
+func (par PolygonAggregatesResponse) toCandlePrice() (types.CandlePrice, error) {
+	return types.NewCandlePrice(
+		fmt.Sprintf("%f", par.Close),
+		fmt.Sprintf("%f", par.Volume),
+		par.Timestamp,
 	)
-	if err != nil {
-		p.logger.Warn().Err(err).Msg("failed to parse candle")
-		return
-	}
-
-	staleTime := PastUnixTime(providerCandlePeriod)
-	candleList := []types.CandlePrice{}
-	candleList = append(candleList, candle)
-
-	for _, c := range p.candles[data.Pair] {
-		if staleTime < c.TimeStamp {
-			candleList = append(candleList, c)
-		}
-	}
-
-	p.candles[data.Pair] = candleList
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.

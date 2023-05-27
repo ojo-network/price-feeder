@@ -16,7 +16,7 @@ func TestKrakenProvider_GetTickerPrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "BTC", Quote: "USDT"},
+		BTCUSDT,
 	)
 	require.NoError(t, err)
 
@@ -35,8 +35,8 @@ func TestKrakenProvider_GetTickerPrices(t *testing.T) {
 		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, lastPrice, prices["ATOMUSDT"].Price)
-		require.Equal(t, volume, prices["ATOMUSDT"].Volume)
+		require.Equal(t, lastPrice, prices[ATOMUSDT].Price)
+		require.Equal(t, volume, prices[ATOMUSDT].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -62,10 +62,10 @@ func TestKrakenProvider_GetTickerPrices(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, lastPriceAtom, prices["ATOMUSDT"].Price)
-		require.Equal(t, volume, prices["ATOMUSDT"].Volume)
-		require.Equal(t, lastPriceLuna, prices["LUNAUSDT"].Price)
-		require.Equal(t, volume, prices["LUNAUSDT"].Volume)
+		require.Equal(t, lastPriceAtom, prices[ATOMUSDT].Price)
+		require.Equal(t, volume, prices[ATOMUSDT].Volume)
+		require.Equal(t, lastPriceLuna, prices[LUNAUSDT].Price)
+		require.Equal(t, volume, prices[LUNAUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
@@ -96,9 +96,7 @@ func TestNormalizeKrakenBTCPair(t *testing.T) {
 }
 
 func TestKrakenProvider_getSubscriptionMsgs(t *testing.T) {
-	provider := &KrakenProvider{
-		subscribedPairs: map[string]types.CurrencyPair{},
-	}
+	provider := &KrakenProvider{}
 	cps := []types.CurrencyPair{
 		{Base: "ATOM", Quote: "USDT"},
 	}

@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 // Response constants
@@ -26,11 +25,11 @@ type (
 	// PricesResponse defines the response type for getting the latest exchange
 	// rates from the oracle.
 	PricesResponse struct {
-		Prices map[string]sdk.Dec `json:"prices"`
+		Prices types.CurrencyPairDec `json:"prices"`
 	}
 
 	PricesPerProviderResponse struct {
-		Prices map[provider.Name]map[string]sdk.Dec `json:"providers"`
+		Prices types.CurrencyPairDecByProvider `json:"providers"`
 	}
 )
 

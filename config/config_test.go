@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +23,7 @@ func TestValidate(t *testing.T) {
 				AllowedOrigins: []string{},
 			},
 			CurrencyPairs: []config.CurrencyPair{
-				{Base: "ATOM", Quote: "USDT", Providers: []provider.Name{provider.ProviderKraken}},
+				{Base: "ATOM", Quote: "USDT", Providers: []types.ProviderName{provider.ProviderKraken}},
 			},
 			Account: config.Account{
 				Address:   "fromaddr",
@@ -55,17 +56,17 @@ func TestValidate(t *testing.T) {
 
 	invalidBase := validConfig()
 	invalidBase.CurrencyPairs = []config.CurrencyPair{
-		{Base: "", Quote: "USDT", Providers: []provider.Name{provider.ProviderKraken}},
+		{Base: "", Quote: "USDT", Providers: []types.ProviderName{provider.ProviderKraken}},
 	}
 
 	invalidQuote := validConfig()
 	invalidQuote.CurrencyPairs = []config.CurrencyPair{
-		{Base: "ATOM", Quote: "", Providers: []provider.Name{provider.ProviderKraken}},
+		{Base: "ATOM", Quote: "", Providers: []types.ProviderName{provider.ProviderKraken}},
 	}
 
 	emptyProviders := validConfig()
 	emptyProviders.CurrencyPairs = []config.CurrencyPair{
-		{Base: "ATOM", Quote: "USDT", Providers: []provider.Name{}},
+		{Base: "ATOM", Quote: "USDT", Providers: []types.ProviderName{}},
 	}
 
 	invalidEndpoints := validConfig()

@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 type APIKeyRequired bool
@@ -9,12 +10,11 @@ type APIKeyRequired bool
 var (
 	// SupportedProviders defines a lookup table of all the supported currency API
 	// providers and whether or not they require an API key to be passed in.
-	SupportedProviders = map[provider.Name]APIKeyRequired{
+	SupportedProviders = map[types.ProviderName]APIKeyRequired{
 		provider.ProviderKraken:    false,
 		provider.ProviderBinance:   false,
 		provider.ProviderBinanceUS: false,
 		provider.ProviderCrescent:  false,
-		provider.ProviderOsmosis:   false,
 		provider.ProviderOsmosisV2: false,
 		provider.ProviderOkx:       false,
 		provider.ProviderHuobi:     false,
