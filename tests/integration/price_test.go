@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
@@ -41,32 +42,39 @@ func TestPriceAccuracy(t *testing.T) {
 
 	// first call to SetPrices starts the provider routines
 	oracle.SetPrices(context.Background())
+	time.Sleep(40 * time.Second)
 
-	time.Sleep(60 * time.Second)
+	for i := 0; i < 3; i++ {
+		time.Sleep(5 * time.Second)
 
-	oracle.SetPrices(context.Background())
-	oraclePrices := oracle.GetPrices()
+		oracle.SetPrices(context.Background())
+		oraclePrices := oracle.GetPrices()
 
-	apiPrices, err := getCoinMarketCapPrices(symbols)
-	require.NoError(t, err)
+		apiPrices, err := getCoinMarketCapPrices(symbols)
+		require.NoError(t, err)
 
-	for _, k := range symbols {
+		checkPrices(t, symbols, oraclePrices, apiPrices)
+	}
+}
+
+func checkPrices(t *testing.T, expectedSymbols []string, oraclePrices map[string]sdk.Dec, apiPrices map[string]float64) {
+	for _, k := range expectedSymbols {
 		if _, ok := apiPrices[k]; !ok {
-			logger.Debug().Msg(fmt.Sprintf("%s API price not found", k))
+			t.Logf("%s API price not found", k)
 			continue
 		}
 
 		if _, ok := oraclePrices[k]; !ok {
-			logger.Debug().Msg(fmt.Sprintf("%s Oracle price not found", k))
+			t.Logf("%s Oracle price not found", k)
 			continue
 		}
 
 		v := oraclePrices[k]
 		stdDeviation := calculateStandardDeviation([]float64{v.MustFloat64(), apiPrices[k]})
 		if stdDeviation > 0.1 {
-			assert.Fail(t, fmt.Sprintf("FAIL %s Oracle price: %s, API price: %f, Std Deviation: %f", k, v, apiPrices[k], stdDeviation))
+			assert.Fail(t, fmt.Sprintf("FAIL %s Oracle price: %f, API price: %f, Std Deviation: %f", k, v, apiPrices[k], stdDeviation))
 		} else {
-			logger.Info().Msg(fmt.Sprintf("PASS %s Oracle price: %s, API price: %f, Std Deviation: %f", k, v, apiPrices[k], stdDeviation))
+			t.Logf("PASS %s Oracle price: %f, API price: %f, Std Deviation: %f", k, v, apiPrices[k], stdDeviation)
 		}
 	}
 }
