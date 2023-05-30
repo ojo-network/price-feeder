@@ -176,7 +176,7 @@ func (c Config) DeviationsMap() (map[string]sdk.Dec, error) {
 	return deviations, nil
 }
 
-// ExpectedSymbols returns a slice of all unique base symbols from the config file.
+// ExpectedSymbols returns a slice of all unique base symbols from the config object.
 func (c Config) ExpectedSymbols() []string {
 	bases := make(map[string]interface{}, len(c.CurrencyPairs))
 	for _, pair := range c.CurrencyPairs {
