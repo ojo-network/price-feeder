@@ -23,7 +23,7 @@ func getCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
 
 	apiKey := os.Getenv("COINMARKETCAP_API_KEY")
 	if apiKey == "" {
-		return nil, fmt.Errorf("COINMARKETCAP_API_KEY env var not set")
+		return nil, fmt.Errorf("COINMARKETCAP_API_KEY env var not set - see readme")
 	}
 
 	req.Header.Set("Accepts", "application/json")

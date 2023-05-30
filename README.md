@@ -162,7 +162,7 @@ If this environment variable is not set, the price feeder will prompt the user f
 ### Integration tests
 
 In order to run the integration price test you need to add the coinmarketcap api environment variable.
-Sign up for a free account and export the api key.
+Sign up for a free account (https://coinmarketcap.com/api/) and export the api key.
 
 Ex :
 `export COINMARKETCAP_API_KEY=yourApiKey`
