@@ -53,11 +53,17 @@ func TestPriceAccuracy(t *testing.T) {
 		apiPrices, err := getCoinMarketCapPrices(symbols)
 		require.NoError(t, err)
 
-		checkPrices(t, symbols, oraclePrices, apiPrices)
+		checkPrices(t, symbols, deviations, oraclePrices, apiPrices)
 	}
 }
 
-func checkPrices(t *testing.T, expectedSymbols []string, oraclePrices map[string]sdk.Dec, apiPrices map[string]float64) {
+func checkPrices(
+	t *testing.T,
+	expectedSymbols []string,
+	deviations map[string]sdk.Dec,
+	oraclePrices map[string]sdk.Dec,
+	apiPrices map[string]float64,
+) {
 	for _, k := range expectedSymbols {
 		if _, ok := apiPrices[k]; !ok {
 			t.Logf("%s API price not found", k)
@@ -71,10 +77,11 @@ func checkPrices(t *testing.T, expectedSymbols []string, oraclePrices map[string
 
 		v := oraclePrices[k]
 		stdDeviation := calculateStandardDeviation([]float64{v.MustFloat64(), apiPrices[k]})
-		if stdDeviation > 0.1 {
-			assert.Fail(t, fmt.Sprintf("FAIL %s Oracle price: %f, API price: %f, Std Deviation: %f", k, v, apiPrices[k], stdDeviation))
+		stdDeviationMax := deviations[k].MustFloat64() * 2
+		if stdDeviation > deviations[k].MustFloat64() {
+			assert.Fail(t, fmt.Sprintf("FAIL %s Oracle price: %f, API price: %f, Std Deviation: %f > %f", k, v, apiPrices[k], stdDeviation, stdDeviationMax))
 		} else {
-			t.Logf("PASS %s Oracle price: %f, API price: %f, Std Deviation: %f", k, v, apiPrices[k], stdDeviation)
+			t.Logf("PASS %s Oracle price: %f, API price: %f, Std Deviation: %f < %f", k, v, apiPrices[k], stdDeviation, stdDeviationMax)
 		}
 	}
 }
