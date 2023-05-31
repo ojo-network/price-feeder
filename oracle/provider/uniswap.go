@@ -78,8 +78,6 @@ type (
 
 		poolIDS          []string
 		pairs            []types.CurrencyPair
-		baseDenomIdx     map[string]types.CurrencyPair
-		quoteDenomIdx    map[string]types.CurrencyPair
 		denomToAddress   map[string]string
 		addressToPair    map[string]types.CurrencyPair
 		poolsHoursDatas  PoolHourDataQuery
@@ -87,7 +85,13 @@ type (
 	}
 )
 
-func NewUniswapProvider(ctx context.Context, logger zerolog.Logger, providerName string, endpoint Endpoint, currencyPairs ...types.CurrencyPair) *UniswapProvider {
+func NewUniswapProvider(
+	ctx context.Context,
+	logger zerolog.Logger,
+	providerName string,
+	endpoint Endpoint,
+	currencyPairs ...types.CurrencyPair,
+) *UniswapProvider {
 	// create pair name to address map
 	denomToAddress := make(map[string]string)
 	addressToPair := make(map[string]types.CurrencyPair)
@@ -134,7 +138,7 @@ func (p *UniswapProvider) startPooling(ctx context.Context) {
 				p.logger.Err(err).Msgf("failed to get hour and minute data")
 			}
 
-			tick += 1
+			tick++
 			p.logger.Log().Int("uniswap tick", tick)
 
 			// slightly larger than a second (time for new candle data to be populated)
@@ -149,7 +153,7 @@ func (p *UniswapProvider) StartConnections() {
 func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 	g, ctx := errgroup.WithContext(ctx)
 
-	//ticker prices
+	// ticker prices
 	g.Go(func() error {
 		idMap := map[string]interface{}{
 			"poolIDS": p.poolIDS,
@@ -167,7 +171,7 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 
 			// query volume from day data
 			var poolsHourData PoolHourDataQuery
-			err := p.client.Query(context.Background(), &poolsHourData, idMap)
+			err := p.client.Query(ctx, &poolsHourData, idMap)
 
 			if err != nil {
 				return err
@@ -192,7 +196,7 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 		return nil
 	})
 
-	//candle prices
+	// candle prices
 	g.Go(func() error {
 
 		idMap := map[string]interface{}{
@@ -211,7 +215,7 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 
 			// query volume from day data
 			var poolsMinuteData PoolMinuteDataCandleQuery
-			err := p.client.Query(context.Background(), &poolsMinuteData, idMap)
+			err := p.client.Query(ctx, &poolsMinuteData, idMap)
 
 			if err != nil {
 				return err
@@ -239,9 +243,9 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 }
 
 // SubscribeCurrencyPairs performs a no-op since Uniswap does not use websockets
-func (p UniswapProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
+func (p *UniswapProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 
-func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
+func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
 	latestTimestamp := make(map[string]float64)
 
@@ -306,7 +310,7 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	return tickerPrices, nil
 }
 
-func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
+func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
@@ -361,7 +365,7 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 }
 
 // GetBundle returns eth price
-func (p UniswapProvider) GetBundle() (float64, error) {
+func (p *UniswapProvider) GetBundle() (float64, error) {
 	var bundle BundleQuery
 	err := p.client.Query(context.Background(), &bundle, nil)
 	if err != nil {
@@ -372,7 +376,7 @@ func (p UniswapProvider) GetBundle() (float64, error) {
 }
 
 // GetAvailablePairs return all available pairs symbol to susbscribe.
-func (p UniswapProvider) GetAvailablePairs() (map[string]struct{}, error) {
+func (p *UniswapProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	availablePairs := make(map[string]struct{})
 
 	// return denoms that is tracked at provider init
