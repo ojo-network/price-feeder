@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func calculateMean(numbers []float64) float64 {
+func calcMean(numbers []float64) float64 {
 	sum := 0.0
 	for _, num := range numbers {
 		sum += num
@@ -15,8 +15,8 @@ func calculateMean(numbers []float64) float64 {
 	return sum / float64(len(numbers))
 }
 
-func calculateStandardDeviation(numbers []float64) float64 {
-	mean := calculateMean(numbers)
+func calcStandardDeviation(numbers []float64) float64 {
+	mean := calcMean(numbers)
 	variance := 0.0
 	for _, num := range numbers {
 		diff := num - mean
@@ -24,6 +24,12 @@ func calculateStandardDeviation(numbers []float64) float64 {
 	}
 	variance /= float64(len(numbers))
 	return math.Sqrt(variance)
+}
+
+func calcCoeficientOfVariation(numbers []float64) float64 {
+	mean := calcMean(numbers)
+	stdDev := calcStandardDeviation(numbers)
+	return (stdDev / mean) * 100
 }
 
 func getLogger() zerolog.Logger {
