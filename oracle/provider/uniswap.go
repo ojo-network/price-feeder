@@ -19,6 +19,8 @@ import (
 
 var _ Provider = (*UniswapProvider)(nil)
 
+const USDC = "USDC"
+
 type (
 
 	// BundleQuery eth price query has fixed id of 1
@@ -43,6 +45,8 @@ type (
 			Token0           Token   `graphql:"token0"`
 			Token1           Token   `graphql:"token1"`
 			Token0Price      string  `graphql:"token0Price"`
+			Token0PriceUSD   string  `graphql:"token0PriceUSD"`
+			Token1PriceUSD   string  `graphql:"token1PriceUSD"`
 			Token1Price      string  `graphql:"token1Price"`
 			VolumeUSDTracked string  `graphql:"volumeUSDTracked"`
 		} `graphql:"poolMinuteDatas(first:$first, after:$after, orderBy: periodStartUnix, orderDirection: asc, where: {poolID_in: $poolIDS, periodStartUnix_gte: $start,periodStartUnix_lte:$stop})"` //nolint:lll
@@ -58,6 +62,8 @@ type (
 			Token1             Token   `graphql:"token1"`
 			Token0Price        string  `graphql:"token0Price"`
 			Token1Price        string  `graphql:"token1Price"`
+			Token0PriceUSD     string  `graphql:"token0PriceUSD"`
+			Token1PriceUSD     string  `graphql:"token1PriceUSD"`
 			VolumeUSDTracked   string  `graphql:"volumeUSDTracked"`
 			VolumeUSDUntracked string  `graphql:"volumeUSDUntracked"`
 		} `graphql:"poolHourDatas(first: $first,after: $after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDS, periodStartUnix_gte:$start,periodStartUnix_lte:$stop})"` //nolint:lll
@@ -75,6 +81,7 @@ type (
 		baseDenomIdx     map[string]types.CurrencyPair
 		quoteDenomIdx    map[string]types.CurrencyPair
 		denomToAddress   map[string]string
+		addressToPair    map[string]types.CurrencyPair
 		poolsHoursDatas  PoolHourDataQuery
 		poolsMinuteDatas PoolMinuteDataCandleQuery
 	}
@@ -83,11 +90,13 @@ type (
 func NewUniswapProvider(ctx context.Context, logger zerolog.Logger, providerName string, endpoint Endpoint, currencyPairs ...types.CurrencyPair) *UniswapProvider {
 	// create pair name to address map
 	denomToAddress := make(map[string]string)
+	addressToPair := make(map[string]types.CurrencyPair)
 	for _, pair := range currencyPairs {
 		// graph supports all lower case id's
 		// currently supports only 1 fee tier pool per currency pair
 		address := strings.ToLower(pair.Address)
 		denomToAddress[pair.String()] = address
+		addressToPair[address] = pair
 	}
 
 	// default provider to eth uniswap
@@ -96,6 +105,7 @@ func NewUniswapProvider(ctx context.Context, logger zerolog.Logger, providerName
 		baseURL:        endpoint.Rest,
 		client:         gql.NewClient(endpoint.Rest, nil),
 		denomToAddress: denomToAddress,
+		addressToPair:  addressToPair,
 		logger:         uniswapLogger,
 		pairs:          currencyPairs,
 		mut:            sync.Mutex{},
@@ -107,9 +117,7 @@ func NewUniswapProvider(ctx context.Context, logger zerolog.Logger, providerName
 }
 
 func (p *UniswapProvider) startPooling(ctx context.Context) {
-	// no-op
 	tick := 0
-	p.setBaseAndQuoteMapping()
 	err := p.setPoolIDS()
 	if err != nil {
 		p.logger.Err(err).Msg("error generating pool ids")
@@ -129,7 +137,8 @@ func (p *UniswapProvider) startPooling(ctx context.Context) {
 			tick += 1
 			p.logger.Log().Int("uniswap tick", tick)
 
-			time.Sleep(time.Second * 5)
+			// slightly larger than a second (time for new candle data to be populated)
+			time.Sleep(time.Millisecond * 1100)
 		}
 	}
 }
@@ -240,20 +249,34 @@ func (p UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[strin
 	defer p.mut.Unlock()
 	for _, poolData := range p.poolsHoursDatas.PoolHourDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
+		symbol1 := strings.ToUpper(poolData.Token1.Symbol) // symbol == quote in a currency pair
 
-		// flip price based on returned quote or denom
+		// check if this pair is request
+		requestedPair, found := p.addressToPair[strings.ToLower(poolData.PoolID)]
+		if !found {
+			continue
+		}
+
+		base := requestedPair.Base
+		quote := requestedPair.Quote
+		name := requestedPair.String()
 		var tokenPrice string
-		var name string
-		if cp, found := p.baseDenomIdx[symbol0]; found {
+		switch {
+		case base == symbol0 && quote == symbol1:
+			// pricing
 			tokenPrice = poolData.Token1Price
-			name = cp.String()
-		} else {
-			if _, found := p.quoteDenomIdx[symbol0]; !found {
-				return nil, fmt.Errorf("%s returned does not match base or quote symbols", symbol0)
-			}
 
+		case base == symbol0 && (quote == USDC && symbol1 != USDC):
+			// consider USDC BASED PRICING
+			tokenPrice = poolData.Token0PriceUSD
+
+		case base == symbol1 && quote == symbol0:
+			// flip prices
 			tokenPrice = poolData.Token0Price
-			name = p.quoteDenomIdx[symbol0].String()
+
+		case base == symbol1 && (quote == USDC && symbol0 != USDC):
+			// consider USDC BASED PRICING
+			tokenPrice = poolData.Token1PriceUSD
 		}
 
 		price, err := toSdkDec(tokenPrice)
@@ -289,20 +312,31 @@ func (p UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[strin
 	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
 	for _, poolData := range p.poolsMinuteDatas.PoolMinuteDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
+		symbol1 := strings.ToUpper(poolData.Token1.Symbol) // symbol == quote in a currency pai// r
 
-		// flip price based on returned quote or denom
+		// check if this pair is request
+		requestedPair, found := p.addressToPair[strings.ToLower(poolData.PoolID)]
+		if !found {
+			continue
+		}
+
+		base := requestedPair.Base
+		quote := requestedPair.Quote
+		name := requestedPair.String()
 		var tokenPrice string
-		var name string
-		if cp, found := p.baseDenomIdx[symbol0]; found {
+		switch {
+		case base == symbol0 && quote == symbol1:
+			// pricing
 			tokenPrice = poolData.Token1Price
-			name = cp.String()
-		} else {
-			if _, found := p.quoteDenomIdx[symbol0]; !found {
-				return nil, fmt.Errorf("%s returned does not match base or quote symbols", symbol0)
-			}
-
+		case base == symbol0 && (quote == USDC && symbol1 != USDC):
+			// consider USDC BASED PRICING
+			tokenPrice = poolData.Token0PriceUSD
+		case base == symbol1 && quote == symbol0:
+			// flip prices here
 			tokenPrice = poolData.Token0Price
-			name = p.quoteDenomIdx[symbol0].String()
+		case base == symbol1 && (quote == USDC && symbol0 != USDC):
+			// consider USDC BASED PRICING
+			tokenPrice = poolData.Token1PriceUSD
 		}
 
 		price, err := toSdkDec(tokenPrice)
@@ -368,22 +402,7 @@ func (p *UniswapProvider) setPoolIDS() error {
 		poolID := p.denomToAddress[pair.String()]
 		poolIDS[i] = poolID
 	}
-
 	p.poolIDS = poolIDS
+
 	return nil
-}
-
-func (p *UniswapProvider) setBaseAndQuoteMapping() {
-	baseDenomIdx := make(map[string]types.CurrencyPair)
-	quoteDenomIdx := make(map[string]types.CurrencyPair)
-	for _, cp := range p.pairs {
-		base := strings.ToUpper(cp.Base)
-		quote := strings.ToUpper(cp.Quote)
-
-		baseDenomIdx[base] = cp
-		quoteDenomIdx[quote] = cp
-	}
-
-	p.baseDenomIdx = baseDenomIdx
-	p.quoteDenomIdx = quoteDenomIdx
 }

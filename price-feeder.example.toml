@@ -25,6 +25,15 @@ providers = [
 quote = "USD"
 
 [[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+  "coinbase",
+  "binanceus",
+]
+quote = "USD"
+
+[[currency_pairs]]
 base = "ATOM"
 providers = [
   "okx",
@@ -50,6 +59,32 @@ quote = "USDC"
 [[currency_pairs.pair_address_providers]]
 address = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
 provider = "eth-uniswap"
+
+
+[[currency_pairs]]
+base = "UNI"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "USDC"
+[[currency_pairs.pair_address_providers]]
+address = "0x1d42064fc4beb5f8aaf85f4617ae8b3b5b8bd801"
+provider = "eth-uniswap"
+
+
+[[currency_pairs]]
+base = "WBTC"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "USDC"
+[[currency_pairs.pair_address_providers]]
+address = "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
+provider = "eth-uniswap"
+
+
 
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
@@ -81,5 +116,5 @@ websocket = "stream.binance.com:9443"
 
 [[provider_endpoints]]
 name = "eth-uniswap"
-rest = "https://api.studio.thegraph.com/query/46403/unidexer/test37"
+rest = "https://api.studio.thegraph.com/query/46403/unidexer/test41"
 websocket = "not supported"

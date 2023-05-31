@@ -46,6 +46,7 @@ var (
 		"WETH":  {},
 		"CBETH": {},
 		"RETH":  {},
+		"WBTC":  {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported
