@@ -1,5 +1,4 @@
 gas_adjustment = 1
-provider_timeout = "10000ms"
 
 [server]
 listen_addr = "0.0.0.0:7171"
@@ -14,6 +13,18 @@ threshold = "1.5"
 [[deviation_thresholds]]
 base = "ATOM"
 threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "ETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "BTC"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "OSMO"
+threshold = "2"
 
 [[currency_pairs]]
 base = "USDT"
@@ -50,6 +61,53 @@ providers = [
 quote = "USD"
 
 [[currency_pairs]]
+base = "ETH"
+providers = [
+  "okx",
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "ETH"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "BTC"
+providers = [
+  "okx",
+  "gate",
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "BTC"
+providers = [
+  "coinbase",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "bitget",
+  "gate",
+  "huobi",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
 base = "WETH"
 providers = [
   "eth-uniswap"
@@ -83,8 +141,6 @@ quote = "USDC"
 [[currency_pairs.pair_address_providers]]
 address = "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
 provider = "eth-uniswap"
-
-
 
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"

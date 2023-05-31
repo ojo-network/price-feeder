@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -63,18 +62,19 @@ func (s *IntegrationTestSuite) TestSubscribeCurrencyPairs() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	currencyPairs := []types.CurrencyPair{{Base: "ATOM", Quote: "USDT"}}
-	pvd, _ := provider.NewOkxProvider(ctx, getLogger(), provider.Endpoint{}, currencyPairs...)
+	currencyPairs := []types.CurrencyPair{{Base: "USDT", Quote: "USD"}}
+	pvd, _ := provider.NewKrakenProvider(ctx, getLogger(), provider.Endpoint{}, currencyPairs...)
+	pvd.StartConnections()
 
 	time.Sleep(5 * time.Second)
 
-	newPairs := []types.CurrencyPair{{Base: "ETH", Quote: "USDT"}}
+	newPairs := []types.CurrencyPair{{Base: "ATOM", Quote: "USD"}}
 	pvd.SubscribeCurrencyPairs(newPairs...)
 	currencyPairs = append(currencyPairs, newPairs...)
 
-	time.Sleep(25 * time.Second) // wait for provider to connect and receive some prices
+	time.Sleep(25 * time.Second)
 
-	checkForPrices(s.T(), pvd, currencyPairs, "OKX")
+	checkForPrices(s.T(), pvd, currencyPairs, "Kraken")
 
 	cancel()
 }
@@ -112,16 +112,9 @@ func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.C
 
 		require.True(t,
 			candlePrices[currencyPairKey][0].Price.GT(sdk.NewDec(0)),
-			"candle price iss zero for %s pair %s",
+			"candle price is zero for %s pair %s",
 			providerName,
 			currencyPairKey,
 		)
 	}
-}
-
-func getLogger() zerolog.Logger {
-	logWriter := zerolog.ConsoleWriter{Out: os.Stderr}
-	logLvl := zerolog.DebugLevel
-	zerolog.SetGlobalLevel(logLvl)
-	return zerolog.New(logWriter).Level(logLvl).With().Timestamp().Logger()
 }
