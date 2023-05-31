@@ -35,8 +35,13 @@ base = "ETH"
 threshold = "2"
 
 [[deviation_thresholds]]
+<<<<<<< HEAD
 base = "WBTC"
 threshold = "1.5"
+=======
+base = "BTC"
+threshold = "2"
+>>>>>>> 96e9c8d (feat: Add integration price test (#146))
 
 [[deviation_thresholds]]
 base = "BNB"

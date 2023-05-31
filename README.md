@@ -146,3 +146,12 @@ Ex :
 `export PRICE_FEEDER_PASS=keyringPassword`
 
 If this environment variable is not set, the price feeder will prompt the user for input.
+
+### Integration tests
+
+In order to run the integration price test you need to add the coinmarketcap api environment variable.
+Sign up for a free account [here](https://coinmarketcap.com/api/) and export the api key.
+
+Ex :
+`export COINMARKETCAP_API_KEY=yourApiKey`
+`make test-integration`
