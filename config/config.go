@@ -162,6 +162,33 @@ func (c Config) ProviderEndpointsMap() map[provider.Name]provider.Endpoint {
 	return endpoints
 }
 
+// DeviationsMap converts the deviation_thresholds from the config file into
+// a map of sdk.Dec where the key is the base asset.
+func (c Config) DeviationsMap() (map[string]sdk.Dec, error) {
+	deviations := make(map[string]sdk.Dec, len(c.Deviations))
+	for _, deviation := range c.Deviations {
+		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		if err != nil {
+			return nil, err
+		}
+		deviations[deviation.Base] = threshold
+	}
+	return deviations, nil
+}
+
+// ExpectedSymbols returns a slice of all unique base symbols from the config object.
+func (c Config) ExpectedSymbols() []string {
+	bases := make(map[string]interface{}, len(c.CurrencyPairs))
+	for _, pair := range c.CurrencyPairs {
+		bases[pair.Base] = struct{}{}
+	}
+	expectedSymbols := make([]string, 0, len(bases))
+	for b := range bases {
+		expectedSymbols = append(expectedSymbols, b)
+	}
+	return expectedSymbols
+}
+
 // ParseConfig attempts to read and parse configuration from the given file path.
 // An error is returned if reading or parsing the config fails.
 func ParseConfig(configPath string) (Config, error) {

@@ -20,7 +20,7 @@ threshold = "2"
 
 [[deviation_thresholds]]
 base = "BTC"
-threshold = "1.5"
+threshold = "2"
 
 [[deviation_thresholds]]
 base = "OSMO"
