@@ -14,6 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	maxCoeficientOfVariation = 0.1
+)
+
 func TestPriceAccuracy(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -63,24 +67,30 @@ func checkPrices(
 	oraclePrices map[string]sdk.Dec,
 	apiPrices map[string]float64,
 ) {
-	for _, k := range expectedSymbols {
-		if _, ok := apiPrices[k]; !ok {
-			t.Logf("%s API price not found", k)
+	for _, denom := range expectedSymbols {
+		if _, ok := apiPrices[denom]; !ok {
+			t.Logf("%s API price not found", denom)
 			continue
 		}
 
-		if _, ok := oraclePrices[k]; !ok {
-			t.Logf("%s Oracle price not found", k)
+		if _, ok := oraclePrices[denom]; !ok {
+			t.Logf("%s Oracle price not found", denom)
 			continue
 		}
 
-		v := oraclePrices[k]
-		cv := calcCoeficientOfVariation([]float64{v.MustFloat64(), apiPrices[k]})
-		cvMax := 0.1
-		if cv > cvMax {
-			assert.Fail(t, fmt.Sprintf("FAIL %s Oracle price: %f, API price: %f, CV: %f > %f", k, v, apiPrices[k], cv, cvMax))
+		oraclePrice := oraclePrices[denom].MustFloat64()
+		apiPrice := apiPrices[denom]
+		cv := calcCoeficientOfVariation([]float64{oraclePrice, apiPrice})
+
+		if cv > maxCoeficientOfVariation {
+			assert.Fail(t, fmt.Sprintf(
+				"FAIL %s Oracle price: %f, API price: %f, CV: %f > %f",
+				denom, oraclePrice, apiPrice, cv, maxCoeficientOfVariation,
+			))
 		} else {
-			t.Logf("PASS %s Oracle price: %f, API price: %f, CV: %f < %f", k, v, apiPrices[k], cv, cvMax)
+			t.Logf(
+				"PASS %s Oracle price: %f, API price: %f, CV: %f < %f",
+				denom, oraclePrice, apiPrice, cv, maxCoeficientOfVariation)
 		}
 	}
 }
