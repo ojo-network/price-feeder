@@ -1,16 +1,21 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/hasura/go-graphql-client"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/libs/rand"
 
@@ -80,8 +85,9 @@ func (p *ProviderTestSuite) setMockData() {
 		p.totalVolume[i] = sdk.ZeroDec()
 
 		cPair := types.CurrencyPair{
-			Base:  fmt.Sprintf("SYBMOL0%d", i),
-			Quote: fmt.Sprintf("SYBMOL1%d", i),
+			Base:    fmt.Sprintf("SYBMOL0%d", i),
+			Quote:   fmt.Sprintf("SYBMOL1%d", i),
+			Address: pair,
 		}
 
 		p.currencyPairs = append(p.currencyPairs, cPair)
@@ -89,7 +95,6 @@ func (p *ProviderTestSuite) setMockData() {
 		for j := 0; j < 24; j++ {
 			volFloat := strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64)
 			vol, _ := toSdkDec(volFloat)
-
 			p.hourData = append(p.hourData, PoolHourData{
 				ID:              fmt.Sprintf("%s-%d", pair, j),
 				PoolID:          pair,
@@ -102,10 +107,9 @@ func (p *ProviderTestSuite) setMockData() {
 					Name:   fmt.Sprintf("TEST1%d", i),
 					Symbol: fmt.Sprintf("SYBMOL1%d", i),
 				},
-				Token0Price:        strconv.FormatFloat(rand.Float64()*3000, 'f', -1, 64),
-				Token1Price:        strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64),
-				VolumeUSDTracked:   volFloat,
-				VolumeUSDUntracked: strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64),
+				Token0Price:      strconv.FormatFloat(rand.Float64()*3000, 'f', -1, 64),
+				Token1Price:      strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64),
+				VolumeUSDTracked: volFloat,
 			},
 			)
 
@@ -185,6 +189,36 @@ func (p *ProviderTestSuite) setupMockServer() {
 	p.server = server
 }
 
+func (p *ProviderTestSuite) createClient() {
+	// create clients and pairs
+	// create pair name to address map
+	denomToAddress := make(map[string]string)
+	addressToPair := make(map[string]types.CurrencyPair)
+	for _, pair := range p.currencyPairs {
+		// graph supports all lower case id's
+		// currently supports only 1 fee tier pool per currency pair
+		address := strings.ToLower(pair.Address)
+		denomToAddress[pair.String()] = address
+		addressToPair[address] = pair
+	}
+
+	// default provider to eth uniswap
+	logger := zerolog.Logger{}.Output(zerolog.ConsoleWriter{Out: os.Stderr}).Level(zerolog.ErrorLevel)
+	uniswapLogger := logger.With().Str("provider", "eth-uniswap").Logger()
+	provider := &UniswapProvider{
+		baseURL:        p.server.URL,
+		tickerClient:   nil,
+		candleClient:   graphql.NewClient(fmt.Sprintf(p.server.URL+"/poolMinuteData"), p.server.Client()),
+		denomToAddress: denomToAddress,
+		addressToPair:  addressToPair,
+		logger:         uniswapLogger,
+		pairs:          p.currencyPairs,
+		mut:            sync.Mutex{},
+	}
+
+	p.provider = provider
+}
+
 type ProviderTestSuite struct {
 	suite.Suite
 	server        *httptest.Server
@@ -200,18 +234,15 @@ type ProviderTestSuite struct {
 func (p *ProviderTestSuite) SetupSuite() {
 	p.setMockData()
 	p.setupMockServer()
-	p.provider = NewUniswapProvider(Endpoint{}, p.currencyPairs...)
+	p.createClient()
 }
 
-func (suite *ProviderTestSuite) TeadDownSuite() {
-	suite.server.Close()
+func (p *ProviderTestSuite) TeadDownSuite() {
+	p.server.Close()
 }
 
 func (p *ProviderTestSuite) TestGetBundle() {
-
-	client := graphql.NewClient(fmt.Sprintf(p.server.URL+"/bundle"), p.server.Client())
-	p.provider.client = client
-
+	p.provider.tickerClient = graphql.NewClient(fmt.Sprintf(p.server.URL+"/bundle"), p.server.Client())
 	ethPrice, err := p.provider.GetBundle()
 	p.NoError(err)
 
@@ -222,11 +253,13 @@ func (p *ProviderTestSuite) TestGetBundle() {
 }
 
 func (p *ProviderTestSuite) TestGetTickerPrices() {
-	client := graphql.NewClient(fmt.Sprintf(p.server.URL+"/poolHourData"), p.server.Client())
-	p.provider.client = client
+	p.provider.tickerClient = graphql.NewClient(fmt.Sprintf(p.server.URL+"/poolHourData"), p.server.Client())
+	err := p.provider.getHourAndMinuteData(context.Background())
+	p.NoError(err)
 
 	data, err := p.provider.GetTickerPrices(p.currencyPairs...)
 	p.NoError(err)
+
 	p.Len(data, len(p.currencyPairs))
 
 	for i, pair := range p.currencyPairs {
@@ -242,8 +275,9 @@ func (p *ProviderTestSuite) TestGetTickerPrices() {
 }
 
 func (p *ProviderTestSuite) TestGetCandlePrices() {
-	client := graphql.NewClient(fmt.Sprintf(p.server.URL+"/poolMinuteData"), p.server.Client())
-	p.provider.client = client
+	p.provider.tickerClient = graphql.NewClient(fmt.Sprintf(p.server.URL+"/poolHourData"), p.server.Client())
+	err := p.provider.getHourAndMinuteData(context.Background())
+	p.NoError(err)
 
 	data, err := p.provider.GetCandlePrices(p.currencyPairs...)
 	p.NoError(err)

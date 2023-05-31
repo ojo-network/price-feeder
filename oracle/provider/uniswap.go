@@ -73,8 +73,10 @@ type (
 	UniswapProvider struct {
 		logger  zerolog.Logger
 		baseURL string
-		client  *gql.Client
-		mut     sync.Mutex
+		// support concurrent quries
+		tickerClient *gql.Client
+		candleClient *gql.Client
+		mut          sync.Mutex
 
 		poolIDS          []string
 		pairs            []types.CurrencyPair
@@ -107,7 +109,8 @@ func NewUniswapProvider(
 	uniswapLogger := logger.With().Str("provider", providerName).Logger()
 	provider := &UniswapProvider{
 		baseURL:        endpoint.Rest,
-		client:         gql.NewClient(endpoint.Rest, nil),
+		tickerClient:   gql.NewClient(endpoint.Rest, nil),
+		candleClient:   gql.NewClient(endpoint.Rest, nil),
 		denomToAddress: denomToAddress,
 		addressToPair:  addressToPair,
 		logger:         uniswapLogger,
@@ -171,8 +174,7 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 
 			// query volume from day data
 			var poolsHourData PoolHourDataQuery
-			err := p.client.Query(ctx, &poolsHourData, idMap)
-
+			err := p.tickerClient.Query(ctx, &poolsHourData, idMap)
 			if err != nil {
 				return err
 			}
@@ -215,8 +217,7 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 
 			// query volume from day data
 			var poolsMinuteData PoolMinuteDataCandleQuery
-			err := p.client.Query(ctx, &poolsMinuteData, idMap)
-
+			err := p.candleClient.Query(ctx, &poolsMinuteData, idMap)
 			if err != nil {
 				return err
 			}
@@ -239,7 +240,8 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 		return nil
 	})
 
-	return g.Wait()
+	err := g.Wait()
+	return err
 }
 
 // SubscribeCurrencyPairs performs a no-op since Uniswap does not use websockets
@@ -250,8 +252,10 @@ func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[stri
 	latestTimestamp := make(map[string]float64)
 
 	p.mut.Lock()
-	defer p.mut.Unlock()
-	for _, poolData := range p.poolsHoursDatas.PoolHourDatas {
+	poolHourDatas := p.poolsHoursDatas
+	p.mut.Unlock()
+
+	for _, poolData := range poolHourDatas.PoolHourDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
 		symbol1 := strings.ToUpper(poolData.Token1.Symbol) // symbol == quote in a currency pair
 
@@ -267,7 +271,6 @@ func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[stri
 		var tokenPrice string
 		switch {
 		case base == symbol0 && quote == symbol1:
-			// pricing
 			tokenPrice = poolData.Token1Price
 
 		case base == symbol0 && (quote == USDC && symbol1 != USDC):
@@ -281,6 +284,9 @@ func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[stri
 		case base == symbol1 && (quote == USDC && symbol0 != USDC):
 			// consider USDC BASED PRICING
 			tokenPrice = poolData.Token1PriceUSD
+
+		default:
+			return nil, fmt.Errorf("price conversion error, pair %s  and quote %s mismatch", base, quote)
 		}
 
 		price, err := toSdkDec(tokenPrice)
@@ -312,9 +318,11 @@ func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[stri
 
 func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
 	p.mut.Lock()
-	defer p.mut.Unlock()
+	poolsMinuteDatas := p.poolsMinuteDatas
+	p.mut.Unlock()
+
 	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
-	for _, poolData := range p.poolsMinuteDatas.PoolMinuteDatas {
+	for _, poolData := range poolsMinuteDatas.PoolMinuteDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
 		symbol1 := strings.ToUpper(poolData.Token1.Symbol) // symbol == quote in a currency pai// r
 
@@ -341,6 +349,9 @@ func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[stri
 		case base == symbol1 && (quote == USDC && symbol0 != USDC):
 			// consider USDC BASED PRICING
 			tokenPrice = poolData.Token1PriceUSD
+
+		default:
+			return nil, fmt.Errorf("price conversion error, pair %s  and quote %s mismatch", base, quote)
 		}
 
 		price, err := toSdkDec(tokenPrice)
@@ -367,7 +378,7 @@ func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[stri
 // GetBundle returns eth price
 func (p *UniswapProvider) GetBundle() (float64, error) {
 	var bundle BundleQuery
-	err := p.client.Query(context.Background(), &bundle, nil)
+	err := p.tickerClient.Query(context.Background(), &bundle, nil)
 	if err != nil {
 		return 0, err
 	}
