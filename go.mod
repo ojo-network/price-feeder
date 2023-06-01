@@ -17,9 +17,14 @@ require (
 	github.com/rs/zerolog v1.29.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
+<<<<<<< HEAD
 	github.com/stretchr/testify v1.8.1
 	github.com/tendermint/tendermint v0.34.26
 	github.com/umee-network/umee/v4 v4.1.0
+=======
+	github.com/stretchr/testify v1.8.4
+	github.com/tendermint/tendermint v0.34.27
+>>>>>>> 011139b (build(deps): Bump github.com/stretchr/testify from 1.8.2 to 1.8.4 (#149))
 	golang.org/x/sync v0.1.0
 	google.golang.org/grpc v1.53.0
 	gopkg.in/yaml.v3 v3.0.1
