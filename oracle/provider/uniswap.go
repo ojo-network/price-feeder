@@ -203,7 +203,7 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 
 		idMap := map[string]interface{}{
 			"poolIDS": p.poolIDS,
-			"start":   time.Now().Unix() - int64((10 * time.Minute).Seconds()),
+			"start":   time.Now().Unix() - int64((30 * time.Minute).Seconds()),
 			"stop":    time.Now().Unix(),
 		}
 

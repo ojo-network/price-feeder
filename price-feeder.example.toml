@@ -36,15 +36,6 @@ providers = [
 quote = "USD"
 
 [[currency_pairs]]
-base = "USDC"
-providers = [
-  "kraken",
-  "coinbase",
-  "binanceus",
-]
-quote = "USD"
-
-[[currency_pairs]]
 base = "ATOM"
 providers = [
   "okx",
@@ -108,6 +99,13 @@ providers = [
 quote = "ATOM"
 
 [[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
 base = "WETH"
 providers = [
   "eth-uniswap"
@@ -118,29 +116,6 @@ quote = "USDC"
 address = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
 provider = "eth-uniswap"
 
-
-[[currency_pairs]]
-base = "UNI"
-providers = [
-  "eth-uniswap"
-]
-
-quote = "USDC"
-[[currency_pairs.pair_address_providers]]
-address = "0x1d42064fc4beb5f8aaf85f4617ae8b3b5b8bd801"
-provider = "eth-uniswap"
-
-
-[[currency_pairs]]
-base = "WBTC"
-providers = [
-  "eth-uniswap"
-]
-
-quote = "USDC"
-[[currency_pairs.pair_address_providers]]
-address = "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
-provider = "eth-uniswap"
 
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
