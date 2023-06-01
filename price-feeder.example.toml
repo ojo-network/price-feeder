@@ -14,6 +14,18 @@ threshold = "1.5"
 base = "ATOM"
 threshold = "1.5"
 
+[[deviation_thresholds]]
+base = "ETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "BTC"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "OSMO"
+threshold = "2"
+
 [[currency_pairs]]
 base = "USDT"
 providers = [
@@ -38,6 +50,53 @@ providers = [
   "binanceus",
 ]
 quote = "USD"
+
+[[currency_pairs]]
+base = "ETH"
+providers = [
+  "okx",
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "ETH"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "BTC"
+providers = [
+  "okx",
+  "gate",
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "BTC"
+providers = [
+  "coinbase",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "bitget",
+  "gate",
+  "huobi",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
 
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
