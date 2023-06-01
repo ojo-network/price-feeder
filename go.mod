@@ -17,11 +17,18 @@ require (
 	github.com/rs/zerolog v1.29.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
+<<<<<<< HEAD
 	github.com/stretchr/testify v1.8.1
 	github.com/tendermint/tendermint v0.34.26
 	github.com/umee-network/umee/v4 v4.1.0
 	golang.org/x/sync v0.1.0
 	google.golang.org/grpc v1.53.0
+=======
+	github.com/stretchr/testify v1.8.4
+	github.com/tendermint/tendermint v0.34.27
+	golang.org/x/sync v0.2.0
+	google.golang.org/grpc v1.54.0
+>>>>>>> 5b4ad2f (build(deps): bump golang.org/x/sync from 0.1.0 to 0.2.0 (#125))
 	gopkg.in/yaml.v3 v3.0.1
 )
 
