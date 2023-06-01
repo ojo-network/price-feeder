@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -30,6 +31,8 @@ func TestServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
 
+// TestWebsocketProviders tests that we receive pricing information for
+// every webssocket provider and each of their currency pairs.
 func (s *IntegrationTestSuite) TestWebsocketProviders() {
 	if testing.Short() {
 		s.T().Skip("skipping integration test in short mode")
@@ -40,20 +43,25 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 
 	endpoints := cfg.ProviderEndpointsMap()
 
+	var waitGroup sync.WaitGroup
 	for key, pairs := range cfg.ProviderPairs() {
+		waitGroup.Add(1)
 		providerName := key
 		currencyPairs := pairs
-		endpoint := endpoints[providerName]
-		s.T().Run(string(providerName), func(t *testing.T) {
-			t.Parallel()
+
+		go func() {
+			defer waitGroup.Done()
+			endpoint := endpoints[providerName]
 			ctx, cancel := context.WithCancel(context.Background())
+			s.T().Logf("Checking %s provider with currency pairs %+v", providerName, currencyPairs)
 			pvd, _ := oracle.NewProvider(ctx, providerName, getLogger(), endpoint, currencyPairs...)
 			pvd.StartConnections()
 			time.Sleep(60 * time.Second) // wait for provider to connect and receive some prices
-			checkForPrices(t, pvd, currencyPairs, providerName.String())
+			checkForPrices(s.T(), pvd, currencyPairs, providerName.String())
 			cancel()
-		})
+		}()
 	}
+	waitGroup.Wait()
 }
 
 func (s *IntegrationTestSuite) TestSubscribeCurrencyPairs() {

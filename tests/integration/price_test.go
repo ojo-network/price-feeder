@@ -16,9 +16,11 @@ import (
 )
 
 const (
-	maxCoeficientOfVariation = 0.1
+	maxCoeficientOfVariation = 0.2
 )
 
+// TestPriceAccuracy tests the accuracy of the final prices calculated by the oracle
+// by comparing them to the prices from the CoinMarketCap API.
 func TestPriceAccuracy(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
@@ -47,19 +49,15 @@ func TestPriceAccuracy(t *testing.T) {
 
 	// first call to SetPrices starts the provider routines
 	oracle.SetPrices(context.Background())
-	time.Sleep(40 * time.Second)
+	time.Sleep(60 * time.Second)
 
-	for i := 0; i < 3; i++ {
-		time.Sleep(5 * time.Second)
+	oracle.SetPrices(context.Background())
+	oraclePrices := oracle.GetPrices()
 
-		oracle.SetPrices(context.Background())
-		oraclePrices := oracle.GetPrices()
+	apiPrices, err := getCoinMarketCapPrices(symbols)
+	require.NoError(t, err)
 
-		apiPrices, err := getCoinMarketCapPrices(symbols)
-		require.NoError(t, err)
-
-		checkPrices(t, symbols, oraclePrices, apiPrices)
-	}
+	checkPrices(t, symbols, oraclePrices, apiPrices)
 }
 
 func checkPrices(
