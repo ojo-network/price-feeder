@@ -21,13 +21,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
-<<<<<<< HEAD
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	// "github.com/ojo-network/ojo/app/params"
-=======
-	"github.com/ojo-network/ojo/app/params"
->>>>>>> 96e9c8d (feat: Add integration price test (#146))
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
