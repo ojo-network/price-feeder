@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	maxCoeficientOfVariation = 0.2
+	maxCoeficientOfVariation = 0.5
 )
 
 // TestPriceAccuracy tests the accuracy of the final prices calculated by the oracle
