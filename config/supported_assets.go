@@ -38,6 +38,7 @@ var (
 		"ETH":    {},
 		"ATOM":   {},
 		"OSMO":   {},
+		"JUNO":   {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported
