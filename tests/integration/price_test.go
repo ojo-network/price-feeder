@@ -72,7 +72,7 @@ func checkPrices(
 		}
 
 		if _, ok := oraclePrices[denom]; !ok {
-			t.Logf("%s Oracle price not found", denom)
+			assert.Failf(t, "%s Oracle price not found", denom)
 			continue
 		}
 
