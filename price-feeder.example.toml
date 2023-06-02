@@ -35,8 +35,8 @@ base = "ETH"
 threshold = "2"
 
 [[deviation_thresholds]]
-base = "WBTC"
-threshold = "1.5"
+base = "BTC"
+threshold = "2"
 
 [[deviation_thresholds]]
 base = "BNB"
