@@ -20,6 +20,7 @@ const (
 	osmosisV2WSPath   = "ws"
 	osmosisV2RestHost = "https://api.osmo-api.prod.ojo.network"
 	osmosisV2RestPath = "/assetpairs"
+	osmosisv2AckMsg   = "ack"
 )
 
 var _ Provider = (*OsmosisV2Provider)(nil)
@@ -233,7 +234,7 @@ func (p *OsmosisV2Provider) getCandlePrices(key string) ([]types.CandlePrice, er
 
 func (p *OsmosisV2Provider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	// check if message is an ack
-	if string(bz) == "ack" {
+	if string(bz) == osmosisv2AckMsg {
 		return
 	}
 

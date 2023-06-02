@@ -16,19 +16,21 @@ import (
 )
 
 const (
-	crescentV2WSHost   = "api.cresc-api.prod.ojo.network"
-	crescentV2WSPath   = "ws"
-	crescentV2RestHost = "https://api.cresc-api.prod.ojo.network"
-	crescentV2RestPath = "/assetpairs"
-	crescentAckMsg     = "ack"
+	kujiraWSHost   = "api.osmo-api.prod.ojo.network"
+	kujiraWSPath   = "ws"
+	kujiraRestHost = "https://api.osmo-api.prod.ojo.network"
+	kujiraRestPath = "/assetpairs"
+	kujiraAckMsg   = "ack"
 )
 
-var _ Provider = (*CrescentProvider)(nil)
+var _ Provider = (*KujiraProvider)(nil)
 
 type (
-	// CrescentProvider defines an Oracle provider implemented by OJO's
-	// Crescent API.
-	CrescentProvider struct {
+	// KujiraProvider defines an Oracle provider implemented by OJO's
+	// Kujira API.
+	//
+	// REF: https://github.com/ojo-network/kujira-api
+	KujiraProvider struct {
 		wsc             *WebsocketController
 		wsURL           url.URL
 		logger          zerolog.Logger
@@ -39,55 +41,55 @@ type (
 		subscribedPairs map[string]types.CurrencyPair  // Symbol => types.CurrencyPair
 	}
 
-	CrescentTicker struct {
+	KujiraTicker struct {
 		Price  string `json:"Price"`
 		Volume string `json:"Volume"`
 	}
 
-	CrescentCandle struct {
+	KujiraCandle struct {
 		Close   string `json:"Close"`
 		Volume  string `json:"Volume"`
 		EndTime int64  `json:"EndTime"`
 	}
 
-	// CrescentPairsSummary defines the response structure for an Crescent pairs
+	// KujiraPairsSummary defines the response structure for an Kujira pairs
 	// summary.
-	CrescentPairsSummary struct {
-		Data []CrescentPairData `json:"data"`
+	KujiraPairsSummary struct {
+		Data []KujiraPairData `json:"data"`
 	}
 
-	// CrescentPairData defines the data response structure for an Crescent pair.
-	CrescentPairData struct {
+	// KujiraPairData defines the data response structure for an Kujira pair.
+	KujiraPairData struct {
 		Base  string `json:"base"`
 		Quote string `json:"quote"`
 	}
 )
 
-func NewCrescentProvider(
+func NewKujiraProvider(
 	ctx context.Context,
 	logger zerolog.Logger,
 	endpoints Endpoint,
 	pairs ...types.CurrencyPair,
-) (*CrescentProvider, error) {
-	if endpoints.Name != ProviderCrescent {
+) (*KujiraProvider, error) {
+	if endpoints.Name != ProviderKujira {
 		endpoints = Endpoint{
-			Name:      ProviderCrescent,
-			Rest:      crescentV2RestHost,
-			Websocket: crescentV2WSHost,
+			Name:      ProviderKujira,
+			Rest:      kujiraRestHost,
+			Websocket: kujiraWSHost,
 		}
 	}
 
 	wsURL := url.URL{
 		Scheme: "wss",
 		Host:   endpoints.Websocket,
-		Path:   crescentV2WSPath,
+		Path:   kujiraWSPath,
 	}
 
-	crescentV2Logger := logger.With().Str("provider", "crescent").Logger()
+	kujiraLogger := logger.With().Str("provider", "kujira").Logger()
 
-	provider := &CrescentProvider{
+	provider := &KujiraProvider{
 		wsURL:           wsURL,
-		logger:          crescentV2Logger,
+		logger:          kujiraLogger,
 		endpoints:       endpoints,
 		tickers:         map[string]types.TickerPrice{},
 		candles:         map[string][]types.CandlePrice{},
@@ -114,19 +116,19 @@ func NewCrescentProvider(
 		provider.messageReceived,
 		defaultPingDuration,
 		websocket.PingMessage,
-		crescentV2Logger,
+		kujiraLogger,
 	)
 
 	return provider, nil
 }
 
-func (p *CrescentProvider) StartConnections() {
+func (p *KujiraProvider) StartConnections() {
 	p.wsc.StartConnections()
 }
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *CrescentProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
+func (p *KujiraProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -144,12 +146,12 @@ func (p *CrescentProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 }
 
 // GetTickerPrices returns the tickerPrices based on the saved map.
-func (p *CrescentProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
+func (p *KujiraProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
 	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
 
 	tickerErrs := 0
 	for _, cp := range pairs {
-		key := currencyPairToCrescentPair(cp)
+		key := currencyPairToKujiraPair(cp)
 		price, err := p.getTickerPrice(key)
 		if err != nil {
 			p.logger.Warn().Err(err)
@@ -170,12 +172,12 @@ func (p *CrescentProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[str
 }
 
 // GetCandlePrices returns the candlePrices based on the saved map
-func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
+func (p *KujiraProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
 	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
 
 	candleErrs := 0
 	for _, cp := range pairs {
-		key := currencyPairToCrescentPair(cp)
+		key := currencyPairToKujiraPair(cp)
 		prices, err := p.getCandlePrices(key)
 		if err != nil {
 			p.logger.Warn().Err(err)
@@ -195,7 +197,7 @@ func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[str
 	return candlePrices, nil
 }
 
-func (p *CrescentProvider) getTickerPrice(key string) (types.TickerPrice, error) {
+func (p *KujiraProvider) getTickerPrice(key string) (types.TickerPrice, error) {
 	p.mtx.RLock()
 	defer p.mtx.RUnlock()
 
@@ -211,7 +213,7 @@ func (p *CrescentProvider) getTickerPrice(key string) (types.TickerPrice, error)
 	return ticker, nil
 }
 
-func (p *CrescentProvider) getCandlePrices(key string) ([]types.CandlePrice, error) {
+func (p *KujiraProvider) getCandlePrices(key string) ([]types.CandlePrice, error) {
 	p.mtx.RLock()
 	defer p.mtx.RUnlock()
 
@@ -230,18 +232,18 @@ func (p *CrescentProvider) getCandlePrices(key string) ([]types.CandlePrice, err
 	return candleList, nil
 }
 
-func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
+func (p *KujiraProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	// check if message is an ack
-	if string(bz) == crescentAckMsg {
+	if string(bz) == kujiraAckMsg {
 		return
 	}
 
 	var (
 		messageResp map[string]interface{}
 		messageErr  error
-		tickerResp  CrescentTicker
+		tickerResp  KujiraTicker
 		tickerErr   error
-		candleResp  []CrescentCandle
+		candleResp  []KujiraCandle
 		candleErr   error
 	)
 
@@ -256,8 +258,8 @@ func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 	// Check the response for currency pairs that the provider is subscribed
 	// to and determine whether it is a ticker or candle.
 	for _, pair := range p.subscribedPairs {
-		crescentPair := currencyPairToCrescentPair(pair)
-		if msg, ok := messageResp[crescentPair]; ok {
+		kujiraPair := currencyPairToKujiraPair(pair)
+		if msg, ok := messageResp[kujiraPair]; ok {
 			switch v := msg.(type) {
 			// ticker response
 			case map[string]interface{}:
@@ -271,10 +273,10 @@ func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 					continue
 				}
 				p.setTickerPair(
-					crescentPair,
+					kujiraPair,
 					tickerResp,
 				)
-				telemetryWebsocketMessage(ProviderCrescent, MessageTypeTicker)
+				telemetryWebsocketMessage(ProviderKujira, MessageTypeTicker)
 				continue
 
 			// candle response
@@ -294,29 +296,29 @@ func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 				}
 				for _, singleCandle := range candleResp {
 					p.setCandlePair(
-						crescentPair,
+						kujiraPair,
 						singleCandle,
 					)
 				}
-				telemetryWebsocketMessage(ProviderCrescent, MessageTypeCandle)
+				telemetryWebsocketMessage(ProviderKujira, MessageTypeCandle)
 				continue
 			}
 		}
 	}
 }
 
-func (p *CrescentProvider) setTickerPair(symbol string, tickerPair CrescentTicker) {
+func (p *KujiraProvider) setTickerPair(symbol string, tickerPair KujiraTicker) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
 	price, err := sdk.NewDecFromStr(tickerPair.Price)
 	if err != nil {
-		p.logger.Warn().Err(err).Msg("crescent: failed to parse ticker price")
+		p.logger.Warn().Err(err).Msg("kujira: failed to parse ticker price")
 		return
 	}
 	volume, err := sdk.NewDecFromStr(tickerPair.Volume)
 	if err != nil {
-		p.logger.Warn().Err(err).Msg("crescent: failed to parse ticker volume")
+		p.logger.Warn().Err(err).Msg("kujira: failed to parse ticker volume")
 		return
 	}
 
@@ -326,18 +328,18 @@ func (p *CrescentProvider) setTickerPair(symbol string, tickerPair CrescentTicke
 	}
 }
 
-func (p *CrescentProvider) setCandlePair(symbol string, candlePair CrescentCandle) {
+func (p *KujiraProvider) setCandlePair(symbol string, candlePair KujiraCandle) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
 	close, err := sdk.NewDecFromStr(candlePair.Close)
 	if err != nil {
-		p.logger.Warn().Err(err).Msg("crescent: failed to parse candle close")
+		p.logger.Warn().Err(err).Msg("kujira: failed to parse candle close")
 		return
 	}
 	volume, err := sdk.NewDecFromStr(candlePair.Volume)
 	if err != nil {
-		p.logger.Warn().Err(err).Msg("crescent: failed to parse candle volume")
+		p.logger.Warn().Err(err).Msg("kujira: failed to parse candle volume")
 		return
 	}
 	candle := types.CandlePrice{
@@ -359,7 +361,7 @@ func (p *CrescentProvider) setCandlePair(symbol string, candlePair CrescentCandl
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
-func (p *CrescentProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
+func (p *KujiraProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
 	for _, cp := range cps {
 		p.subscribedPairs[cp.String()] = cp
 	}
@@ -367,14 +369,14 @@ func (p *CrescentProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
 
 // GetAvailablePairs returns all pairs to which the provider can subscribe.
 // ex.: map["ATOMUSDT" => {}, "OJOUSDC" => {}].
-func (p *CrescentProvider) GetAvailablePairs() (map[string]struct{}, error) {
-	resp, err := http.Get(p.endpoints.Rest + crescentV2RestPath)
+func (p *KujiraProvider) GetAvailablePairs() (map[string]struct{}, error) {
+	resp, err := http.Get(p.endpoints.Rest + kujiraRestPath)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var pairsSummary []CrescentPairData
+	var pairsSummary []KujiraPairData
 	if err := json.NewDecoder(resp.Body).Decode(&pairsSummary); err != nil {
 		return nil, err
 	}
@@ -391,8 +393,8 @@ func (p *CrescentProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return availablePairs, nil
 }
 
-// currencyPairToCrescentPair receives a currency pair and return crescent
+// currencyPairToKujiraPair receives a currency pair and return kujira
 // ticker symbol atomusdt@ticker.
-func currencyPairToCrescentPair(cp types.CurrencyPair) string {
+func currencyPairToKujiraPair(cp types.CurrencyPair) string {
 	return cp.Base + "/" + cp.Quote
 }
