@@ -19,6 +19,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
+	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -187,8 +188,9 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 		}
 
 		for _, pair := range currencyPairs {
-			if _, ok := requiredRates[pair]; !ok {
-				requiredRates[pair] = struct{}{}
+			usdPair := types.CurrencyPair{Base: pair.Base, Quote: config.DenomUSD}
+			if _, ok := requiredRates[usdPair]; !ok {
+				requiredRates[usdPair] = struct{}{}
 			}
 		}
 

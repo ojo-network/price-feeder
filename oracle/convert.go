@@ -67,7 +67,7 @@ func ConvertCandlesToUSD(
 				for providerName, candleSet := range candles {
 					if _, ok := validProviders[providerName]; ok {
 						for cp, candles := range candleSet {
-							if cp.Quote == pair.Quote {
+							if cp.Base == pair.Quote {
 								if _, ok := validCandleList[providerName]; !ok {
 									validCandleList[providerName] = make(map[types.CurrencyPair][]types.CandlePrice)
 								}
@@ -107,7 +107,7 @@ func ConvertCandlesToUSD(
 					continue
 				}
 
-				conversionRates[pair.Quote] = cvRate
+				conversionRates[pair.Base] = cvRate
 			}
 		}
 	}
@@ -122,12 +122,14 @@ func ConvertCandlesToUSD(
 				if requiredConversion == asset {
 					conversionAttempted = true
 					// candles are filtered out when conversion rate is not found
-					if conversionRate, ok := conversionRates[requiredConversion.Quote]; ok {
+					if conversionRate, ok := conversionRates[asset.Base]; ok {
 						newCurrencyPair := types.CurrencyPair{Base: asset.Base, Quote: "USD"}
 						convertedCandles[provider][newCurrencyPair] = append(
 							convertedCandles[provider][newCurrencyPair],
 							convertCandles(assetCandles, conversionRate)...,
 						)
+					} else {
+						logger.Error().Msgf("no valid conversion rate found for %s", asset)
 					}
 					break
 				}
@@ -188,7 +190,7 @@ func ConvertTickersToUSD(
 					// to find the conversion rate.
 					if _, ok := validProviders[providerName]; ok {
 						for cp, ticker := range tickerSet {
-							if cp.Quote == pair.Quote {
+							if cp.Base == pair.Quote {
 								if _, ok := validTickerList[providerName]; !ok {
 									validTickerList[providerName] = make(types.CurrencyPairTickers)
 								}
@@ -199,7 +201,7 @@ func ConvertTickersToUSD(
 				}
 
 				if len(validTickerList) == 0 {
-					logger.Error().Err(fmt.Errorf("there are no valid conversion rates for %s", pair.Quote))
+					logger.Error().Err(fmt.Errorf("there are no valid conversion rates for %s", pair.Base))
 					continue
 				}
 
@@ -215,10 +217,12 @@ func ConvertTickersToUSD(
 
 				vwap := ComputeVWAP(filteredTickers)
 
-				conversionRates[pair.Quote] = vwap[pair]
+				conversionRates[pair.Base] = vwap[pair]
 			}
 		}
 	}
+
+	fmt.Println(conversionRates)
 
 	// Convert assets to USD and filter out any unable to convert.
 	convertedTickers := make(types.AggregatedProviderPrices)
@@ -230,7 +234,7 @@ func ConvertTickersToUSD(
 				if requiredConversion.Base == asset.Base {
 					conversionAttempted = true
 					// ticker is filtered out when conversion rate is not found
-					if conversionRate, ok := conversionRates[requiredConversion.Quote]; ok {
+					if conversionRate, ok := conversionRates[requiredConversion.Base]; ok {
 						ticker.Price = ticker.Price.Mul(conversionRate)
 						newCurrencyPair := types.CurrencyPair{Base: asset.Base, Quote: "USD"}
 						convertedTickers[provider][newCurrencyPair] = ticker
