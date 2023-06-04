@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
+	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,21 +62,23 @@ func TestPriceAccuracy(t *testing.T) {
 func checkPrices(
 	t *testing.T,
 	expectedSymbols []string,
-	oraclePrices map[string]sdk.Dec,
+	oraclePrices types.CurrencyPairDec,
 	apiPrices map[string]float64,
 ) {
 	for _, denom := range expectedSymbols {
+		cp := types.CurrencyPair{Base: denom, Quote: "USD"}
+
 		if _, ok := apiPrices[denom]; !ok {
 			t.Logf("%s API price not found", denom)
 			continue
 		}
 
-		if _, ok := oraclePrices[denom]; !ok {
+		if _, ok := oraclePrices[cp]; !ok {
 			t.Logf("%s Oracle price not found", denom)
 			continue
 		}
 
-		oraclePrice := oraclePrices[denom].MustFloat64()
+		oraclePrice := oraclePrices[cp].MustFloat64()
 		apiPrice := apiPrices[denom]
 		cv := calcCoeficientOfVariation([]float64{oraclePrice, apiPrice})
 
