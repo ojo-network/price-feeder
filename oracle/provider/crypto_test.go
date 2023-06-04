@@ -70,7 +70,7 @@ func TestCryptoProvider_GetTickerPrices(t *testing.T) {
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
 		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
 		require.Error(t, err)
-		require.Equal(t, "crypto has no ticker data for requested pairs: [FOOBAR]", err.Error())
+		require.Equal(t, "failed to get ticker price for FOO_BAR", err.Error())
 		require.Nil(t, prices)
 	})
 }
@@ -110,7 +110,7 @@ func TestCryptoProvider_GetCandlePrices(t *testing.T) {
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {
 		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
-		require.EqualError(t, err, "crypto has no candle data for requested pairs: [FOOBAR]")
+		require.EqualError(t, err, "failed to get candle prices for FOO_BAR")
 		require.Nil(t, prices)
 	})
 }

@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -99,7 +98,8 @@ func (ps *priceStore) GetTickerPrices(pairs ...types.CurrencyPair) (types.Curren
 		key := ps.translateCurrencyPair(cp)
 		ticker, ok := ps.tickers[key]
 		if !ok {
-			return nil, fmt.Errorf("failed to get ticker price for %s", key)
+			ps.logger.Error().Msgf("failed to get ticker price for %s", key)
+			continue
 		}
 		tickerPrices[cp] = ticker
 	}
@@ -117,7 +117,8 @@ func (ps *priceStore) GetCandlePrices(pairs ...types.CurrencyPair) (types.Curren
 		key := ps.translateCurrencyPair(cp)
 		candles, ok := ps.candles[key]
 		if !ok {
-			return nil, fmt.Errorf("failed to get candle prices for %s", key)
+			ps.logger.Error().Msgf("failed to get candle prices for %s", key)
+			continue
 		}
 		candlesCopy := make([]types.CandlePrice, 0, len(candles))
 		candlesCopy = append(candlesCopy, candles...)

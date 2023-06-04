@@ -17,6 +17,7 @@ import (
 const (
 	// cryptoCandlePeriod is a change from the default to support older
 	// crypto.com candles.
+	// TODO
 	cryptoCandlePeriod = 10 * time.Minute
 
 	cryptoWSHost             = "stream.crypto.com"
