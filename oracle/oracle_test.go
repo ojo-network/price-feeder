@@ -123,6 +123,12 @@ func (ots *OracleTestSuite) SetupSuite() {
 					Quote: "USD",
 				},
 			},
+			provider.ProviderOsmosisV2: {
+				{
+					Base:  "XBT",
+					Quote: "USDT",
+				},
+			},
 		},
 		time.Millisecond*100,
 		make(map[string]sdk.Dec),
@@ -247,9 +253,10 @@ func (ots *OracleTestSuite) TestPrices() {
 	ots.Require().NoError(ots.oracle.SetPrices(context.TODO()))
 
 	prices = ots.oracle.GetPrices()
+	fmt.Println(prices)
 	ots.Require().Len(prices, 4)
-	ots.Require().Equal(sdk.MustNewDecFromStr("3.710916056220858266"), prices[OJOUSDC])
-	ots.Require().Equal(sdk.MustNewDecFromStr("3.717"), prices[XBTUSDT])
+	ots.Require().Equal(sdk.MustNewDecFromStr("3.710916056220858266"), prices[OJOUSD])
+	ots.Require().Equal(sdk.MustNewDecFromStr("3.717"), prices[XBTUSD])
 	ots.Require().Equal(sdk.MustNewDecFromStr("1"), prices[USDCUSD])
 	ots.Require().Equal(sdk.MustNewDecFromStr("1"), prices[USDTUSD])
 
@@ -257,7 +264,7 @@ func (ots *OracleTestSuite) TestPrices() {
 	ots.oracle.priceProviders = map[types.ProviderName]provider.Provider{
 		provider.ProviderBinance: mockProvider{
 			prices: types.CurrencyPairTickers{
-				OJOUSDX: {
+				OJOUSDT: {
 					Price:  sdk.MustNewDecFromStr("3.72"),
 					Volume: sdk.MustNewDecFromStr("2396974.02000000"),
 				},
@@ -300,7 +307,7 @@ func (ots *OracleTestSuite) TestPrices() {
 	ots.Require().NoError(ots.oracle.SetPrices(context.TODO()))
 	prices = ots.oracle.GetPrices()
 	ots.Require().Len(prices, 4)
-	ots.Require().Equal(sdk.MustNewDecFromStr("3.70"), prices[OJOUSD])
+	ots.Require().Equal(sdk.MustNewDecFromStr("3.710916056220858266"), prices[OJOUSD])
 	ots.Require().Equal(sdk.MustNewDecFromStr("3.717"), prices[XBTUSD])
 	ots.Require().Equal(sdk.MustNewDecFromStr("1"), prices[USDCUSD])
 	ots.Require().Equal(sdk.MustNewDecFromStr("1"), prices[USDTUSD])
@@ -381,7 +388,7 @@ func TestGenerateExchangeRatesString(t *testing.T) {
 			input: types.CurrencyPairDec{
 				OJOUSD: sdk.MustNewDecFromStr("3.72"),
 			},
-			expected: "OJO:3.720000000000000000",
+			expected: "OJOUSD:3.720000000000000000",
 		},
 		"multi denom": {
 			input: types.CurrencyPairDec{
@@ -620,10 +627,11 @@ func (ots *OracleTestSuite) TestGetComputedPricesCandlesConversion() {
 	require.NoError(ots.T(), err,
 		"It should successfully filter out bad candles and convert everything to USD",
 	)
+
 	require.Equal(ots.T(),
 		ethUsdPrice.Mul(
 			btcEthPrice).Add(btcUSDPrice).Quo(sdk.MustNewDecFromStr("2")),
-		prices[btcPair],
+		prices[BTCUSD],
 	)
 }
 
@@ -694,7 +702,7 @@ func (ots *OracleTestSuite) TestGetComputedPricesTickersConversion() {
 	require.Equal(ots.T(),
 		ethUsdPrice.Mul(
 			btcEthPrice).Add(btcUSDPrice).Quo(sdk.MustNewDecFromStr("2")),
-		prices[BTCETH],
+		prices[BTCUSD],
 	)
 }
 

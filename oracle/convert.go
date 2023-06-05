@@ -113,8 +113,6 @@ func ConvertCandlesToUSD(
 		}
 	}
 
-	fmt.Println(conversionRates)
-
 	// Convert assets to USD and filter out any unable to convert.
 	convertedCandles := make(types.AggregatedProviderCandles)
 	for provider, assetMap := range candles {
