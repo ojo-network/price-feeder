@@ -106,10 +106,11 @@ func TestConvertCandlesToUSD(t *testing.T) {
 		make(map[string]sdk.Dec),
 	)
 
+	convertedPair := types.CurrencyPair{Base: "ATOM", Quote: "USD"}
 	require.Equal(
 		t,
 		atomPrice.Mul(usdtPrice),
-		convertedCandles[provider.ProviderBinance][atomPair][0].Price,
+		convertedCandles[provider.ProviderBinance][convertedPair][0].Price,
 	)
 }
 
@@ -166,10 +167,11 @@ func TestConvertCandlesToUSDFiltering(t *testing.T) {
 		make(map[string]sdk.Dec),
 	)
 
+	convertedPair := types.CurrencyPair{Base: "ATOM", Quote: "USD"}
 	require.Equal(
 		t,
 		atomPrice.Mul(usdtPrice),
-		convertedCandles[provider.ProviderBinance][atomPair][0].Price,
+		convertedCandles[provider.ProviderBinance][convertedPair][0].Price,
 	)
 }
 
@@ -236,10 +238,11 @@ func TestConvertTickersToUSD(t *testing.T) {
 		make(map[string]sdk.Dec),
 	)
 
+	convertedPair := types.CurrencyPair{Base: "ATOM", Quote: "USD"}
 	require.Equal(
 		t,
 		atomPrice.Mul(usdtPrice),
-		convertedTickers[provider.ProviderBinance][atomPair].Price,
+		convertedTickers[provider.ProviderBinance][convertedPair].Price,
 	)
 }
 
@@ -289,9 +292,10 @@ func TestConvertTickersToUSDFiltering(t *testing.T) {
 		make(map[string]sdk.Dec),
 	)
 
+	convertedPair := types.CurrencyPair{Base: "ATOM", Quote: "USD"}
 	require.Equal(
 		t,
 		atomPrice.Mul(usdtPrice),
-		covertedDeviation[provider.ProviderBinance][atomPair].Price,
+		covertedDeviation[provider.ProviderBinance][convertedPair].Price,
 	)
 }
