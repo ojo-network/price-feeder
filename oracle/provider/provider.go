@@ -1,16 +1,13 @@
 package provider
 
 import (
-	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 const (
-	defaultTimeout       = 10 * time.Second
-	providerCandlePeriod = 5 * time.Minute
+	defaultTimeout = 10 * time.Second
 
 	ProviderKraken    types.ProviderName = "kraken"
 	ProviderBinance   types.ProviderName = "binance"
@@ -82,23 +79,6 @@ type (
 	}
 )
 
-// preventRedirect avoid any redirect in the http.Client the request call
-// will not return an error, but a valid response with redirect response code.
-func preventRedirect(_ *http.Request, _ []*http.Request) error {
-	return http.ErrUseLastResponse
-}
-
-func newDefaultHTTPClient() *http.Client {
-	return newHTTPClientWithTimeout(defaultTimeout)
-}
-
-func newHTTPClientWithTimeout(timeout time.Duration) *http.Client {
-	return &http.Client{
-		Timeout:       timeout,
-		CheckRedirect: preventRedirect,
-	}
-}
-
 // PastUnixTime returns a millisecond timestamp that represents the unix time
 // minus t.
 func PastUnixTime(t time.Duration) int64 {
@@ -108,11 +88,4 @@ func PastUnixTime(t time.Duration) int64 {
 // SecondsToMilli converts seconds to milliseconds for our unix timestamps.
 func SecondsToMilli(t int64) int64 {
 	return t * int64(time.Second/time.Millisecond)
-}
-
-func checkHTTPStatus(resp *http.Response) error {
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status: %s", resp.Status)
-	}
-	return nil
 }

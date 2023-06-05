@@ -93,7 +93,7 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 			EndTime: time,
 		}
 
-		p.setCandlePair("BCRE/ATOM", candle)
+		p.setCandlePair(candle, "BCRE/ATOM")
 
 		prices, err := p.GetCandlePrices(BCREATOM)
 		require.NoError(t, err)

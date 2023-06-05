@@ -9,6 +9,10 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const (
+	defaultCandlePeriod = 5 * time.Minute
+)
+
 // PriceStore is an embedded struct in each provider that manages the in memory
 // store of subscribed currency pairs, candles prices, and ticker prices. It also
 // handles thread safety and pruning of old candle prices.
@@ -16,6 +20,7 @@ type priceStore struct {
 	tickers         map[string]types.TickerPrice
 	candles         map[string][]types.CandlePrice
 	subscribedPairs map[string]types.CurrencyPair
+	candlePeriod    time.Duration
 
 	subscribedPairsMtx sync.RWMutex
 	tickerMtx          sync.RWMutex
@@ -46,6 +51,7 @@ func newPriceStore(logger zerolog.Logger) priceStore {
 		tickers:         map[string]types.TickerPrice{},
 		candles:         map[string][]types.CandlePrice{},
 		subscribedPairs: map[string]types.CurrencyPair{},
+		candlePeriod:    defaultCandlePeriod,
 		logger:          logger,
 		translateCurrencyPair: func(cp types.CurrencyPair) string {
 			return cp.String()
@@ -156,9 +162,9 @@ func (ps *priceStore) setCandlePair(candle providerCandle, currencyPair string) 
 	ps.appendAndFilterCandles(oracleCandle, currencyPair)
 }
 
-// Does not aquire lock - must be called from parent function
+// Does not acquire lock - must be called from parent function
 func (ps *priceStore) appendAndFilterCandles(newCandle types.CandlePrice, currencyPair string) {
-	staleTime := PastUnixTime(providerCandlePeriod)
+	staleTime := PastUnixTime(ps.candlePeriod)
 	newCandles := []types.CandlePrice{newCandle}
 
 	for _, c := range ps.candles[currencyPair] {
