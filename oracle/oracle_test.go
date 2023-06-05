@@ -253,7 +253,6 @@ func (ots *OracleTestSuite) TestPrices() {
 	ots.Require().NoError(ots.oracle.SetPrices(context.TODO()))
 
 	prices = ots.oracle.GetPrices()
-	fmt.Println(prices)
 	ots.Require().Len(prices, 4)
 	ots.Require().Equal(sdk.MustNewDecFromStr("3.710916056220858266"), prices[OJOUSD])
 	ots.Require().Equal(sdk.MustNewDecFromStr("3.717"), prices[XBTUSD])
