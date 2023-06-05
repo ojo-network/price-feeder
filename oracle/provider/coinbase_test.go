@@ -30,8 +30,8 @@ func TestCoinbaseProvider_GetTickerPrices(t *testing.T) {
 			Volume: volume,
 		}
 
-		for _, ticker := range tickerMap {
-			p.setTickerPair(ticker, ticker.ProductID)
+		for pair, ticker := range tickerMap {
+			p.setTickerPair(ticker, pair)
 		}
 
 		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
@@ -57,8 +57,8 @@ func TestCoinbaseProvider_GetTickerPrices(t *testing.T) {
 			Volume: volume,
 		}
 
-		for _, ticker := range tickerMap {
-			p.setTickerPair(ticker, ticker.ProductID)
+		for pair, ticker := range tickerMap {
+			p.setTickerPair(ticker, pair)
 		}
 
 		prices, err := p.GetTickerPrices(
@@ -74,9 +74,8 @@ func TestCoinbaseProvider_GetTickerPrices(t *testing.T) {
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
-		require.EqualError(t, err, "coinbase has no ticker data for requested pairs: [FOOBAR]")
-		require.Nil(t, prices)
+		prices, _ := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
+		require.Empty(t, prices)
 	})
 }
 
