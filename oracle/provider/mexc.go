@@ -111,7 +111,7 @@ func NewMexcProvider(
 		endpoints:  endpoints,
 		priceStore: newPriceStore(mexcLogger),
 	}
-	provider.translateCurrencyPair = currencyPairToMexcPair
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToMexcPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,

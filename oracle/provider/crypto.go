@@ -131,7 +131,7 @@ func NewCryptoProvider(
 		priceStore: newPriceStore(cryptoLogger),
 	}
 	provider.candlePeriod = cryptoCandlePeriod
-	provider.translateCurrencyPair = currencyPairToCryptoPair
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToCryptoPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,

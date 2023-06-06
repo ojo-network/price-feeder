@@ -100,7 +100,7 @@ func NewPolygonProvider(
 		endpoints:  endpoints,
 		priceStore: newPriceStore(polygonLogger),
 	}
-	provider.priceStore.translateCurrencyPair = currencyPairToPolygonPair
+	provider.priceStore.setCurrencyPairToTickerAndCandlePair(currencyPairToPolygonPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,

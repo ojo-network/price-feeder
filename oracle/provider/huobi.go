@@ -121,7 +121,8 @@ func NewHuobiProvider(
 		endpoints:  endpoints,
 		priceStore: newPriceStore(huobiLogger),
 	}
-	provider.translateCurrencyPair = currencyPairToHuobiTickerPair
+	provider.currencyPairToTickerPair = currencyPairToHuobiTickerPair
+	provider.curencyPairToCandlePair = currencyPairToHuobiCandlePair
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,

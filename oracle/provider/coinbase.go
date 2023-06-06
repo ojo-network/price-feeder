@@ -112,7 +112,7 @@ func NewCoinbaseProvider(
 		endpoints:      endpoints,
 		priceStore:     newPriceStore(coinbaseLogger),
 	}
-	provider.translateCurrencyPair = currencyPairToCoinbasePair
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToCoinbasePair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,

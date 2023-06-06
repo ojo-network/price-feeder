@@ -122,7 +122,7 @@ func NewOkxProvider(
 		endpoints:  endpoints,
 		priceStore: newPriceStore(okxLogger),
 	}
-	provider.translateCurrencyPair = currencyPairToOkxPair
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToOkxPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,

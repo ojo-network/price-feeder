@@ -129,7 +129,7 @@ func NewGateProvider(
 		endpoints:      endpoints,
 		priceStore:     newPriceStore(gateLogger),
 	}
-	provider.translateCurrencyPair = currencyPairToGatePair
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToGatePair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,

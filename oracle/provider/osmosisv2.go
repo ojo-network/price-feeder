@@ -97,7 +97,7 @@ func NewOsmosisV2Provider(
 		endpoints:  endpoints,
 		priceStore: newPriceStore(osmosisV2Logger),
 	}
-	provider.translateCurrencyPair = currencyPairToOsmosisV2Pair
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToOsmosisV2Pair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,

@@ -26,10 +26,11 @@ type priceStore struct {
 	tickerMtx          sync.RWMutex
 	candleMtx          sync.RWMutex
 
-	// translateCurrencyPair is a function that translates a CurrencyPair to a
-	// string specific to the provider. This is used as the key for the ticker and
-	// candle maps.
-	translateCurrencyPair func(types.CurrencyPair) string
+	// currencyPairToTickerPair translates CurrencyPair the provider specific string map index
+	currencyPairToTickerPair func(types.CurrencyPair) string
+
+	// currencyPairToCandlePair translates CurrencyPair the provider specific string map index
+	curencyPairToCandlePair func(types.CurrencyPair) string
 
 	logger zerolog.Logger
 }
@@ -46,17 +47,25 @@ type providerCandle interface {
 	toCandlePrice() (types.CandlePrice, error)
 }
 
+func defaultCurrencyPairTranslation(cp types.CurrencyPair) string {
+	return cp.String()
+}
+
 func newPriceStore(logger zerolog.Logger) priceStore {
 	return priceStore{
-		tickers:         map[string]types.TickerPrice{},
-		candles:         map[string][]types.CandlePrice{},
-		subscribedPairs: map[string]types.CurrencyPair{},
-		candlePeriod:    defaultCandlePeriod,
-		logger:          logger,
-		translateCurrencyPair: func(cp types.CurrencyPair) string {
-			return cp.String()
-		},
+		tickers:                  map[string]types.TickerPrice{},
+		candles:                  map[string][]types.CandlePrice{},
+		subscribedPairs:          map[string]types.CurrencyPair{},
+		candlePeriod:             defaultCandlePeriod,
+		logger:                   logger,
+		currencyPairToTickerPair: defaultCurrencyPairTranslation,
+		curencyPairToCandlePair:  defaultCurrencyPairTranslation,
 	}
+}
+
+func (ps *priceStore) setCurrencyPairToTickerAndCandlePair(f func(types.CurrencyPair) string) {
+	ps.currencyPairToTickerPair = f
+	ps.curencyPairToCandlePair = f
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
@@ -101,7 +110,7 @@ func (ps *priceStore) GetTickerPrices(pairs ...types.CurrencyPair) (types.Curren
 
 	tickerPrices := make(types.CurrencyPairTickers, len(pairs))
 	for _, cp := range pairs {
-		key := ps.translateCurrencyPair(cp)
+		key := ps.currencyPairToTickerPair(cp)
 		ticker, ok := ps.tickers[key]
 		if !ok {
 			ps.logger.Error().Msgf("failed to get ticker price for %s", key)
@@ -120,7 +129,7 @@ func (ps *priceStore) GetCandlePrices(pairs ...types.CurrencyPair) (types.Curren
 
 	candlePrices := make(types.CurrencyPairCandles, len(pairs))
 	for _, cp := range pairs {
-		key := ps.translateCurrencyPair(cp)
+		key := ps.curencyPairToCandlePair(cp)
 		candles, ok := ps.candles[key]
 		if !ok {
 			ps.logger.Error().Msgf("failed to get candle prices for %s", key)

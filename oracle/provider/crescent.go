@@ -87,7 +87,7 @@ func NewCrescentProvider(
 		endpoints:  endpoints,
 		priceStore: newPriceStore(crescentV2Logger),
 	}
-	provider.priceStore.translateCurrencyPair = currencyPairToCrescentPair
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToCrescentPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
