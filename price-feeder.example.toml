@@ -382,11 +382,6 @@ service-name = "price-feeder"
 prometheus-retention-time = 100
 
 [[provider_endpoints]]
-name = "binance"
-rest = "https://api1.binance.com"
-websocket = "stream.binance.com:9443"
-
-[[provider_endpoints]]
 name = "osmosisv2"
 rest = "https://api.osmo-api.prod.ojo.network"
 websocket = "api.osmo-api.prod.ojo.network"
