@@ -24,6 +24,7 @@ var (
 		provider.ProviderMexc:      false,
 		provider.ProviderCrypto:    false,
 		provider.ProviderPolygon:   true,
+		provider.ProviderKujira:    false,
 		provider.ProviderMock:      false,
 	}
 
