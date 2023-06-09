@@ -14,15 +14,15 @@ type CandlePrice struct {
 }
 
 // NewCandlePrice parses the lastPrice and volume to a decimal and returns a CandlePrice
-func NewCandlePrice(provider, symbol, lastPrice, volume string, timeStamp int64) (CandlePrice, error) {
+func NewCandlePrice(lastPrice, volume string, timeStamp int64) (CandlePrice, error) {
 	price, err := sdk.NewDecFromStr(lastPrice)
 	if err != nil {
-		return CandlePrice{}, fmt.Errorf("failed to parse %s price (%s) for %s: %w", provider, lastPrice, symbol, err)
+		return CandlePrice{}, fmt.Errorf("failed to parse candle price (%s): %w", lastPrice, err)
 	}
 
 	volumeDec, err := sdk.NewDecFromStr(volume)
 	if err != nil {
-		return CandlePrice{}, fmt.Errorf("failed to parse %s volume (%s) for %s: %w", provider, volume, symbol, err)
+		return CandlePrice{}, fmt.Errorf("failed to parse candle volume (%s): %w", volume, err)
 	}
 
 	return CandlePrice{Price: price, Volume: volumeDec, TimeStamp: timeStamp}, nil

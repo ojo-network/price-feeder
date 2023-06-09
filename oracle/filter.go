@@ -16,18 +16,18 @@ var defaultDeviationThreshold = sdk.MustNewDecFromStr("1.0")
 // all assets, and filters out any providers that are not within 2𝜎 of the mean.
 func FilterTickerDeviations(
 	logger zerolog.Logger,
-	prices provider.AggregatedProviderPrices,
+	prices types.AggregatedProviderPrices,
 	deviationThresholds map[string]sdk.Dec,
-) (provider.AggregatedProviderPrices, error) {
+) (types.AggregatedProviderPrices, error) {
 	var (
-		filteredPrices = make(provider.AggregatedProviderPrices)
-		priceMap       = make(map[provider.Name]map[string]sdk.Dec)
+		filteredPrices = make(types.AggregatedProviderPrices)
+		priceMap       = make(types.CurrencyPairDecByProvider)
 	)
 
 	for providerName, priceTickers := range prices {
 		p, ok := priceMap[providerName]
 		if !ok {
-			p = map[string]sdk.Dec{}
+			p = map[types.CurrencyPair]sdk.Dec{}
 			priceMap[providerName] = p
 		}
 		for base, tp := range priceTickers {
@@ -44,23 +44,23 @@ func FilterTickerDeviations(
 	// T is defined as the deviation threshold, either set by the config
 	// or defaulted to 1.
 	for providerName, priceTickers := range prices {
-		for base, tp := range priceTickers {
+		for cp, tp := range priceTickers {
 			t := defaultDeviationThreshold
-			if _, ok := deviationThresholds[base]; ok {
-				t = deviationThresholds[base]
+			if _, ok := deviationThresholds[cp.Base]; ok {
+				t = deviationThresholds[cp.Base]
 			}
 
-			if d, ok := deviations[base]; !ok || isBetween(tp.Price, means[base], d.Mul(t)) {
+			if d, ok := deviations[cp]; !ok || isBetween(tp.Price, means[cp], d.Mul(t)) {
 				p, ok := filteredPrices[providerName]
 				if !ok {
-					p = map[string]types.TickerPrice{}
+					p = make(types.CurrencyPairTickers)
 					filteredPrices[providerName] = p
 				}
-				p[base] = tp
+				p[cp] = tp
 			} else {
 				provider.TelemetryFailure(providerName, provider.MessageTypeTicker)
 				logger.Warn().
-					Str("base", base).
+					Interface("currency_pair", cp).
 					Str("provider", string(providerName)).
 					Str("price", tp.Price.String()).
 					Msg("provider deviating from other prices")
@@ -75,24 +75,24 @@ func FilterTickerDeviations(
 // all assets, and filters out any providers that are not within 2𝜎 of the mean.
 func FilterCandleDeviations(
 	logger zerolog.Logger,
-	candles provider.AggregatedProviderCandles,
+	candles types.AggregatedProviderCandles,
 	deviationThresholds map[string]sdk.Dec,
-) (provider.AggregatedProviderCandles, error) {
+) (types.AggregatedProviderCandles, error) {
 	var (
-		filteredCandles = make(provider.AggregatedProviderCandles)
-		tvwaps          = make(map[provider.Name]map[string]sdk.Dec)
+		filteredCandles = make(types.AggregatedProviderCandles)
+		tvwaps          = make(types.CurrencyPairDecByProvider)
 	)
 
 	for providerName, priceCandles := range candles {
-		candlePrices := make(provider.AggregatedProviderCandles)
+		candlePrices := make(types.AggregatedProviderCandles)
 
-		for base, cp := range priceCandles {
+		for currencyPair, candlePrice := range priceCandles {
 			p, ok := candlePrices[providerName]
 			if !ok {
-				p = map[string][]types.CandlePrice{}
+				p = map[types.CurrencyPair][]types.CandlePrice{}
 				candlePrices[providerName] = p
 			}
-			p[base] = cp
+			p[currencyPair] = candlePrice
 		}
 
 		tvwap, err := ComputeTVWAP(candlePrices)
@@ -100,12 +100,12 @@ func FilterCandleDeviations(
 			return nil, err
 		}
 
-		for base, asset := range tvwap {
+		for cp, asset := range tvwap {
 			if _, ok := tvwaps[providerName]; !ok {
-				tvwaps[providerName] = make(map[string]sdk.Dec)
+				tvwaps[providerName] = make(types.CurrencyPairDec)
 			}
 
-			tvwaps[providerName][base] = asset
+			tvwaps[providerName][cp] = asset
 		}
 	}
 
@@ -118,23 +118,23 @@ func FilterCandleDeviations(
 	// T is defined as the deviation threshold, either set by the config
 	// or defaulted to 1.
 	for providerName, priceMap := range tvwaps {
-		for base, price := range priceMap {
+		for cp, price := range priceMap {
 			t := defaultDeviationThreshold
-			if _, ok := deviationThresholds[base]; ok {
-				t = deviationThresholds[base]
+			if _, ok := deviationThresholds[cp.Base]; ok {
+				t = deviationThresholds[cp.Base]
 			}
 
-			if d, ok := deviations[base]; !ok || isBetween(price, means[base], d.Mul(t)) {
+			if d, ok := deviations[cp]; !ok || isBetween(price, means[cp], d.Mul(t)) {
 				p, ok := filteredCandles[providerName]
 				if !ok {
-					p = map[string][]types.CandlePrice{}
+					p = make(types.CurrencyPairCandles)
 					filteredCandles[providerName] = p
 				}
-				p[base] = candles[providerName][base]
+				p[cp] = candles[providerName][cp]
 			} else {
 				provider.TelemetryFailure(providerName, provider.MessageTypeCandle)
 				logger.Warn().
-					Str("base", base).
+					Interface("currency_pair", cp).
 					Str("provider", string(providerName)).
 					Str("price", price.String()).
 					Msg("provider deviating from other candles")
