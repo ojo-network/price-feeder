@@ -3,6 +3,7 @@ package provider
 import (
 	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
+	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 const (
@@ -21,7 +22,7 @@ func (mt MessageType) String() string {
 }
 
 // providerLabel returns a label based on the provider name.
-func providerLabel(n Name) metrics.Label {
+func providerLabel(n types.ProviderName) metrics.Label {
 	return metrics.Label{
 		Name:  "provider",
 		Value: n.String(),
@@ -38,7 +39,7 @@ func messageTypeLabel(mt MessageType) metrics.Label {
 
 // telemetryWebsocketReconnect gives an standard way to add
 // `price_feeder_websocket_reconnect` metric.
-func telemetryWebsocketReconnect(n Name) {
+func telemetryWebsocketReconnect(n types.ProviderName) {
 	telemetry.IncrCounterWithLabels(
 		[]string{
 			"websocket",
@@ -53,7 +54,7 @@ func telemetryWebsocketReconnect(n Name) {
 
 // telemetryWebsocketSubscribeCurrencyPairs gives an standard way to add
 // `price_feeder_websocket_subscribe_currency_pairs{provider="x"}` metric.
-func telemetryWebsocketSubscribeCurrencyPairs(n Name, incr int) {
+func telemetryWebsocketSubscribeCurrencyPairs(n types.ProviderName, incr int) {
 	telemetry.IncrCounterWithLabels(
 		[]string{
 			"websocket",
@@ -69,7 +70,7 @@ func telemetryWebsocketSubscribeCurrencyPairs(n Name, incr int) {
 
 // telemetryWebsocketMessage gives an standard way to add
 // `price_feeder_websocket_message{type="x", provider="x"}` metric.
-func telemetryWebsocketMessage(n Name, mt MessageType) {
+func telemetryWebsocketMessage(n types.ProviderName, mt MessageType) {
 	telemetry.IncrCounterWithLabels(
 		[]string{
 			"websocket",
@@ -85,7 +86,7 @@ func telemetryWebsocketMessage(n Name, mt MessageType) {
 
 // TelemetryFailure gives an standard way to add
 // `price_feeder_failure_provider{type="x", provider="x"}` metric.
-func TelemetryFailure(n Name, mt MessageType) {
+func TelemetryFailure(n types.ProviderName, mt MessageType) {
 	telemetry.IncrCounterWithLabels(
 		[]string{
 			"failure",

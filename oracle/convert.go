@@ -6,7 +6,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ojo-network/price-feeder/config"
-	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 )
@@ -15,9 +14,9 @@ import (
 // given the asset and the map of providers to currency pairs.
 func getUSDBasedProviders(
 	asset string,
-	providerPairs map[provider.Name][]types.CurrencyPair,
-) (map[provider.Name]struct{}, error) {
-	conversionProviders := make(map[provider.Name]struct{})
+	providerPairs map[types.ProviderName][]types.CurrencyPair,
+) (map[types.ProviderName]struct{}, error) {
+	conversionProviders := make(map[types.ProviderName]struct{})
 
 	for provider, pairs := range providerPairs {
 		for _, pair := range pairs {
@@ -39,16 +38,16 @@ func getUSDBasedProviders(
 // TODO - Refactor with: https://github.com/ojo-network/price-feeder/issues/105
 func ConvertCandlesToUSD(
 	logger zerolog.Logger,
-	candles provider.AggregatedProviderCandles,
-	providerPairs map[provider.Name][]types.CurrencyPair,
+	candles types.AggregatedProviderCandles,
+	providerPairs map[types.ProviderName][]types.CurrencyPair,
 	deviationThresholds map[string]sdk.Dec,
-) provider.AggregatedProviderCandles {
+) types.AggregatedProviderCandles {
 	if len(candles) == 0 {
 		return candles
 	}
 
 	conversionRates := make(map[string]sdk.Dec)
-	requiredConversions := make(map[provider.Name][]types.CurrencyPair)
+	requiredConversions := make(map[types.ProviderName][]types.CurrencyPair)
 
 	for pairProviderName, pairs := range providerPairs {
 		for _, pair := range pairs {
@@ -64,16 +63,16 @@ func ConvertCandlesToUSD(
 
 				// Find candles which we can use for conversion, and calculate the tvwap
 				// to find the conversion rate.
-				validCandleList := provider.AggregatedProviderCandles{}
+				validCandleList := types.AggregatedProviderCandles{}
 				for providerName, candleSet := range candles {
 					if _, ok := validProviders[providerName]; ok {
-						for base, candles := range candleSet {
-							if base == pair.Quote {
+						for cp, candles := range candleSet {
+							if cp.Base == pair.Quote {
 								if _, ok := validCandleList[providerName]; !ok {
-									validCandleList[providerName] = make(map[string][]types.CandlePrice)
+									validCandleList[providerName] = make(map[types.CurrencyPair][]types.CandlePrice)
 								}
 
-								validCandleList[providerName][base] = candles
+								validCandleList[providerName][cp] = candles
 							}
 						}
 					}
@@ -102,7 +101,8 @@ func ConvertCandlesToUSD(
 					continue
 				}
 
-				cvRate, ok := tvwap[pair.Quote]
+				conversionPair := types.CurrencyPair{Base: pair.Quote, Quote: config.DenomUSD}
+				cvRate, ok := tvwap[conversionPair]
 				if !ok {
 					logger.Error().Err(fmt.Errorf("error on computing tvwap for quote: %s, base: %s", pair.Quote, pair.Base))
 					continue
@@ -114,20 +114,23 @@ func ConvertCandlesToUSD(
 	}
 
 	// Convert assets to USD and filter out any unable to convert.
-	convertedCandles := make(provider.AggregatedProviderCandles)
+	convertedCandles := make(types.AggregatedProviderCandles)
 	for provider, assetMap := range candles {
-		convertedCandles[provider] = make(map[string][]types.CandlePrice)
+		convertedCandles[provider] = make(types.CurrencyPairCandles)
 		for asset, assetCandles := range assetMap {
 			conversionAttempted := false
 			for _, requiredConversion := range requiredConversions[provider] {
-				if requiredConversion.Base == asset {
+				if requiredConversion == asset {
 					conversionAttempted = true
 					// candles are filtered out when conversion rate is not found
-					if conversionRate, ok := conversionRates[requiredConversion.Quote]; ok {
-						convertedCandles[provider][asset] = append(
-							convertedCandles[provider][asset],
+					if conversionRate, ok := conversionRates[asset.Quote]; ok {
+						newCurrencyPair := types.CurrencyPair{Base: asset.Base, Quote: config.DenomUSD}
+						convertedCandles[provider][newCurrencyPair] = append(
+							convertedCandles[provider][newCurrencyPair],
 							convertCandles(assetCandles, conversionRate)...,
 						)
+					} else {
+						logger.Error().Msgf("no valid conversion rate found for %s", asset)
 					}
 					break
 				}
@@ -158,16 +161,16 @@ func convertCandles(candles []types.CandlePrice, conversionRate sdk.Dec) (ret []
 // TODO - Refactor with: https://github.com/ojo-network/price-feeder/issues/105
 func ConvertTickersToUSD(
 	logger zerolog.Logger,
-	tickers provider.AggregatedProviderPrices,
-	providerPairs map[provider.Name][]types.CurrencyPair,
+	tickers types.AggregatedProviderPrices,
+	providerPairs map[types.ProviderName][]types.CurrencyPair,
 	deviationThresholds map[string]sdk.Dec,
-) provider.AggregatedProviderPrices {
+) types.AggregatedProviderPrices {
 	if len(tickers) == 0 {
 		return tickers
 	}
 
 	conversionRates := make(map[string]sdk.Dec)
-	requiredConversions := make(map[provider.Name][]types.CurrencyPair)
+	requiredConversions := make(map[types.ProviderName][]types.CurrencyPair)
 
 	for pairProviderName, pairs := range providerPairs {
 		for _, pair := range pairs {
@@ -182,25 +185,24 @@ func ConvertTickersToUSD(
 				}
 
 				// Find valid candles, and then let's re-compute the tvwap.
-				validTickerList := provider.AggregatedProviderPrices{}
+				validTickerList := types.AggregatedProviderPrices{}
 				for providerName, tickerSet := range tickers {
 					// Find tickers which we can use for conversion, and calculate the vwap
 					// to find the conversion rate.
 					if _, ok := validProviders[providerName]; ok {
-						for base, ticker := range tickerSet {
-							if base == pair.Quote {
+						for cp, ticker := range tickerSet {
+							if cp.Base == pair.Quote {
 								if _, ok := validTickerList[providerName]; !ok {
-									validTickerList[providerName] = make(map[string]types.TickerPrice)
+									validTickerList[providerName] = make(types.CurrencyPairTickers)
 								}
-
-								validTickerList[providerName][base] = ticker
+								validTickerList[providerName][cp] = ticker
 							}
 						}
 					}
 				}
 
 				if len(validTickerList) == 0 {
-					logger.Error().Err(fmt.Errorf("there are no valid conversion rates for %s", pair.Quote))
+					logger.Error().Err(fmt.Errorf("there are no valid conversion rates for %s", pair.Base))
 					continue
 				}
 
@@ -216,24 +218,26 @@ func ConvertTickersToUSD(
 
 				vwap := ComputeVWAP(filteredTickers)
 
-				conversionRates[pair.Quote] = vwap[pair.Quote]
+				conversionPair := types.CurrencyPair{Base: pair.Quote, Quote: config.DenomUSD}
+				conversionRates[pair.Quote] = vwap[conversionPair]
 			}
 		}
 	}
 
 	// Convert assets to USD and filter out any unable to convert.
-	convertedTickers := make(provider.AggregatedProviderPrices)
+	convertedTickers := make(types.AggregatedProviderPrices)
 	for provider, assetMap := range tickers {
-		convertedTickers[provider] = make(map[string]types.TickerPrice)
+		convertedTickers[provider] = make(types.CurrencyPairTickers)
 		for asset, ticker := range assetMap {
 			conversionAttempted := false
 			for _, requiredConversion := range requiredConversions[provider] {
-				if requiredConversion.Base == asset {
+				if requiredConversion.Base == asset.Base {
 					conversionAttempted = true
 					// ticker is filtered out when conversion rate is not found
-					if conversionRate, ok := conversionRates[requiredConversion.Quote]; ok {
+					if conversionRate, ok := conversionRates[asset.Quote]; ok {
 						ticker.Price = ticker.Price.Mul(conversionRate)
-						convertedTickers[provider][asset] = ticker
+						newCurrencyPair := types.CurrencyPair{Base: asset.Base, Quote: config.DenomUSD}
+						convertedTickers[provider][newCurrencyPair] = ticker
 					}
 					break
 				}

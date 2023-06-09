@@ -13,7 +13,7 @@ func TestNewCandlePrice(t *testing.T) {
 	timeStamp := int64(1257894000)
 
 	t.Run("when the inputs are valid", func(t *testing.T) {
-		candlePrice, err := NewCandlePrice("binance", "BTC", price, volume, timeStamp)
+		candlePrice, err := NewCandlePrice(price, volume, timeStamp)
 		require.Nil(t, err, "expected the returned error to be nil")
 
 		parsedPrice, _ := sdk.NewDecFromStr(price)
@@ -26,12 +26,12 @@ func TestNewCandlePrice(t *testing.T) {
 	})
 
 	t.Run("when the lastPrice input is invalid", func(t *testing.T) {
-		_, err := NewCandlePrice("binance", "BTC", "bad_price", volume, timeStamp)
+		_, err := NewCandlePrice("bad_price", volume, timeStamp)
 		require.NotNil(t, err, "expected the returned error to not be nil")
 	})
 
 	t.Run("when the volume input is invalid", func(t *testing.T) {
-		_, err := NewCandlePrice("binance", "BTC", price, "bad_volume", timeStamp)
+		_, err := NewCandlePrice(price, "bad_volume", timeStamp)
 		require.NotNil(t, err, "expected the returned error to not be nil")
 	})
 }

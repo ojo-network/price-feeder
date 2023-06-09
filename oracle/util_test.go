@@ -11,56 +11,62 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	ATOMUSD = types.CurrencyPair{Base: "ATOM", Quote: "USD"}
+	OJOUSD  = types.CurrencyPair{Base: "OJO", Quote: "USD"}
+	LUNAUSD = types.CurrencyPair{Base: "LUNA", Quote: "USD"}
+)
+
 func TestComputeVWAP(t *testing.T) {
 	testCases := map[string]struct {
-		prices   map[provider.Name]map[string]types.TickerPrice
-		expected map[string]sdk.Dec
+		prices   types.AggregatedProviderPrices
+		expected types.CurrencyPairDec
 	}{
 		"empty prices": {
-			prices:   make(map[provider.Name]map[string]types.TickerPrice),
-			expected: make(map[string]sdk.Dec),
+			prices:   make(types.AggregatedProviderPrices),
+			expected: make(types.CurrencyPairDec),
 		},
 		"nil prices": {
 			prices:   nil,
-			expected: make(map[string]sdk.Dec),
+			expected: make(types.CurrencyPairDec),
 		},
 		"valid prices": {
-			prices: map[provider.Name]map[string]types.TickerPrice{
+			prices: types.AggregatedProviderPrices{
 				provider.ProviderBinance: {
-					"ATOM": types.TickerPrice{
+					ATOMUSD: types.TickerPrice{
 						Price:  sdk.MustNewDecFromStr("28.21000000"),
 						Volume: sdk.MustNewDecFromStr("2749102.78000000"),
 					},
-					"OJO": types.TickerPrice{
+					OJOUSD: types.TickerPrice{
 						Price:  sdk.MustNewDecFromStr("1.13000000"),
 						Volume: sdk.MustNewDecFromStr("249102.38000000"),
 					},
-					"LUNA": types.TickerPrice{
+					LUNAUSD: types.TickerPrice{
 						Price:  sdk.MustNewDecFromStr("64.87000000"),
 						Volume: sdk.MustNewDecFromStr("7854934.69000000"),
 					},
 				},
 				provider.ProviderKraken: {
-					"ATOM": types.TickerPrice{
+					ATOMUSD: types.TickerPrice{
 						Price:  sdk.MustNewDecFromStr("28.268700"),
 						Volume: sdk.MustNewDecFromStr("178277.53314385"),
 					},
-					"LUNA": types.TickerPrice{
+					LUNAUSD: types.TickerPrice{
 						Price:  sdk.MustNewDecFromStr("64.87853000"),
 						Volume: sdk.MustNewDecFromStr("458917.46353577"),
 					},
 				},
 				"FOO": {
-					"ATOM": types.TickerPrice{
+					ATOMUSD: types.TickerPrice{
 						Price:  sdk.MustNewDecFromStr("28.168700"),
 						Volume: sdk.MustNewDecFromStr("4749102.53314385"),
 					},
 				},
 			},
-			expected: map[string]sdk.Dec{
-				"ATOM": sdk.MustNewDecFromStr("28.185812745610043621"),
-				"OJO":  sdk.MustNewDecFromStr("1.13000000"),
-				"LUNA": sdk.MustNewDecFromStr("64.870470848638112395"),
+			expected: types.CurrencyPairDec{
+				ATOMUSD: sdk.MustNewDecFromStr("28.185812745610043621"),
+				OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
+				LUNAUSD: sdk.MustNewDecFromStr("64.870470848638112395"),
 			},
 		},
 	}
@@ -81,21 +87,21 @@ func TestComputeVWAP(t *testing.T) {
 
 func TestComputeTVWAP(t *testing.T) {
 	testCases := map[string]struct {
-		candles  provider.AggregatedProviderCandles
-		expected map[string]sdk.Dec
+		candles  types.AggregatedProviderCandles
+		expected types.CurrencyPairDec
 	}{
 		"empty prices": {
-			candles:  make(provider.AggregatedProviderCandles),
-			expected: make(map[string]sdk.Dec),
+			candles:  make(types.AggregatedProviderCandles),
+			expected: make(types.CurrencyPairDec),
 		},
 		"nil prices": {
 			candles:  nil,
-			expected: make(map[string]sdk.Dec),
+			expected: make(types.CurrencyPairDec),
 		},
 		"valid prices": {
-			candles: map[provider.Name]map[string][]types.CandlePrice{
+			candles: types.AggregatedProviderCandles{
 				provider.ProviderBinance: {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("25.09183"),
 							Volume:    sdk.MustNewDecFromStr("98444.123455"),
@@ -104,21 +110,21 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 				provider.ProviderKraken: {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("28.268700"),
 							Volume:    sdk.MustNewDecFromStr("178277.53314385"),
 							TimeStamp: provider.PastUnixTime(2 * time.Minute),
 						},
 					},
-					"OJO": []types.CandlePrice{
+					OJOUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("1.13000000"),
 							Volume:    sdk.MustNewDecFromStr("178277.53314385"),
 							TimeStamp: provider.PastUnixTime(2 * time.Minute),
 						},
 					},
-					"LUNA": []types.CandlePrice{
+					LUNAUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("64.87853000"),
 							Volume:    sdk.MustNewDecFromStr("458917.46353577"),
@@ -127,7 +133,7 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 				"FOO": {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("28.168700"),
 							Volume:    sdk.MustNewDecFromStr("4749102.53314385"),
@@ -136,16 +142,16 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]sdk.Dec{
-				"ATOM": sdk.MustNewDecFromStr("28.045149332478338614"),
-				"OJO":  sdk.MustNewDecFromStr("1.13000000"),
-				"LUNA": sdk.MustNewDecFromStr("64.878530000000000000"),
+			expected: types.CurrencyPairDec{
+				ATOMUSD: sdk.MustNewDecFromStr("28.045149332478338614"),
+				OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
+				LUNAUSD: sdk.MustNewDecFromStr("64.878530000000000000"),
 			},
 		},
 		"one expired price": {
-			candles: map[provider.Name]map[string][]types.CandlePrice{
+			candles: types.AggregatedProviderCandles{
 				provider.ProviderBinance: {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("25.09183"),
 							Volume:    sdk.MustNewDecFromStr("98444.123455"),
@@ -154,21 +160,21 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 				provider.ProviderKraken: {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("28.268700"),
 							Volume:    sdk.MustNewDecFromStr("178277.53314385"),
 							TimeStamp: provider.PastUnixTime(2 * time.Minute),
 						},
 					},
-					"OJO": []types.CandlePrice{
+					OJOUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("1.13000000"),
 							Volume:    sdk.MustNewDecFromStr("178277.53314385"),
 							TimeStamp: provider.PastUnixTime(2 * time.Minute),
 						},
 					},
-					"LUNA": []types.CandlePrice{
+					LUNAUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("64.87853000"),
 							Volume:    sdk.MustNewDecFromStr("458917.46353577"),
@@ -177,7 +183,7 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 				"FOO": {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("28.168700"),
 							Volume:    sdk.MustNewDecFromStr("4749102.53314385"),
@@ -186,16 +192,16 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]sdk.Dec{
-				"ATOM": sdk.MustNewDecFromStr("26.601468076898424151"),
-				"OJO":  sdk.MustNewDecFromStr("1.13000000"),
-				"LUNA": sdk.MustNewDecFromStr("64.878530000000000000"),
+			expected: types.CurrencyPairDec{
+				ATOMUSD: sdk.MustNewDecFromStr("26.601468076898424151"),
+				OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
+				LUNAUSD: sdk.MustNewDecFromStr("64.878530000000000000"),
 			},
 		},
 		"all expired prices": {
-			candles: map[provider.Name]map[string][]types.CandlePrice{
+			candles: types.AggregatedProviderCandles{
 				provider.ProviderBinance: {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("25.09183"),
 							Volume:    sdk.MustNewDecFromStr("98444.123455"),
@@ -204,21 +210,21 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 				provider.ProviderKraken: {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("28.268700"),
 							Volume:    sdk.MustNewDecFromStr("178277.53314385"),
 							TimeStamp: provider.PastUnixTime(10 * time.Minute),
 						},
 					},
-					"OJO": []types.CandlePrice{
+					OJOUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("1.13000000"),
 							Volume:    sdk.MustNewDecFromStr("178277.53314385"),
 							TimeStamp: provider.PastUnixTime(10 * time.Minute),
 						},
 					},
-					"LUNA": []types.CandlePrice{
+					LUNAUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("64.87853000"),
 							Volume:    sdk.MustNewDecFromStr("458917.46353577"),
@@ -227,7 +233,7 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 				"FOO": {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("28.168700"),
 							Volume:    sdk.MustNewDecFromStr("4749102.53314385"),
@@ -236,12 +242,12 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]sdk.Dec{},
+			expected: make(types.CurrencyPairDec),
 		},
 		"prices from the future": {
-			candles: map[provider.Name]map[string][]types.CandlePrice{
+			candles: types.AggregatedProviderCandles{
 				provider.ProviderBinance: {
-					"ATOM": []types.CandlePrice{
+					ATOMUSD: []types.CandlePrice{
 						{
 							Price:     sdk.MustNewDecFromStr("25.09183"),
 							Volume:    sdk.MustNewDecFromStr("98444.123455"),
@@ -250,7 +256,7 @@ func TestComputeTVWAP(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]sdk.Dec{},
+			expected: make(types.CurrencyPairDec),
 		},
 	}
 
@@ -275,55 +281,55 @@ func TestStandardDeviation(t *testing.T) {
 		deviation sdk.Dec
 	}
 	testCases := map[string]struct {
-		prices   map[provider.Name]map[string]sdk.Dec
-		expected map[string]deviation
+		prices   types.CurrencyPairDecByProvider
+		expected map[types.CurrencyPair]deviation
 	}{
 		"empty prices": {
-			prices:   make(map[provider.Name]map[string]sdk.Dec),
-			expected: map[string]deviation{},
+			prices:   make(types.CurrencyPairDecByProvider),
+			expected: map[types.CurrencyPair]deviation{},
 		},
 		"nil prices": {
 			prices:   nil,
-			expected: map[string]deviation{},
+			expected: map[types.CurrencyPair]deviation{},
 		},
 		"not enough prices": {
-			prices: map[provider.Name]map[string]sdk.Dec{
+			prices: types.CurrencyPairDecByProvider{
 				provider.ProviderBinance: {
-					"ATOM": sdk.MustNewDecFromStr("28.21000000"),
-					"OJO":  sdk.MustNewDecFromStr("1.13000000"),
-					"LUNA": sdk.MustNewDecFromStr("64.87000000"),
+					ATOMUSD: sdk.MustNewDecFromStr("28.21000000"),
+					OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
+					LUNAUSD: sdk.MustNewDecFromStr("64.87000000"),
 				},
 				provider.ProviderKraken: {
-					"ATOM": sdk.MustNewDecFromStr("28.23000000"),
-					"OJO":  sdk.MustNewDecFromStr("1.13050000"),
-					"LUNA": sdk.MustNewDecFromStr("64.85000000"),
+					ATOMUSD: sdk.MustNewDecFromStr("28.23000000"),
+					OJOUSD:  sdk.MustNewDecFromStr("1.13050000"),
+					LUNAUSD: sdk.MustNewDecFromStr("64.85000000"),
 				},
 			},
-			expected: map[string]deviation{},
+			expected: map[types.CurrencyPair]deviation{},
 		},
 		"some prices": {
-			prices: map[provider.Name]map[string]sdk.Dec{
+			prices: types.CurrencyPairDecByProvider{
 				provider.ProviderBinance: {
-					"ATOM": sdk.MustNewDecFromStr("28.21000000"),
-					"OJO":  sdk.MustNewDecFromStr("1.13000000"),
-					"LUNA": sdk.MustNewDecFromStr("64.87000000"),
+					ATOMUSD: sdk.MustNewDecFromStr("28.21000000"),
+					OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
+					LUNAUSD: sdk.MustNewDecFromStr("64.87000000"),
 				},
 				provider.ProviderKraken: {
-					"ATOM": sdk.MustNewDecFromStr("28.23000000"),
-					"OJO":  sdk.MustNewDecFromStr("1.13050000"),
+					ATOMUSD: sdk.MustNewDecFromStr("28.23000000"),
+					OJOUSD:  sdk.MustNewDecFromStr("1.13050000"),
 				},
-				provider.ProviderOsmosis: {
-					"ATOM": sdk.MustNewDecFromStr("28.40000000"),
-					"OJO":  sdk.MustNewDecFromStr("1.14000000"),
-					"LUNA": sdk.MustNewDecFromStr("64.10000000"),
+				provider.ProviderOsmosisV2: {
+					ATOMUSD: sdk.MustNewDecFromStr("28.40000000"),
+					OJOUSD:  sdk.MustNewDecFromStr("1.14000000"),
+					LUNAUSD: sdk.MustNewDecFromStr("64.10000000"),
 				},
 			},
-			expected: map[string]deviation{
-				"ATOM": {
+			expected: map[types.CurrencyPair]deviation{
+				ATOMUSD: {
 					mean:      sdk.MustNewDecFromStr("28.28"),
 					deviation: sdk.MustNewDecFromStr("0.085244745683629475"),
 				},
-				"OJO": {
+				OJOUSD: {
 					mean:      sdk.MustNewDecFromStr("1.1335"),
 					deviation: sdk.MustNewDecFromStr("0.004600724580614015"),
 				},
@@ -331,33 +337,33 @@ func TestStandardDeviation(t *testing.T) {
 		},
 
 		"non empty prices": {
-			prices: map[provider.Name]map[string]sdk.Dec{
+			prices: types.CurrencyPairDecByProvider{
 				provider.ProviderBinance: {
-					"ATOM": sdk.MustNewDecFromStr("28.21000000"),
-					"OJO":  sdk.MustNewDecFromStr("1.13000000"),
-					"LUNA": sdk.MustNewDecFromStr("64.87000000"),
+					ATOMUSD: sdk.MustNewDecFromStr("28.21000000"),
+					OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
+					LUNAUSD: sdk.MustNewDecFromStr("64.87000000"),
 				},
 				provider.ProviderKraken: {
-					"ATOM": sdk.MustNewDecFromStr("28.23000000"),
-					"OJO":  sdk.MustNewDecFromStr("1.13050000"),
-					"LUNA": sdk.MustNewDecFromStr("64.85000000"),
+					ATOMUSD: sdk.MustNewDecFromStr("28.23000000"),
+					OJOUSD:  sdk.MustNewDecFromStr("1.13050000"),
+					LUNAUSD: sdk.MustNewDecFromStr("64.85000000"),
 				},
-				provider.ProviderOsmosis: {
-					"ATOM": sdk.MustNewDecFromStr("28.40000000"),
-					"OJO":  sdk.MustNewDecFromStr("1.14000000"),
-					"LUNA": sdk.MustNewDecFromStr("64.10000000"),
+				provider.ProviderOsmosisV2: {
+					ATOMUSD: sdk.MustNewDecFromStr("28.40000000"),
+					OJOUSD:  sdk.MustNewDecFromStr("1.14000000"),
+					LUNAUSD: sdk.MustNewDecFromStr("64.10000000"),
 				},
 			},
-			expected: map[string]deviation{
-				"ATOM": {
+			expected: map[types.CurrencyPair]deviation{
+				ATOMUSD: {
 					mean:      sdk.MustNewDecFromStr("28.28"),
 					deviation: sdk.MustNewDecFromStr("0.085244745683629475"),
 				},
-				"OJO": {
+				OJOUSD: {
 					mean:      sdk.MustNewDecFromStr("1.1335"),
 					deviation: sdk.MustNewDecFromStr("0.004600724580614015"),
 				},
-				"LUNA": {
+				LUNAUSD: {
 					mean:      sdk.MustNewDecFromStr("64.606666666666666666"),
 					deviation: sdk.MustNewDecFromStr("0.358360464089193609"),
 				},

@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
+	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -57,37 +58,37 @@ type Oracle struct {
 	closer *pfsync.Closer
 
 	providerTimeout    time.Duration
-	providerPairs      map[provider.Name][]types.CurrencyPair
+	providerPairs      map[types.ProviderName][]types.CurrencyPair
 	previousPrevote    *PreviousPrevote
 	previousVotePeriod float64
-	priceProviders     map[provider.Name]provider.Provider
+	priceProviders     map[types.ProviderName]provider.Provider
 	oracleClient       client.OracleClient
 	deviations         map[string]sdk.Dec
-	endpoints          map[provider.Name]provider.Endpoint
+	endpoints          map[types.ProviderName]provider.Endpoint
 	paramCache         ParamCache
 
 	pricesMutex     sync.RWMutex
 	lastPriceSyncTS time.Time
-	prices          map[string]sdk.Dec
+	prices          types.CurrencyPairDec
 
-	tvwapsByProvider PricesWithMutex
-	vwapsByProvider  PricesWithMutex
+	tvwapsByProvider types.PricesWithMutex
+	vwapsByProvider  types.PricesWithMutex
 }
 
 func New(
 	logger zerolog.Logger,
 	oc client.OracleClient,
-	providerPairs map[provider.Name][]types.CurrencyPair,
+	providerPairs map[types.ProviderName][]types.CurrencyPair,
 	providerTimeout time.Duration,
 	deviations map[string]sdk.Dec,
-	endpoints map[provider.Name]provider.Endpoint,
+	endpoints map[types.ProviderName]provider.Endpoint,
 ) *Oracle {
 	return &Oracle{
 		logger:          logger.With().Str("module", "oracle").Logger(),
 		closer:          pfsync.NewCloser(),
 		oracleClient:    oc,
 		providerPairs:   providerPairs,
-		priceProviders:  make(map[provider.Name]provider.Provider),
+		priceProviders:  make(map[types.ProviderName]provider.Provider),
 		previousPrevote: nil,
 		providerTimeout: providerTimeout,
 		deviations:      deviations,
@@ -140,12 +141,13 @@ func (o *Oracle) GetLastPriceSyncTimestamp() time.Time {
 
 // GetPrices returns a copy of the current prices fetched from the oracle's
 // set of exchange rate providers.
-func (o *Oracle) GetPrices() map[string]sdk.Dec {
+func (o *Oracle) GetPrices() types.CurrencyPairDec {
 	o.pricesMutex.RLock()
 	defer o.pricesMutex.RUnlock()
 
 	// Creates a new array for the prices in the oracle
-	prices := make(map[string]sdk.Dec, len(o.prices))
+	prices := make(types.CurrencyPairDec, len(o.prices))
+
 	for k, v := range o.prices {
 		// Fills in the prices with each value in the oracle
 		prices[k] = v
@@ -155,12 +157,12 @@ func (o *Oracle) GetPrices() map[string]sdk.Dec {
 }
 
 // GetTvwapPrices returns a copy of the tvwapsByProvider map
-func (o *Oracle) GetTvwapPrices() PricesByProvider {
+func (o *Oracle) GetTvwapPrices() types.CurrencyPairDecByProvider {
 	return o.tvwapsByProvider.GetPricesClone()
 }
 
 // GetVwapPrices returns the vwapsByProvider map using a read lock
-func (o *Oracle) GetVwapPrices() PricesByProvider {
+func (o *Oracle) GetVwapPrices() types.CurrencyPairDecByProvider {
 	return o.vwapsByProvider.GetPricesClone()
 }
 
@@ -172,9 +174,9 @@ func (o *Oracle) GetVwapPrices() PricesByProvider {
 func (o *Oracle) SetPrices(ctx context.Context) error {
 	g := new(errgroup.Group)
 	mtx := new(sync.Mutex)
-	providerPrices := make(provider.AggregatedProviderPrices)
-	providerCandles := make(provider.AggregatedProviderCandles)
-	requiredRates := make(map[string]struct{})
+	providerPrices := make(types.AggregatedProviderPrices)
+	providerCandles := make(types.AggregatedProviderCandles)
+	requiredRates := make(map[types.CurrencyPair]struct{})
 
 	for providerName, currencyPairs := range o.providerPairs {
 		providerName := providerName
@@ -186,14 +188,15 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 		}
 
 		for _, pair := range currencyPairs {
-			if _, ok := requiredRates[pair.Base]; !ok {
-				requiredRates[pair.Base] = struct{}{}
+			usdPair := types.CurrencyPair{Base: pair.Base, Quote: config.DenomUSD}
+			if _, ok := requiredRates[usdPair]; !ok {
+				requiredRates[usdPair] = struct{}{}
 			}
 		}
 
 		g.Go(func() error {
-			prices := make(map[string]types.TickerPrice, 0)
-			candles := make(map[string][]types.CandlePrice, 0)
+			prices := make(types.CurrencyPairTickers, 0)
+			candles := make(types.CurrencyPairCandles, 0)
 			ch := make(chan struct{})
 			errCh := make(chan error, 1)
 
@@ -253,9 +256,9 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 		return err
 	}
 
-	for base := range requiredRates {
-		if _, ok := computedPrices[base]; !ok {
-			o.logger.Warn().Str("asset", base).Msg("unable to report price for expected asset")
+	for cp := range requiredRates {
+		if _, ok := computedPrices[cp]; !ok {
+			o.logger.Warn().Str("asset", cp.String()).Msg("unable to report price for expected asset")
 		}
 	}
 
@@ -270,11 +273,11 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 // or due to some staleness) it will use the most recent ticker prices
 // and the VWAP formula instead.
 func (o *Oracle) GetComputedPrices(
-	providerCandles provider.AggregatedProviderCandles,
-	providerPrices provider.AggregatedProviderPrices,
-	providerPairs map[provider.Name][]types.CurrencyPair,
+	providerCandles types.AggregatedProviderCandles,
+	providerPrices types.AggregatedProviderPrices,
+	providerPairs map[types.ProviderName][]types.CurrencyPair,
 	deviations map[string]sdk.Dec,
-) (prices map[string]sdk.Dec, err error) {
+) (prices types.CurrencyPairDec, err error) {
 	// convert any non-USD denominated candles into USD
 	convertedCandles := ConvertCandlesToUSD(
 		o.logger,
@@ -335,28 +338,28 @@ func (o *Oracle) GetComputedPrices(
 // candles and tickers based on the base currency per provider.
 // Returns true if at least one of price or candle exists.
 func SetProviderTickerPricesAndCandles(
-	providerName provider.Name,
-	providerPrices provider.AggregatedProviderPrices,
-	providerCandles provider.AggregatedProviderCandles,
-	prices map[string]types.TickerPrice,
-	candles map[string][]types.CandlePrice,
+	providerName types.ProviderName,
+	providerPrices types.AggregatedProviderPrices,
+	providerCandles types.AggregatedProviderCandles,
+	prices types.CurrencyPairTickers,
+	candles types.CurrencyPairCandles,
 	pair types.CurrencyPair,
 ) (success bool) {
 	if _, ok := providerPrices[providerName]; !ok {
-		providerPrices[providerName] = make(map[string]types.TickerPrice)
+		providerPrices[providerName] = make(map[types.CurrencyPair]types.TickerPrice)
 	}
 	if _, ok := providerCandles[providerName]; !ok {
-		providerCandles[providerName] = make(map[string][]types.CandlePrice)
+		providerCandles[providerName] = make(map[types.CurrencyPair][]types.CandlePrice)
 	}
 
-	tp, pricesOk := prices[pair.String()]
-	cp, candlesOk := candles[pair.String()]
+	tp, pricesOk := prices[pair]
+	cp, candlesOk := candles[pair]
 
 	if pricesOk {
-		providerPrices[providerName][pair.Base] = tp
+		providerPrices[providerName][pair] = tp
 	}
 	if candlesOk {
-		providerCandles[providerName][pair.Base] = cp
+		providerCandles[providerName][pair] = cp
 	}
 
 	return pricesOk || candlesOk
@@ -405,7 +408,7 @@ func (o *Oracle) GetParams(ctx context.Context) (oracletypes.Params, error) {
 	return queryResponse.Params, nil
 }
 
-func (o *Oracle) getOrSetProvider(ctx context.Context, providerName provider.Name) (provider.Provider, error) {
+func (o *Oracle) getOrSetProvider(ctx context.Context, providerName types.ProviderName) (provider.Provider, error) {
 	var (
 		priceProvider provider.Provider
 		ok            bool
@@ -433,7 +436,7 @@ func (o *Oracle) getOrSetProvider(ctx context.Context, providerName provider.Nam
 
 func NewProvider(
 	ctx context.Context,
-	providerName provider.Name,
+	providerName types.ProviderName,
 	logger zerolog.Logger,
 	endpoint provider.Endpoint,
 	providerPairs ...types.CurrencyPair,
@@ -447,9 +450,6 @@ func NewProvider(
 
 	case provider.ProviderKraken:
 		return provider.NewKrakenProvider(ctx, logger, endpoint, providerPairs...)
-
-	case provider.ProviderOsmosis:
-		return provider.NewOsmosisProvider(endpoint), nil
 
 	case provider.ProviderOsmosisV2:
 		return provider.NewOsmosisV2Provider(ctx, logger, endpoint, providerPairs...)
@@ -491,7 +491,8 @@ func NewProvider(
 func (o *Oracle) checkAcceptList(params oracletypes.Params) {
 	for _, denom := range params.AcceptList {
 		symbol := strings.ToUpper(denom.SymbolDenom)
-		if _, ok := o.prices[symbol]; !ok {
+		cp := types.CurrencyPair{Base: symbol, Quote: "USD"}
+		if _, ok := o.prices[cp]; !ok {
 			o.logger.Warn().Str("denom", symbol).Msg("price missing for required denom")
 		}
 	}
@@ -642,13 +643,13 @@ func GenerateSalt(length int) (string, error) {
 
 // GenerateExchangeRatesString generates a canonical string representation of
 // the aggregated exchange rates.
-func GenerateExchangeRatesString(prices map[string]sdk.Dec) string {
+func GenerateExchangeRatesString(prices types.CurrencyPairDec) string {
 	exchangeRates := make([]string, len(prices))
 	i := 0
 
-	// aggregate exchange rates as "<base>:<price>"
-	for base, avgPrice := range prices {
-		exchangeRates[i] = fmt.Sprintf("%s:%s", base, avgPrice.String())
+	// aggregate exchange rates as "<currency_pair>:<price>"
+	for cp, avgPrice := range prices {
+		exchangeRates[i] = fmt.Sprintf("%s:%s", cp.String(), avgPrice.String())
 		i++
 	}
 
