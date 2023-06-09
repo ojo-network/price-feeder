@@ -207,7 +207,7 @@ var (
 )
 
 func SupportedConversionSlice() []types.CurrencyPair {
-	var pairs []types.CurrencyPair
+	pairs := make([]types.CurrencyPair, 0, len(SupportedConversions))
 	for pair := range SupportedConversions {
 		pairs = append(pairs, pair)
 	}
