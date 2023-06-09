@@ -18,11 +18,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
-<<<<<<< HEAD
-=======
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/ojo-network/price-feeder/config"
->>>>>>> adca080 (refactor: add quote denom (#165))
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
