@@ -140,7 +140,7 @@ func ConvertAggregatedCandles(
 }
 
 func convertCandles(candles []types.CandlePrice, rate sdk.Dec) []types.CandlePrice {
-	convertedCandles := make([]types.CandlePrice, len(candles))
+	convertedCandles := []types.CandlePrice{}
 	for _, candle := range candles {
 		candle.Price = candle.Price.Mul(rate)
 		convertedCandles = append(convertedCandles, candle)
