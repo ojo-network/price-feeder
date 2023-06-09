@@ -387,7 +387,7 @@ func TestGenerateExchangeRatesString(t *testing.T) {
 			input: types.CurrencyPairDec{
 				OJOUSD: sdk.MustNewDecFromStr("3.72"),
 			},
-			expected: "OJOUSD:3.720000000000000000",
+			expected: "OJO:3.720000000000000000",
 		},
 		"multi denom": {
 			input: types.CurrencyPairDec{
@@ -395,7 +395,7 @@ func TestGenerateExchangeRatesString(t *testing.T) {
 				ATOMUSD: sdk.MustNewDecFromStr("40.13"),
 				OSMOUSD: sdk.MustNewDecFromStr("8.69"),
 			},
-			expected: "ATOMUSD:40.130000000000000000,OJOUSD:3.720000000000000000,OSMOUSD:8.690000000000000000",
+			expected: "ATOM:40.130000000000000000,OJO:3.720000000000000000,OSMO:8.690000000000000000",
 		},
 	}
 
