@@ -124,7 +124,7 @@ func ConvertCandlesToUSD(
 					conversionAttempted = true
 					// candles are filtered out when conversion rate is not found
 					if conversionRate, ok := conversionRates[asset.Quote]; ok {
-						newCurrencyPair := types.CurrencyPair{Base: asset.Base, Quote: "USD"}
+						newCurrencyPair := types.CurrencyPair{Base: asset.Base, Quote: config.DenomUSD}
 						convertedCandles[provider][newCurrencyPair] = append(
 							convertedCandles[provider][newCurrencyPair],
 							convertCandles(assetCandles, conversionRate)...,
@@ -236,7 +236,7 @@ func ConvertTickersToUSD(
 					// ticker is filtered out when conversion rate is not found
 					if conversionRate, ok := conversionRates[asset.Quote]; ok {
 						ticker.Price = ticker.Price.Mul(conversionRate)
-						newCurrencyPair := types.CurrencyPair{Base: asset.Base, Quote: "USD"}
+						newCurrencyPair := types.CurrencyPair{Base: asset.Base, Quote: config.DenomUSD}
 						convertedTickers[provider][newCurrencyPair] = ticker
 					}
 					break
