@@ -1,7 +1,5 @@
 package oracle
 
-// Everything assumes that there are only two hops
-
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ojo-network/price-feeder/config"
@@ -9,8 +7,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// ConvertRatesToUSD converts the rates to USD. If no conversion exists the
-// rate is omitted in the return.
+// ConvertRatesToUSD converts the rates to USD and updates the currency pair
+// with a USD quote. If no conversion exists the rate is omitted in the return.
 func ConvertRatesToUSD(rates types.CurrencyPairDec) types.CurrencyPairDec {
 	convertedRates := make(types.CurrencyPairDec)
 	for cp, rate := range rates {
@@ -30,9 +28,11 @@ func ConvertRatesToUSD(rates types.CurrencyPairDec) types.CurrencyPairDec {
 	return convertedRates
 }
 
-// CalcCurrencyPairRates computes the conversion rates for the given currency pairs
-// Limited to only the currencyPairs passed in
-// If the rate does not exist after computing candles it falls back to tickers
+// CalcCurrencyPairRates filters the candles and tickers to the currency pair
+// list provided, then filters candles/tickers outside of the deviation threshold,
+// and finally computes the rates for the given currency pairs using TVWAP for candles
+// and VWAP for tickers. It will first compute rates with candles and then attempt
+// to fill in any missing prices with ticker data.
 func CalcCurrencyPairRates(
 	candles types.AggregatedProviderCandles,
 	tickers types.AggregatedProviderPrices,
@@ -41,38 +41,37 @@ func CalcCurrencyPairRates(
 	logger zerolog.Logger,
 ) (types.CurrencyPairDec, error) {
 
-	// Select candles that matches the currencyPairs and fill conversionCandles with them
-	conversionCandles := make(types.AggregatedProviderCandles)
+	candlesFilteredByCP := make(types.AggregatedProviderCandles)
 	for _, ratePair := range currencyPairs {
 		for provider, cpCandles := range candles {
 			for cp, candles := range cpCandles {
 				if cp == ratePair {
-					if _, ok := conversionCandles[provider]; !ok {
-						conversionCandles[provider] = make(types.CurrencyPairCandles)
+					if _, ok := candlesFilteredByCP[provider]; !ok {
+						candlesFilteredByCP[provider] = make(types.CurrencyPairCandles)
 					}
-					conversionCandles[provider][cp] = candles
+					candlesFilteredByCP[provider][cp] = candles
 				}
 			}
 		}
 	}
 
-	filteredCandles, err := FilterCandleDeviations(
+	candlesFilteredByDeviation, err := FilterCandleDeviations(
 		logger,
-		conversionCandles,
+		candlesFilteredByCP,
 		deviationThresholds,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	conversionRates, err := ComputeTVWAP(filteredCandles)
+	conversionRates, err := ComputeTVWAP(candlesFilteredByDeviation)
 	if err != nil {
 		return nil, err
 	}
 
-	// Select tickers that matches the currencyPairs and also does not already exist in the conversionRates
-	// array and fill conversionTickers with them
-	conversionTickers := make(types.AggregatedProviderPrices)
+	// select tickers that matche the currencyPairs and also do
+	// not already exist in the conversionRates array
+	tickersFilteredByCP := make(types.AggregatedProviderPrices)
 	for _, ratePair := range currencyPairs {
 		if _, ok := conversionRates[ratePair]; ok {
 			continue
@@ -80,25 +79,25 @@ func CalcCurrencyPairRates(
 		for provider, cpTickers := range tickers {
 			for cp, tickers := range cpTickers {
 				if cp == ratePair {
-					if _, ok := conversionTickers[provider]; !ok {
-						conversionTickers[provider] = make(types.CurrencyPairTickers)
+					if _, ok := tickersFilteredByCP[provider]; !ok {
+						tickersFilteredByCP[provider] = make(types.CurrencyPairTickers)
 					}
-					conversionTickers[provider][cp] = tickers
+					tickersFilteredByCP[provider][cp] = tickers
 				}
 			}
 		}
 	}
 
-	filteredTickers, err := FilterTickerDeviations(
+	tickersFilteredByDeviation, err := FilterTickerDeviations(
 		logger,
-		conversionTickers,
+		tickersFilteredByCP,
 		deviationThresholds,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	vwap := ComputeVWAP(filteredTickers)
+	vwap := ComputeVWAP(tickersFilteredByDeviation)
 
 	for cp, rate := range vwap {
 		conversionRates[cp] = rate
@@ -107,7 +106,8 @@ func CalcCurrencyPairRates(
 	return conversionRates, nil
 }
 
-// Assumes all rate pairs have a quote of USD (called after ConvertRatesToUSD)
+// ConvertAggregatedCandles converts the candles to USD and updates the currency pair
+// with a USD quote. If no conversion exists the rate is omitted in the return.
 func ConvertAggregatedCandles(
 	candles types.AggregatedProviderCandles,
 	rates types.CurrencyPairDec,
@@ -148,6 +148,8 @@ func convertCandles(candles []types.CandlePrice, rate sdk.Dec) []types.CandlePri
 	return convertedCandles
 }
 
+// ConvertAggregatedTickers converts the tickers to USD and updates the currency pair
+// with a USD quote. If no conversion exists the rate is omitted in the return.
 func ConvertAggregatedTickers(
 	tickers types.AggregatedProviderPrices,
 	rates types.CurrencyPairDec,

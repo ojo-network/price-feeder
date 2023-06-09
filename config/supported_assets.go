@@ -28,7 +28,8 @@ var (
 	}
 
 	// SupportedConversions defines a lookup table for which currency pairs we
-	// support converting prices with.
+	// support converting prices with. Each currency pair with a non-USD quote
+	// requires a corresponding USD conversion rate.
 	SupportedConversions = map[types.CurrencyPair]struct{}{
 		{Base: "USDC", Quote: "USD"}: {},
 		{Base: "USDT", Quote: "USD"}: {},

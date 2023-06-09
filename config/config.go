@@ -224,7 +224,10 @@ func ParseConfig(configPath string) (Config, error) {
 		cfg.ProviderTimeout = defaultProviderTimeout.String()
 	}
 
-	cfg.validateCurrencyPairs()
+	err := cfg.validateCurrencyPairs()
+	if err != nil {
+		return cfg, err
+	}
 
 	for _, deviation := range cfg.Deviations {
 		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
@@ -241,33 +244,38 @@ func ParseConfig(configPath string) (Config, error) {
 }
 
 func (c Config) validateCurrencyPairs() error {
-	for _, pair := range c.CurrencyPairs {
-		if pair.Base == "" {
+OUTER:
+	for _, cp := range c.CurrencyPairs {
+		if cp.Base == "" {
 			return fmt.Errorf("currency pair base cannot be empty")
 		}
-		if pair.Quote == "" {
+		if cp.Quote == "" {
 			return fmt.Errorf("currency pair quote cannot be empty")
 		}
-		if pair.Base == pair.Quote {
+		if cp.Base == cp.Quote {
 			return fmt.Errorf("currency pair base and quote cannot be the same")
 		}
-		if len(pair.Providers) == 0 {
+		if len(cp.Providers) == 0 {
 			return fmt.Errorf("currency pair must have at least one provider")
 		}
-		if pair.Quote == DenomUSD {
+		for _, prov := range cp.Providers {
+			if _, ok := SupportedProviders[prov]; !ok {
+				return fmt.Errorf("unsupported provider: %s", prov)
+			}
+			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, c.ProviderEndpoints) {
+				return fmt.Errorf("provider %s requires an API Key", prov)
+			}
+		}
+		if cp.Quote == DenomUSD {
 			continue
 		}
 		// verify a conversion pair exists for the quote currency
-		for _, conversionPair := range c.CurrencyPairs {
-			if pair.Quote == conversionPair.Base {
-				conversionCP := types.CurrencyPair{Base: conversionPair.Base, Quote: conversionPair.Quote}
-				// verify the conversion pair is supported
-				if _, ok := SupportedConversions[conversionCP]; ok {
-					break
-				}
+		for _, conversionPair := range SupportedConversionSlice() {
+			if cp.Quote == conversionPair.Base {
+				continue OUTER
 			}
 		}
-		return fmt.Errorf("currency pair quote %s is not supported", pair.Quote)
+		return fmt.Errorf("currency pair quote %s is not supported", cp.Quote)
 	}
 	return nil
 }
