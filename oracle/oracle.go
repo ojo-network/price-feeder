@@ -649,7 +649,7 @@ func GenerateExchangeRatesString(prices types.CurrencyPairDec) string {
 
 	// aggregate exchange rates as "<currency_pair>:<price>"
 	for cp, avgPrice := range prices {
-		exchangeRates[i] = fmt.Sprintf("%s:%s", cp.String(), avgPrice.String())
+		exchangeRates[i] = fmt.Sprintf("%s:%s", cp.Base, avgPrice.String())
 		i++
 	}
 
