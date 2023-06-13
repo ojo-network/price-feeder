@@ -69,8 +69,8 @@ func CalcCurrencyPairRates(
 		return nil, err
 	}
 
-	// select tickers that matche the currencyPairs and also do
-	// not already exist in the conversionRates array
+	// Select tickers that matche the currencyPairs and also do
+	// not already exist in the conversionRates array.
 	tickersFilteredByCP := make(types.AggregatedProviderPrices)
 	for _, ratePair := range currencyPairs {
 		if _, ok := conversionRates[ratePair]; ok {
