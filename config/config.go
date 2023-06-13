@@ -224,40 +224,9 @@ func ParseConfig(configPath string) (Config, error) {
 		cfg.ProviderTimeout = defaultProviderTimeout.String()
 	}
 
-	pairs := make(map[string]map[types.ProviderName]struct{})
-	coinQuotes := make(map[string]struct{})
-	for _, cp := range cfg.CurrencyPairs {
-		if _, ok := pairs[cp.Base]; !ok {
-			pairs[cp.Base] = make(map[types.ProviderName]struct{})
-		}
-		if strings.ToUpper(cp.Quote) != DenomUSD {
-			coinQuotes[cp.Quote] = struct{}{}
-		}
-		if _, ok := SupportedQuotes[strings.ToUpper(cp.Quote)]; !ok {
-			return cfg, fmt.Errorf("unsupported quote: %s", cp.Quote)
-		}
-
-		for _, prov := range cp.Providers {
-			if _, ok := SupportedProviders[prov]; !ok {
-				return cfg, fmt.Errorf("unsupported provider: %s", prov)
-			}
-			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, cfg.ProviderEndpoints) {
-				return cfg, fmt.Errorf("provider %s requires an API Key", prov)
-			}
-			pairs[cp.Base][prov] = struct{}{}
-		}
-	}
-
-	// Use coinQuotes to ensure that any quotes can be converted to USD.
-	for quote := range coinQuotes {
-		for index, pair := range cfg.CurrencyPairs {
-			if pair.Base == quote && pair.Quote == DenomUSD {
-				break
-			}
-			if index == len(cfg.CurrencyPairs)-1 {
-				return cfg, fmt.Errorf("all non-usd quotes require a conversion rate feed")
-			}
-		}
+	err := cfg.validateCurrencyPairs()
+	if err != nil {
+		return cfg, err
 	}
 
 	for _, deviation := range cfg.Deviations {
@@ -272,6 +241,43 @@ func ParseConfig(configPath string) (Config, error) {
 	}
 
 	return cfg, cfg.Validate()
+}
+
+func (c Config) validateCurrencyPairs() error {
+OUTER:
+	for _, cp := range c.CurrencyPairs {
+		if cp.Base == "" {
+			return fmt.Errorf("currency pair base cannot be empty")
+		}
+		if cp.Quote == "" {
+			return fmt.Errorf("currency pair quote cannot be empty")
+		}
+		if cp.Base == cp.Quote {
+			return fmt.Errorf("currency pair base and quote cannot be the same")
+		}
+		if len(cp.Providers) == 0 {
+			return fmt.Errorf("currency pair must have at least one provider")
+		}
+		for _, prov := range cp.Providers {
+			if _, ok := SupportedProviders[prov]; !ok {
+				return fmt.Errorf("unsupported provider: %s", prov)
+			}
+			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, c.ProviderEndpoints) {
+				return fmt.Errorf("provider %s requires an API Key", prov)
+			}
+		}
+		if cp.Quote == DenomUSD {
+			continue
+		}
+		// verify a conversion pair exists for the quote currency
+		for _, conversionPair := range SupportedConversionSlice() {
+			if cp.Quote == conversionPair.Base {
+				continue OUTER
+			}
+		}
+		return fmt.Errorf("currency pair quote %s is not supported", cp.Quote)
+	}
+	return nil
 }
 
 // CheckProviderMins starts the currency provider tracker to check the amount of
