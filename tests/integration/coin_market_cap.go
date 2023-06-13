@@ -18,8 +18,13 @@ func getCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
 		return nil, err
 	}
 
+	symbolsUpper := make([]string, len(symbols))
+	for i, symbol := range symbols {
+		symbolsUpper[i] = strings.ToUpper(symbol)
+	}
+
 	q := url.Values{}
-	q.Add("symbol", strings.Join(symbols, ","))
+	q.Add("symbol", strings.Join(symbolsUpper, ","))
 
 	apiKey := os.Getenv("COINMARKETCAP_API_KEY")
 	if apiKey == "" {
@@ -47,7 +52,7 @@ func getCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
 	prices := make(map[string]float64, len(symbols))
 
 	for _, symbol := range symbols {
-		tokenData, ok := data[symbol].(map[string]interface{})
+		tokenData, ok := data[strings.ToUpper(symbol)].(map[string]interface{})
 		if !ok {
 			fmt.Printf("coinmarketcap.com token data not found for %s\n", symbol)
 			continue

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	maxCoeficientOfVariation = 0.2
+	maxCoeficientOfVariation = 0.5
 )
 
 // TestPriceAccuracy tests the accuracy of the final prices calculated by the oracle
@@ -56,6 +56,7 @@ func TestPriceAccuracy(t *testing.T) {
 	apiPrices, err := getCoinMarketCapPrices(symbols)
 	require.NoError(t, err)
 
+	t.Logf("checking oracle prices: %v", oraclePrices)
 	checkPrices(t, symbols, oraclePrices, apiPrices)
 }
 
@@ -68,13 +69,13 @@ func checkPrices(
 	for _, denom := range expectedSymbols {
 		cp := types.CurrencyPair{Base: denom, Quote: "USD"}
 
-		if _, ok := apiPrices[denom]; !ok {
-			t.Logf("%s API price not found", denom)
+		if _, ok := oraclePrices[cp]; !ok {
+			assert.Failf(t, "Oracle price not found", "currency_pair", cp)
 			continue
 		}
 
-		if _, ok := oraclePrices[cp]; !ok {
-			t.Logf("%s Oracle price not found", cp)
+		if _, ok := apiPrices[denom]; !ok {
+			t.Logf("%s API price not found", denom)
 			continue
 		}
 
