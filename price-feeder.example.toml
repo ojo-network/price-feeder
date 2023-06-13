@@ -31,7 +31,8 @@ base = "USDT"
 providers = [
   "kraken",
   "coinbase",
-  "binanceus",
+  "crypto",
+  "gate",
 ]
 quote = "USD"
 
@@ -40,6 +41,7 @@ base = "ATOM"
 providers = [
   "okx",
   "bitget",
+  "gate",
 ]
 quote = "USDT"
 
@@ -47,7 +49,6 @@ quote = "USDT"
 base = "ATOM"
 providers = [
   "kraken",
-  "binanceus",
 ]
 quote = "USD"
 
