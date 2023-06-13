@@ -249,8 +249,6 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 	computedPrices, err := o.GetComputedPrices(
 		providerCandles,
 		providerPrices,
-		o.providerPairs,
-		o.deviations,
 	)
 	if err != nil {
 		return err
@@ -268,70 +266,57 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 	return nil
 }
 
-// GetComputedPrices gets the candle and ticker prices and computes it.
-// It returns candles' TVWAP if possible, if not possible (not available
-// or due to some staleness) it will use the most recent ticker prices
-// and the VWAP formula instead.
+func (o *Oracle) RequiredRates() []types.CurrencyPair {
+	requiredRatesMap := make(map[types.CurrencyPair]struct{})
+	for _, currencyPairs := range o.providerPairs {
+		for _, pair := range currencyPairs {
+			usdPair := types.CurrencyPair{Base: pair.Base, Quote: config.DenomUSD}
+			if _, ok := requiredRatesMap[usdPair]; !ok {
+				requiredRatesMap[usdPair] = struct{}{}
+			}
+		}
+	}
+
+	rates := make([]types.CurrencyPair, 0, len(requiredRatesMap))
+	for pair := range requiredRatesMap {
+		rates = append(rates, pair)
+	}
+	return rates
+}
+
 func (o *Oracle) GetComputedPrices(
 	providerCandles types.AggregatedProviderCandles,
 	providerPrices types.AggregatedProviderPrices,
-	providerPairs map[types.ProviderName][]types.CurrencyPair,
-	deviations map[string]sdk.Dec,
-) (prices types.CurrencyPairDec, err error) {
-	// convert any non-USD denominated candles into USD
-	convertedCandles := ConvertCandlesToUSD(
-		o.logger,
+) (types.CurrencyPairDec, error) {
+
+	conversionRates, err := CalcCurrencyPairRates(
 		providerCandles,
-		providerPairs,
-		deviations,
-	)
-
-	// filter out any erroneous candles
-	filteredCandles, err := FilterCandleDeviations(
+		providerPrices,
+		o.deviations,
+		config.SupportedConversionSlice(),
 		o.logger,
-		convertedCandles,
-		deviations,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	computedPrices, _ := ComputeTvwapsByProvider(filteredCandles)
-	o.tvwapsByProvider.SetPrices(computedPrices)
+	USDRates := ConvertRatesToUSD(conversionRates)
 
-	// attempt to use candles for TVWAP calculations
-	tvwapPrices, err := ComputeTVWAP(filteredCandles)
+	convertedCandles := ConvertAggregatedCandles(providerCandles, USDRates)
+	convertedTickers := ConvertAggregatedTickers(providerPrices, USDRates)
+
+	prices, err := CalcCurrencyPairRates(
+		convertedCandles,
+		convertedTickers,
+		o.deviations,
+		o.RequiredRates(),
+		o.logger,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	// If TVWAP candles are not available or were filtered out due to staleness,
-	// use most recent prices & VWAP instead.
-	if len(tvwapPrices) == 0 {
-		convertedTickers := ConvertTickersToUSD(
-			o.logger,
-			providerPrices,
-			providerPairs,
-			deviations,
-		)
-
-		filteredProviderPrices, err := FilterTickerDeviations(
-			o.logger,
-			convertedTickers,
-			deviations,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		o.vwapsByProvider.SetPrices(ComputeVwapsByProvider(filteredProviderPrices))
-
-		vwapPrices := ComputeVWAP(filteredProviderPrices)
-
-		return vwapPrices, nil
-	}
-
-	return tvwapPrices, nil
+	return prices, nil
 }
 
 // SetProviderTickerPricesAndCandles flattens and collects prices for

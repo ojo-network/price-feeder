@@ -165,7 +165,7 @@ func (ots *OracleTestSuite) TestPrices() {
 	ots.oracle.priceProviders = map[types.ProviderName]provider.Provider{
 		provider.ProviderBinance: mockProvider{
 			prices: types.CurrencyPairTickers{
-				types.CurrencyPair{Base: "OJO", Quote: "USDX"}: {
+				OJOUSDX: {
 					Price:  sdk.MustNewDecFromStr("3.72"),
 					Volume: sdk.MustNewDecFromStr("2396974.02000000"),
 				},
@@ -205,6 +205,15 @@ func (ots *OracleTestSuite) TestPrices() {
 
 	prices := ots.oracle.GetPrices()
 	ots.Require().Len(prices, 0)
+
+	providerPair := map[types.ProviderName][]types.CurrencyPair{
+		provider.ProviderBinance:   {OJOUSDT},
+		provider.ProviderKraken:    {OJOUSDC},
+		provider.ProviderHuobi:     {USDCUSD},
+		provider.ProviderCoinbase:  {USDTUSD},
+		provider.ProviderOsmosisV2: {XBTUSDT},
+	}
+	ots.oracle.providerPairs = providerPair
 
 	// use a mock provider to provide prices for the configured exchange pairs
 	ots.oracle.priceProviders = map[types.ProviderName]provider.Provider{
@@ -488,12 +497,11 @@ func (ots *OracleTestSuite) TestSuccessGetComputedPricesCandles() {
 	providerPair := map[types.ProviderName][]types.CurrencyPair{
 		provider.ProviderBinance: {pair},
 	}
+	ots.oracle.providerPairs = providerPair
 
 	prices, err := ots.oracle.GetComputedPrices(
 		providerCandles,
 		make(types.AggregatedProviderPrices, 1),
-		providerPair,
-		make(map[string]sdk.Dec),
 	)
 
 	require.NoError(ots.T(), err, "It should successfully get computed candle prices")
@@ -520,12 +528,11 @@ func (ots *OracleTestSuite) TestSuccessGetComputedPricesTickers() {
 	providerPair := map[types.ProviderName][]types.CurrencyPair{
 		provider.ProviderBinance: {pair},
 	}
+	ots.oracle.providerPairs = providerPair
 
 	prices, err := ots.oracle.GetComputedPrices(
 		make(types.AggregatedProviderCandles, 1),
 		providerPrices,
-		providerPair,
-		make(map[string]sdk.Dec),
 	)
 
 	require.NoError(ots.T(), err, "It should successfully get computed ticker prices")
@@ -549,10 +556,10 @@ func (ots *OracleTestSuite) TestGetComputedPricesCandlesConversion() {
 	btcUSDPrice := sdk.MustNewDecFromStr("20962.601")
 	ethUsdPrice := sdk.MustNewDecFromStr("1195.02")
 	volume := sdk.MustNewDecFromStr("894123.00")
-	providerCandles := make(types.AggregatedProviderCandles, 4)
+	providerCandles := make(types.AggregatedProviderCandles)
 
 	// normal rates
-	binanceCandles := make(types.CurrencyPairCandles, 2)
+	binanceCandles := make(types.CurrencyPairCandles)
 	binanceCandles[btcPair] = []types.CandlePrice{
 		{
 			Price:     btcEthPrice,
@@ -570,7 +577,7 @@ func (ots *OracleTestSuite) TestGetComputedPricesCandlesConversion() {
 	providerCandles[provider.ProviderBinance] = binanceCandles
 
 	// normal rates
-	gateCandles := make(types.CurrencyPairCandles, 1)
+	gateCandles := make(types.CurrencyPairCandles)
 	gateCandles[ethPair] = []types.CandlePrice{
 		{
 			Price:     ethUsdPrice,
@@ -578,17 +585,10 @@ func (ots *OracleTestSuite) TestGetComputedPricesCandlesConversion() {
 			TimeStamp: provider.PastUnixTime(1 * time.Minute),
 		},
 	}
-	gateCandles[btcPair] = []types.CandlePrice{
-		{
-			Price:     btcEthPrice,
-			Volume:    volume,
-			TimeStamp: provider.PastUnixTime(1 * time.Minute),
-		},
-	}
 	providerCandles[provider.ProviderGate] = gateCandles
 
 	// abnormal eth rate
-	okxCandles := make(types.CurrencyPairCandles, 1)
+	okxCandles := make(types.CurrencyPairCandles)
 	okxCandles[ethPair] = []types.CandlePrice{
 		{
 			Price:     sdk.MustNewDecFromStr("1.0"),
@@ -599,7 +599,7 @@ func (ots *OracleTestSuite) TestGetComputedPricesCandlesConversion() {
 	providerCandles[provider.ProviderOkx] = okxCandles
 
 	// btc / usd rate
-	krakenCandles := make(types.CurrencyPairCandles, 1)
+	krakenCandles := make(types.CurrencyPairCandles)
 	krakenCandles[btcUSDPair] = []types.CandlePrice{
 		{
 			Price:     btcUSDPrice,
@@ -609,27 +609,28 @@ func (ots *OracleTestSuite) TestGetComputedPricesCandlesConversion() {
 	}
 	providerCandles[provider.ProviderKraken] = krakenCandles
 
-	providerPair := map[types.ProviderName][]types.CurrencyPair{
+	ots.oracle.providerPairs = map[types.ProviderName][]types.CurrencyPair{
 		provider.ProviderBinance: {btcPair, ethPair},
 		provider.ProviderGate:    {ethPair},
 		provider.ProviderOkx:     {ethPair},
 		provider.ProviderKraken:  {btcUSDPair},
 	}
+	ots.oracle.deviations = map[string]sdk.Dec{
+		"BTC": sdk.MustNewDecFromStr("1"),
+	}
 
 	prices, err := ots.oracle.GetComputedPrices(
 		providerCandles,
-		make(types.AggregatedProviderPrices, 1),
-		providerPair,
-		make(map[string]sdk.Dec),
+		make(types.AggregatedProviderPrices),
 	)
 
 	require.NoError(ots.T(), err,
 		"It should successfully filter out bad candles and convert everything to USD",
 	)
 
+	btcUsdRate := btcEthPrice.Mul(ethUsdPrice)
 	require.Equal(ots.T(),
-		ethUsdPrice.Mul(
-			btcEthPrice).Add(btcUSDPrice).Quo(sdk.MustNewDecFromStr("2")),
+		btcUsdRate.Add(btcUSDPrice).Quo(sdk.MustNewDecFromStr("2")),
 		prices[BTCUSD],
 	)
 }
@@ -655,10 +656,6 @@ func (ots *OracleTestSuite) TestGetComputedPricesTickersConversion() {
 
 	// normal rates
 	gateTickerPrices := make(types.CurrencyPairTickers, 4)
-	gateTickerPrices[BTCETH] = types.TickerPrice{
-		Price:  btcEthPrice,
-		Volume: volume,
-	}
 	gateTickerPrices[ETHUSD] = types.TickerPrice{
 		Price:  ethUsdPrice,
 		Volume: volume,
@@ -687,12 +684,11 @@ func (ots *OracleTestSuite) TestGetComputedPricesTickersConversion() {
 		provider.ProviderOkx:     {ETHUSD},
 		provider.ProviderKraken:  {BTCUSD},
 	}
+	ots.oracle.providerPairs = providerPair
 
 	prices, err := ots.oracle.GetComputedPrices(
 		make(types.AggregatedProviderCandles, 1),
 		providerPrices,
-		providerPair,
-		make(map[string]sdk.Dec),
 	)
 
 	require.NoError(ots.T(), err,
@@ -810,13 +806,11 @@ func (ots *OracleTestSuite) TestGetComputedPricesEmptyTvwap() {
 		tc := tc
 
 		ots.Run(name, func() {
+			ots.oracle.providerPairs = tc.pairs
 			prices, _ := ots.oracle.GetComputedPrices(
 				tc.candles,
 				tc.prices,
-				tc.pairs,
-				make(map[string]sdk.Dec),
 			)
-
 			require.Equal(ots.T(), tc.numPrices, len(prices))
 		})
 	}
