@@ -43,8 +43,8 @@ base = "ETH"
 threshold = "2"
 
 [[deviation_thresholds]]
-base = "WBTC"
-threshold = "1.5"
+base = "BTC"
+threshold = "2"
 
 [[deviation_thresholds]]
 base = "BNB"
@@ -122,7 +122,7 @@ base = "USDT"
 providers = [
   "kraken",
   "coinbase",
-  "binanceus",
+  "crypto",
 ]
 quote = "USD"
 
@@ -138,7 +138,7 @@ quote = "USDT"
 base = "ATOM"
 providers = [
   "kraken",
-  "binanceus",
+  "crypto",
 ]
 quote = "USD"
 
@@ -203,7 +203,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "BNB"
 providers = [
-  "binanceus",
+  "mexc",
   "bitget",
   "okx",
 ]
@@ -402,11 +402,6 @@ enabled = true
 global-labels = [["chain_id", "umee-local-testnet"]]
 service-name = "price-feeder"
 prometheus-retention-time = 100
-
-[[provider_endpoints]]
-name = "binance"
-rest = "https://api1.binance.com"
-websocket = "stream.binance.com:9443"
 
 [[provider_endpoints]]
 name = "osmosisv2"

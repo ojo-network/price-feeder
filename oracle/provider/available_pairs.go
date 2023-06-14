@@ -16,7 +16,7 @@ import (
 // cannot be subsribed to.
 func ConfirmPairAvailability(
 	p Provider,
-	providerName Name,
+	providerName types.ProviderName,
 	logger zerolog.Logger,
 	cps ...types.CurrencyPair,
 ) ([]types.CurrencyPair, error) {

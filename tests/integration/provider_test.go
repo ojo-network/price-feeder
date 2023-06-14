@@ -2,7 +2,7 @@ package integration
 
 import (
 	"context"
-	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -30,6 +30,8 @@ func TestServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
 }
 
+// TestWebsocketProviders tests that we receive pricing information for
+// every webssocket provider and each of their currency pairs.
 func (s *IntegrationTestSuite) TestWebsocketProviders() {
 	if testing.Short() {
 		s.T().Skip("skipping integration test in short mode")
@@ -40,20 +42,25 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 
 	endpoints := cfg.ProviderEndpointsMap()
 
+	var waitGroup sync.WaitGroup
 	for key, pairs := range cfg.ProviderPairs() {
+		waitGroup.Add(1)
 		providerName := key
 		currencyPairs := pairs
-		endpoint := endpoints[providerName]
-		s.T().Run(string(providerName), func(t *testing.T) {
-			t.Parallel()
+
+		go func() {
+			defer waitGroup.Done()
+			endpoint := endpoints[providerName]
 			ctx, cancel := context.WithCancel(context.Background())
+			s.T().Logf("Checking %s provider with currency pairs %+v", providerName, currencyPairs)
 			pvd, _ := oracle.NewProvider(ctx, providerName, getLogger(), endpoint, currencyPairs...)
 			pvd.StartConnections()
 			time.Sleep(60 * time.Second) // wait for provider to connect and receive some prices
-			checkForPrices(t, pvd, currencyPairs, providerName.String())
+			checkForPrices(s.T(), pvd, currencyPairs, providerName.String())
 			cancel()
-		})
+		}()
 	}
+	waitGroup.Wait()
 }
 
 func (s *IntegrationTestSuite) TestSubscribeCurrencyPairs() {
@@ -62,18 +69,19 @@ func (s *IntegrationTestSuite) TestSubscribeCurrencyPairs() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	currencyPairs := []types.CurrencyPair{{Base: "ATOM", Quote: "USDT"}}
-	pvd, _ := provider.NewOkxProvider(ctx, getLogger(), provider.Endpoint{}, currencyPairs...)
+	currencyPairs := []types.CurrencyPair{{Base: "USDT", Quote: "USD"}}
+	pvd, _ := provider.NewKrakenProvider(ctx, getLogger(), provider.Endpoint{}, currencyPairs...)
+	pvd.StartConnections()
 
 	time.Sleep(5 * time.Second)
 
-	newPairs := []types.CurrencyPair{{Base: "ETH", Quote: "USDT"}}
+	newPairs := []types.CurrencyPair{{Base: "ATOM", Quote: "USD"}}
 	pvd.SubscribeCurrencyPairs(newPairs...)
 	currencyPairs = append(currencyPairs, newPairs...)
 
-	time.Sleep(25 * time.Second) // wait for provider to connect and receive some prices
+	time.Sleep(25 * time.Second)
 
-	checkForPrices(s.T(), pvd, currencyPairs, "OKX")
+	checkForPrices(s.T(), pvd, currencyPairs, "Kraken")
 
 	cancel()
 }
@@ -89,38 +97,31 @@ func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.C
 		currencyPairKey := cp.String()
 
 		require.False(t,
-			tickerPrices[currencyPairKey].Price.IsNil(),
+			tickerPrices[cp].Price.IsNil(),
 			"no ticker price for %s pair %s",
 			providerName,
 			currencyPairKey,
 		)
 
 		require.True(t,
-			tickerPrices[currencyPairKey].Price.GT(sdk.NewDec(0)),
+			tickerPrices[cp].Price.GT(sdk.NewDec(0)),
 			"ticker price is zero for %s pair %s",
 			providerName,
 			currencyPairKey,
 		)
 
 		require.NotEmpty(t,
-			candlePrices[currencyPairKey],
+			candlePrices[cp],
 			"no candle prices for %s pair %s",
 			providerName,
 			currencyPairKey,
 		)
 
 		require.True(t,
-			candlePrices[currencyPairKey][0].Price.GT(sdk.NewDec(0)),
-			"candle price iss zero for %s pair %s",
+			candlePrices[cp][0].Price.GT(sdk.NewDec(0)),
+			"candle price is zero for %s pair %s",
 			providerName,
 			currencyPairKey,
 		)
 	}
-}
-
-func getLogger() zerolog.Logger {
-	logWriter := zerolog.ConsoleWriter{Out: os.Stderr}
-	logLvl := zerolog.DebugLevel
-	zerolog.SetGlobalLevel(logLvl)
-	return zerolog.New(logWriter).Level(logLvl).With().Timestamp().Logger()
 }

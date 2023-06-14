@@ -65,9 +65,9 @@ type (
 	// CurrencyPair defines a price quote of the exchange rate for two different
 	// currencies and the supported providers for getting the exchange rate.
 	CurrencyPair struct {
-		Base      string          `mapstructure:"base" validate:"required"`
-		Quote     string          `mapstructure:"quote" validate:"required"`
-		Providers []provider.Name `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+		Base      string               `mapstructure:"base" validate:"required"`
+		Quote     string               `mapstructure:"quote" validate:"required"`
+		Providers []types.ProviderName `mapstructure:"providers" validate:"required,gt=0,dive,required"`
 	}
 
 	// Deviation defines a maximum amount of standard deviations that a given asset can
@@ -122,7 +122,7 @@ func endpointValidation(sl validator.StructLevel) {
 
 // hasAPIKey searches through the provided endpoints to return whether or not
 // a given endpoint was supplied with an API Key.
-func hasAPIKey(endpointName provider.Name, endpoints []provider.Endpoint) bool {
+func hasAPIKey(endpointName types.ProviderName, endpoints []provider.Endpoint) bool {
 	for _, endpoint := range endpoints {
 		if endpoint.Name == endpointName && endpoint.APIKey != "" {
 			return true
@@ -138,8 +138,8 @@ func (c Config) Validate() error {
 	return validate.Struct(c)
 }
 
-func (c Config) ProviderPairs() map[provider.Name][]types.CurrencyPair {
-	providerPairs := make(map[provider.Name][]types.CurrencyPair)
+func (c Config) ProviderPairs() map[types.ProviderName][]types.CurrencyPair {
+	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
 
 	for _, pair := range c.CurrencyPairs {
 		for _, provider := range pair.Providers {
@@ -154,12 +154,39 @@ func (c Config) ProviderPairs() map[provider.Name][]types.CurrencyPair {
 
 // ProviderEndpointsMap converts the provider_endpoints from the config
 // file into a map of provider.Endpoint where the key is the provider name.
-func (c Config) ProviderEndpointsMap() map[provider.Name]provider.Endpoint {
-	endpoints := make(map[provider.Name]provider.Endpoint, len(c.ProviderEndpoints))
+func (c Config) ProviderEndpointsMap() map[types.ProviderName]provider.Endpoint {
+	endpoints := make(map[types.ProviderName]provider.Endpoint, len(c.ProviderEndpoints))
 	for _, endpoint := range c.ProviderEndpoints {
 		endpoints[endpoint.Name] = endpoint
 	}
 	return endpoints
+}
+
+// DeviationsMap converts the deviation_thresholds from the config file into
+// a map of sdk.Dec where the key is the base asset.
+func (c Config) DeviationsMap() (map[string]sdk.Dec, error) {
+	deviations := make(map[string]sdk.Dec, len(c.Deviations))
+	for _, deviation := range c.Deviations {
+		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		if err != nil {
+			return nil, err
+		}
+		deviations[deviation.Base] = threshold
+	}
+	return deviations, nil
+}
+
+// ExpectedSymbols returns a slice of all unique base symbols from the config object.
+func (c Config) ExpectedSymbols() []string {
+	bases := make(map[string]interface{}, len(c.CurrencyPairs))
+	for _, pair := range c.CurrencyPairs {
+		bases[pair.Base] = struct{}{}
+	}
+	expectedSymbols := make([]string, 0, len(bases))
+	for b := range bases {
+		expectedSymbols = append(expectedSymbols, b)
+	}
+	return expectedSymbols
 }
 
 // ParseConfig attempts to read and parse configuration from the given file path.
@@ -197,40 +224,9 @@ func ParseConfig(configPath string) (Config, error) {
 		cfg.ProviderTimeout = defaultProviderTimeout.String()
 	}
 
-	pairs := make(map[string]map[provider.Name]struct{})
-	coinQuotes := make(map[string]struct{})
-	for _, cp := range cfg.CurrencyPairs {
-		if _, ok := pairs[cp.Base]; !ok {
-			pairs[cp.Base] = make(map[provider.Name]struct{})
-		}
-		if strings.ToUpper(cp.Quote) != DenomUSD {
-			coinQuotes[cp.Quote] = struct{}{}
-		}
-		if _, ok := SupportedQuotes[strings.ToUpper(cp.Quote)]; !ok {
-			return cfg, fmt.Errorf("unsupported quote: %s", cp.Quote)
-		}
-
-		for _, prov := range cp.Providers {
-			if _, ok := SupportedProviders[prov]; !ok {
-				return cfg, fmt.Errorf("unsupported provider: %s", prov)
-			}
-			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, cfg.ProviderEndpoints) {
-				return cfg, fmt.Errorf("provider %s requires an API Key", prov)
-			}
-			pairs[cp.Base][prov] = struct{}{}
-		}
-	}
-
-	// Use coinQuotes to ensure that any quotes can be converted to USD.
-	for quote := range coinQuotes {
-		for index, pair := range cfg.CurrencyPairs {
-			if pair.Base == quote && pair.Quote == DenomUSD {
-				break
-			}
-			if index == len(cfg.CurrencyPairs)-1 {
-				return cfg, fmt.Errorf("all non-usd quotes require a conversion rate feed")
-			}
-		}
+	err := cfg.validateCurrencyPairs()
+	if err != nil {
+		return cfg, err
 	}
 
 	for _, deviation := range cfg.Deviations {
@@ -247,6 +243,43 @@ func ParseConfig(configPath string) (Config, error) {
 	return cfg, cfg.Validate()
 }
 
+func (c Config) validateCurrencyPairs() error {
+OUTER:
+	for _, cp := range c.CurrencyPairs {
+		if cp.Base == "" {
+			return fmt.Errorf("currency pair base cannot be empty")
+		}
+		if cp.Quote == "" {
+			return fmt.Errorf("currency pair quote cannot be empty")
+		}
+		if cp.Base == cp.Quote {
+			return fmt.Errorf("currency pair base and quote cannot be the same")
+		}
+		if len(cp.Providers) == 0 {
+			return fmt.Errorf("currency pair must have at least one provider")
+		}
+		for _, prov := range cp.Providers {
+			if _, ok := SupportedProviders[prov]; !ok {
+				return fmt.Errorf("unsupported provider: %s", prov)
+			}
+			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, c.ProviderEndpoints) {
+				return fmt.Errorf("provider %s requires an API Key", prov)
+			}
+		}
+		if cp.Quote == DenomUSD {
+			continue
+		}
+		// verify a conversion pair exists for the quote currency
+		for _, conversionPair := range SupportedConversionSlice() {
+			if cp.Quote == conversionPair.Base {
+				continue OUTER
+			}
+		}
+		return fmt.Errorf("currency pair quote %s is not supported", cp.Quote)
+	}
+	return nil
+}
+
 // CheckProviderMins starts the currency provider tracker to check the amount of
 // providers available for a currency by querying CoinGecko's API. It will enforce
 // a provider minimum for a given currency based on its available providers.
@@ -261,10 +294,10 @@ func CheckProviderMins(ctx context.Context, logger zerolog.Logger, cfg Config) e
 		}
 	}
 
-	pairs := make(map[string]map[provider.Name]struct{})
+	pairs := make(map[string]map[types.ProviderName]struct{})
 	for _, cp := range cfg.CurrencyPairs {
 		if _, ok := pairs[cp.Base]; !ok {
-			pairs[cp.Base] = make(map[provider.Name]struct{})
+			pairs[cp.Base] = make(map[types.ProviderName]struct{})
 		}
 		for _, provider := range cp.Providers {
 			pairs[cp.Base][provider] = struct{}{}
