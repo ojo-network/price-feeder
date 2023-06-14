@@ -98,28 +98,28 @@ func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.C
 		currencyPairKey := cp.String()
 
 		require.False(t,
-			tickerPrices[currencyPairKey].Price.IsNil(),
+			tickerPrices[cp].Price.IsNil(),
 			"no ticker price for %s pair %s",
 			providerName,
 			currencyPairKey,
 		)
 
 		require.True(t,
-			tickerPrices[currencyPairKey].Price.GT(sdk.NewDec(0)),
+			tickerPrices[cp].Price.GT(sdk.NewDec(0)),
 			"ticker price is zero for %s pair %s",
 			providerName,
 			currencyPairKey,
 		)
 
 		require.NotEmpty(t,
-			candlePrices[currencyPairKey],
+			candlePrices[cp],
 			"no candle prices for %s pair %s",
 			providerName,
 			currencyPairKey,
 		)
 
 		require.True(t,
-			candlePrices[currencyPairKey][0].Price.GT(sdk.NewDec(0)),
+			candlePrices[cp][0].Price.GT(sdk.NewDec(0)),
 			"candle price is zero for %s pair %s",
 			providerName,
 			currencyPairKey,
