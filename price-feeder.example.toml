@@ -7,6 +7,14 @@ verbose_cors = true
 write_timeout = "20s"
 
 [[deviation_thresholds]]
+base = "MARS"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "CMST"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "USDT"
 threshold = "1.5"
 
@@ -358,6 +366,20 @@ base = "CBETH"
 quote = "USD"
 providers = [ "coinbase",]
 
+[[currency_pairs]]
+base = "CMST"
+providers = [
+  "crescent",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "MARS"
+providers = [
+  "osmosisv2",
+]
+quote = "OSMO"
+
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
 chain_id = "umee-local-testnet"
@@ -385,3 +407,8 @@ prometheus-retention-time = 100
 name = "osmosisv2"
 rest = "https://api.osmo-api.prod.ojo.network"
 websocket = "api.osmo-api.prod.ojo.network"
+
+[[provider_endpoints]]
+name = "crescent"
+rest = "https://api.cresc-api.prod.ojo.network"
+websocket = "api.cresc-api.prod.ojo.network"
