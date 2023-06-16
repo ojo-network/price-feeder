@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	kujiraWSHost   = ""
+	kujiraWSHost   = "api.osmo-api.prod.ojo.network"
 	kujiraWSPath   = "ws"
-	kujiraRestHost = ""
+	kujiraRestHost = "https://api.osmo-api.prod.ojo.network"
 	kujiraRestPath = "/assetpairs"
 	kujiraAckMsg   = "ack"
 )
