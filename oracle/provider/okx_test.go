@@ -33,13 +33,15 @@ func TestOkxProvider_GetTickerPrices(t *testing.T) {
 			Vol24h: volume,
 		}
 
-		p.tickers = syncMap
+		for _, okxTicker := range syncMap {
+			p.setTickerPair(okxTicker, okxTicker.OkxInstID.InstID)
+		}
 
 		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPrice), prices["ATOMUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["ATOMUSDT"].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr(lastPrice), prices[ATOMUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -64,23 +66,25 @@ func TestOkxProvider_GetTickerPrices(t *testing.T) {
 			Vol24h: volume,
 		}
 
-		p.tickers = syncMap
+		for _, okxTicker := range syncMap {
+			p.setTickerPair(okxTicker, okxTicker.OkxInstID.InstID)
+		}
+
 		prices, err := p.GetTickerPrices(
 			types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
 			types.CurrencyPair{Base: "LUNA", Quote: "USDT"},
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPriceAtom), prices["ATOMUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["ATOMUSDT"].Volume)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPriceLuna), prices["LUNAUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["LUNAUSDT"].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr(lastPriceAtom), prices[ATOMUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr(lastPriceLuna), prices[LUNAUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[LUNAUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
-		require.EqualError(t, err, "okx has no ticker data for requested pairs: [FOOBAR]")
-		require.Nil(t, prices)
+		prices, _ := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
+		require.Empty(t, prices)
 	})
 }
 
@@ -91,9 +95,7 @@ func TestOkxCurrencyPairToOkxPair(t *testing.T) {
 }
 
 func TestOkxProvider_getSubscriptionMsgs(t *testing.T) {
-	provider := &OkxProvider{
-		subscribedPairs: map[string]types.CurrencyPair{},
-	}
+	provider := &OkxProvider{}
 	cps := []types.CurrencyPair{
 		{Base: "ATOM", Quote: "USDT"},
 	}

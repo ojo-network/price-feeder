@@ -29,7 +29,7 @@ type (
 		parentCtx           context.Context
 		websocketCtx        context.Context
 		websocketCancelFunc context.CancelFunc
-		providerName        Name
+		providerName        types.ProviderName
 		websocketURL        url.URL
 		subscriptionMsg     interface{}
 		messageHandler      MessageHandler
@@ -46,7 +46,7 @@ type (
 	// that manages reconnecting, subscribing, and receiving messages.
 	WebsocketController struct {
 		parentCtx    context.Context
-		providerName Name
+		providerName types.ProviderName
 		websocketURL url.URL
 		logger       zerolog.Logger
 		connections  []*WebsocketConnection
@@ -55,7 +55,7 @@ type (
 
 func NewWebsocketController(
 	ctx context.Context,
-	providerName Name,
+	providerName types.ProviderName,
 	websocketURL url.URL,
 	subscriptionMsgs []interface{},
 	messageHandler MessageHandler,

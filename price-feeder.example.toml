@@ -26,12 +26,17 @@ threshold = "2"
 base = "OSMO"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "DAI"
+threshold = "2"
+
 [[currency_pairs]]
 base = "USDT"
 providers = [
   "kraken",
   "coinbase",
-  "binanceus",
+  "crypto",
+  "gate",
 ]
 quote = "USD"
 
@@ -40,6 +45,7 @@ base = "ATOM"
 providers = [
   "okx",
   "bitget",
+  "gate",
 ]
 quote = "USDT"
 
@@ -47,7 +53,6 @@ quote = "USDT"
 base = "ATOM"
 providers = [
   "kraken",
-  "binanceus",
 ]
 quote = "USD"
 
@@ -97,6 +102,37 @@ providers = [
   "osmosisv2",
 ]
 quote = "ATOM"
+
+[[currency_pairs]]
+base = "stATOM"
+providers = [
+  "osmosisv2",
+  "crescent",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "stOSMO"
+providers = [
+  "osmosisv2",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "DAI"
+providers = [
+  "okx",
+  "bitget",
+  "huobi",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "DAI"
+providers = [
+  "kraken",
+]
+quote = "USD"
 
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
