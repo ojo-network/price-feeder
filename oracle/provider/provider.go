@@ -22,7 +22,7 @@ const (
 	ProviderCrypto    types.ProviderName = "crypto"
 	ProviderPolygon   types.ProviderName = "polygon"
 	ProviderCrescent  types.ProviderName = "crescent"
-  ProviderKujira    types.ProviderName = "kujira"
+	ProviderKujira    types.ProviderName = "kujira"
 	ProviderMock      types.ProviderName = "mock"
 )
 

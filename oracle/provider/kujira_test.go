@@ -15,7 +15,7 @@ func TestKujiraProvider_GetTickerPrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "KUJI", Quote: "ATOM"},
+		KUJIATOM,
 	)
 	require.NoError(t, err)
 
@@ -34,8 +34,8 @@ func TestKujiraProvider_GetTickerPrices(t *testing.T) {
 		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "KUJI", Quote: "ATOM"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, lastPrice, prices["KUJIATOM"].Price)
-		require.Equal(t, volume, prices["KUJIATOM"].Volume)
+		require.Equal(t, lastPrice, prices[KUJIATOM].Price)
+		require.Equal(t, volume, prices[KUJIATOM].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -61,17 +61,15 @@ func TestKujiraProvider_GetTickerPrices(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, lastPriceAtom, prices["ATOMUSDT"].Price)
-		require.Equal(t, volume, prices["ATOMUSDT"].Volume)
-		require.Equal(t, lastPriceLuna, prices["LUNAUSDT"].Price)
-		require.Equal(t, volume, prices["LUNAUSDT"].Volume)
+		require.Equal(t, lastPriceAtom, prices[ATOMUSDT].Price)
+		require.Equal(t, volume, prices[ATOMUSDT].Volume)
+		require.Equal(t, lastPriceLuna, prices[LUNAUSDT].Price)
+		require.Equal(t, volume, prices[LUNAUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
-		require.Error(t, err)
-		require.Equal(t, "kujira has no ticker data for requested pairs: [FOOBAR]", err.Error())
-		require.Nil(t, prices)
+		prices, _ := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
+		require.Empty(t, prices)
 	})
 }
 
@@ -80,7 +78,7 @@ func TestKujiraProvider_GetCandlePrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "KUJI", Quote: "ATOM"},
+		KUJIATOM,
 	)
 	require.NoError(t, err)
 
@@ -95,20 +93,19 @@ func TestKujiraProvider_GetCandlePrices(t *testing.T) {
 			EndTime: time,
 		}
 
-		p.setCandlePair("KUJI/ATOM", candle)
+		p.setCandlePair(candle, "KUJI/ATOM")
 
 		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "KUJI", Quote: "ATOM"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(price), prices["KUJIATOM"][0].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["KUJIATOM"][0].Volume)
-		require.Equal(t, time, prices["KUJIATOM"][0].TimeStamp)
+		require.Equal(t, sdk.MustNewDecFromStr(price), prices[KUJIATOM][0].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[KUJIATOM][0].Volume)
+		require.Equal(t, time, prices[KUJIATOM][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {
-		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
-		require.EqualError(t, err, "kujira has no candle data for requested pairs: [FOOBAR]")
-		require.Nil(t, prices)
+		prices, _ := p.GetCandlePrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
+		require.Empty(t, prices)
 	})
 }
 

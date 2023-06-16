@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	kujiraWSHost   = "api.osmo-api.prod.ojo.network"
+	kujiraWSHost   = ""
 	kujiraWSPath   = "ws"
-	kujiraRestHost = "https://api.osmo-api.prod.ojo.network"
+	kujiraRestHost = ""
 	kujiraRestPath = "/assetpairs"
 	kujiraAckMsg   = "ack"
 )
@@ -31,14 +31,13 @@ type (
 	//
 	// REF: https://github.com/ojo-network/kujira-api
 	KujiraProvider struct {
-		wsc             *WebsocketController
-		wsURL           url.URL
-		logger          zerolog.Logger
-		mtx             sync.RWMutex
-		endpoints       Endpoint
-		tickers         map[string]types.TickerPrice   // Symbol => TickerPrice
-		candles         map[string][]types.CandlePrice // Symbol => CandlePrice
-		subscribedPairs map[string]types.CurrencyPair  // Symbol => types.CurrencyPair
+		wsc       *WebsocketController
+		wsURL     url.URL
+		logger    zerolog.Logger
+		mtx       sync.RWMutex
+		endpoints Endpoint
+
+		priceStore
 	}
 
 	KujiraTicker struct {
@@ -88,13 +87,12 @@ func NewKujiraProvider(
 	kujiraLogger := logger.With().Str("provider", "kujira").Logger()
 
 	provider := &KujiraProvider{
-		wsURL:           wsURL,
-		logger:          kujiraLogger,
-		endpoints:       endpoints,
-		tickers:         map[string]types.TickerPrice{},
-		candles:         map[string][]types.CandlePrice{},
-		subscribedPairs: map[string]types.CurrencyPair{},
+		wsURL:      wsURL,
+		logger:     kujiraLogger,
+		endpoints:  endpoints,
+		priceStore: newPriceStore(kujiraLogger),
 	}
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToKujiraPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
@@ -145,93 +143,6 @@ func (p *KujiraProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-// GetTickerPrices returns the tickerPrices based on the saved map.
-func (p *KujiraProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-
-	tickerErrs := 0
-	for _, cp := range pairs {
-		key := currencyPairToKujiraPair(cp)
-		price, err := p.getTickerPrice(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			tickerErrs++
-			continue
-		}
-		tickerPrices[cp.String()] = price
-	}
-
-	if tickerErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoTickers.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return tickerPrices, nil
-}
-
-// GetCandlePrices returns the candlePrices based on the saved map
-func (p *KujiraProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
-
-	candleErrs := 0
-	for _, cp := range pairs {
-		key := currencyPairToKujiraPair(cp)
-		prices, err := p.getCandlePrices(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			candleErrs++
-			continue
-		}
-		candlePrices[cp.String()] = prices
-	}
-
-	if candleErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoCandles.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return candlePrices, nil
-}
-
-func (p *KujiraProvider) getTickerPrice(key string) (types.TickerPrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	ticker, ok := p.tickers[key]
-	if !ok {
-		return types.TickerPrice{}, fmt.Errorf(
-			types.ErrTickerNotFound.Error(),
-			p.endpoints.Name,
-			key,
-		)
-	}
-
-	return ticker, nil
-}
-
-func (p *KujiraProvider) getCandlePrices(key string) ([]types.CandlePrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	candles, ok := p.candles[key]
-	if !ok {
-		return []types.CandlePrice{}, fmt.Errorf(
-			types.ErrCandleNotFound.Error(),
-			p.endpoints.Name,
-			key,
-		)
-	}
-
-	candleList := []types.CandlePrice{}
-	candleList = append(candleList, candles...)
-
-	return candleList, nil
-}
-
 func (p *KujiraProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	// check if message is an ack
 	if string(bz) == kujiraAckMsg {
@@ -273,8 +184,8 @@ func (p *KujiraProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byt
 					continue
 				}
 				p.setTickerPair(
-					kujiraPair,
 					tickerResp,
+					kujiraPair,
 				)
 				telemetryWebsocketMessage(ProviderKujira, MessageTypeTicker)
 				continue
@@ -296,8 +207,8 @@ func (p *KujiraProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byt
 				}
 				for _, singleCandle := range candleResp {
 					p.setCandlePair(
-						kujiraPair,
 						singleCandle,
+						kujiraPair,
 					)
 				}
 				telemetryWebsocketMessage(ProviderKujira, MessageTypeCandle)
@@ -307,57 +218,38 @@ func (p *KujiraProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byt
 	}
 }
 
-func (p *KujiraProvider) setTickerPair(symbol string, tickerPair KujiraTicker) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	price, err := sdk.NewDecFromStr(tickerPair.Price)
+func (o KujiraTicker) toTickerPrice() (types.TickerPrice, error) {
+	price, err := sdk.NewDecFromStr(o.Price)
 	if err != nil {
-		p.logger.Warn().Err(err).Msg("kujira: failed to parse ticker price")
-		return
+		return types.TickerPrice{}, fmt.Errorf("kujira: failed to parse ticker price: %w", err)
 	}
-	volume, err := sdk.NewDecFromStr(tickerPair.Volume)
+	volume, err := sdk.NewDecFromStr(o.Volume)
 	if err != nil {
-		p.logger.Warn().Err(err).Msg("kujira: failed to parse ticker volume")
-		return
+		return types.TickerPrice{}, fmt.Errorf("kujira: failed to parse ticker volume: %w", err)
 	}
 
-	p.tickers[symbol] = types.TickerPrice{
+	tickerPrice := types.TickerPrice{
 		Price:  price,
 		Volume: volume,
 	}
+	return tickerPrice, nil
 }
 
-func (p *KujiraProvider) setCandlePair(symbol string, candlePair KujiraCandle) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	close, err := sdk.NewDecFromStr(candlePair.Close)
+func (o KujiraCandle) toCandlePrice() (types.CandlePrice, error) {
+	close, err := sdk.NewDecFromStr(o.Close)
 	if err != nil {
-		p.logger.Warn().Err(err).Msg("kujira: failed to parse candle close")
-		return
+		return types.CandlePrice{}, fmt.Errorf("kujira: failed to parse candle price: %w", err)
 	}
-	volume, err := sdk.NewDecFromStr(candlePair.Volume)
+	volume, err := sdk.NewDecFromStr(o.Volume)
 	if err != nil {
-		p.logger.Warn().Err(err).Msg("kujira: failed to parse candle volume")
-		return
+		return types.CandlePrice{}, fmt.Errorf("kujira: failed to parse candle volume: %w", err)
 	}
-	candle := types.CandlePrice{
+	candlePrice := types.CandlePrice{
 		Price:     close,
 		Volume:    volume,
-		TimeStamp: candlePair.EndTime,
+		TimeStamp: o.EndTime,
 	}
-
-	staleTime := PastUnixTime(providerCandlePeriod)
-	candleList := []types.CandlePrice{}
-	candleList = append(candleList, candle)
-	for _, c := range p.candles[symbol] {
-		if staleTime < c.TimeStamp {
-			candleList = append(candleList, c)
-		}
-	}
-
-	p.candles[symbol] = candleList
+	return candlePrice, nil
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
