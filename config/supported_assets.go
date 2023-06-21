@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 type APIKeyRequired bool
@@ -10,21 +11,21 @@ var (
 	// SupportedProviders defines a lookup table of all the supported currency API
 	// providers and whether or not they require an API key to be passed in.
 	SupportedProviders = map[types.ProviderName]APIKeyRequired{
-		provider.ProviderKraken:    false,
-		provider.ProviderBinance:   false,
-		provider.ProviderBinanceUS: false,
-		provider.ProviderCrescent:  false,
-		provider.ProviderOsmosisV2: false,
-		provider.ProviderOkx:       false,
-		provider.ProviderHuobi:     false,
-		provider.ProviderGate:      false,
-		provider.ProviderCoinbase:  false,
-		provider.ProviderBitget:    false,
-		provider.ProviderMexc:      false,
-		provider.ProviderCrypto:    false,
-		provider.ProviderPolygon:   true,
+		provider.ProviderKraken:     false,
+		provider.ProviderBinance:    false,
+		provider.ProviderBinanceUS:  false,
+		provider.ProviderCrescent:   false,
+		provider.ProviderOsmosisV2:  false,
+		provider.ProviderOkx:        false,
+		provider.ProviderHuobi:      false,
+		provider.ProviderGate:       false,
+		provider.ProviderCoinbase:   false,
+		provider.ProviderBitget:     false,
+		provider.ProviderMexc:       false,
+		provider.ProviderCrypto:     false,
+		provider.ProviderPolygon:    true,
 		provider.ProviderEthUniswap: false,
-		provider.ProviderMock:      false,
+		provider.ProviderMock:       false,
 	}
 
 	// SupportedConversions defines a lookup table for which currency pairs we
@@ -41,6 +42,8 @@ var (
 
 		{Base: "OSMO", Quote: "USDT"}: {},
 		{Base: "JUNO", Quote: "USDT"}: {},
+		{Base: "WETH", Quote: "USDC"}: {},
+		{Base: "WBTC", Quote: "WETH"}: {},
 	}
 
 	SupportedUniswapCurrencies = map[string]struct{}{

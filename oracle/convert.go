@@ -41,12 +41,11 @@ func CalcCurrencyPairRates(
 	currencyPairs []types.CurrencyPair,
 	logger zerolog.Logger,
 ) (types.CurrencyPairDec, error) {
-
 	candlesFilteredByCP := make(types.AggregatedProviderCandles)
 	for _, ratePair := range currencyPairs {
 		for provider, cpCandles := range candles {
 			for cp, candles := range cpCandles {
-				if cp == ratePair {
+				if cp.String() == ratePair.String() {
 					if _, ok := candlesFilteredByCP[provider]; !ok {
 						candlesFilteredByCP[provider] = make(types.CurrencyPairCandles)
 					}
@@ -70,7 +69,7 @@ func CalcCurrencyPairRates(
 		return nil, err
 	}
 
-	// Select tickers that matche the currencyPairs and also do
+	// Select tickers that match the currencyPairs and also do
 	// not already exist in the conversionRates array.
 	tickersFilteredByCP := make(types.AggregatedProviderPrices)
 	for _, ratePair := range currencyPairs {
@@ -99,7 +98,6 @@ func CalcCurrencyPairRates(
 	}
 
 	vwap := ComputeVWAP(tickersFilteredByDeviation)
-
 	for cp, rate := range vwap {
 		conversionRates[cp] = rate
 	}

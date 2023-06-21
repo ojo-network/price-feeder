@@ -8,11 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gql "github.com/hasura/go-graphql-client"
 	"github.com/rs/zerolog"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
@@ -38,17 +37,18 @@ type (
 
 	PoolMinuteDataCandleQuery struct {
 		PoolMinuteDatas []struct {
-			ID               string  `graphql:"id"`
-			PoolID           string  `graphql:"poolID"`
-			PeriodStartUnix  float64 `graphql:"periodStartUnix"`
-			Timestamp        float64 `graphql:"timestamp"`
-			Token0           Token   `graphql:"token0"`
-			Token1           Token   `graphql:"token1"`
-			Token0Price      string  `graphql:"token0Price"`
-			Token0PriceUSD   string  `graphql:"token0PriceUSD"`
-			Token1PriceUSD   string  `graphql:"token1PriceUSD"`
-			Token1Price      string  `graphql:"token1Price"`
-			VolumeUSDTracked string  `graphql:"volumeUSDTracked"`
+			ID                 string  `graphql:"id"`
+			PoolID             string  `graphql:"poolID"`
+			PeriodStartUnix    float64 `graphql:"periodStartUnix"`
+			Timestamp          float64 `graphql:"timestamp"`
+			Token0             Token   `graphql:"token0"`
+			Token1             Token   `graphql:"token1"`
+			Token0Price        string  `graphql:"token0Price"`
+			Token0PriceUSD     string  `graphql:"token0PriceUSD"`
+			Token1PriceUSD     string  `graphql:"token1PriceUSD"`
+			Token1Price        string  `graphql:"token1Price"`
+			VolumeUSDTracked   string  `graphql:"volumeUSDTracked"`
+			VolumeUSDUntracked string  `graphql:"volumeUSDUntracked"`
 		} `graphql:"poolMinuteDatas(first:$first, after:$after, orderBy: periodStartUnix, orderDirection: asc, where: {poolID_in: $poolIDS, periodStartUnix_gte: $start,periodStartUnix_lte:$stop})"` //nolint:lll
 	}
 
@@ -200,7 +200,6 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 
 	// candle prices
 	g.Go(func() error {
-
 		idMap := map[string]interface{}{
 			"poolIDS": p.poolIDS,
 			"start":   time.Now().Unix() - int64((30 * time.Minute).Seconds()),
@@ -247,8 +246,8 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 // SubscribeCurrencyPairs performs a no-op since Uniswap does not use websockets
 func (p *UniswapProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 
-func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
+func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (types.CurrencyPairTickers, error) {
+	tickerPrices := make(types.CurrencyPairTickers)
 	latestTimestamp := make(map[string]float64)
 
 	p.mut.Lock()
@@ -303,25 +302,25 @@ func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[stri
 		// update price according to latest timestamp
 		if timestamp > latestTimestamp[name] {
 			latestTimestamp[name] = timestamp
-			if _, found := tickerPrices[name]; !found {
-				tickerPrices[name] = types.TickerPrice{Price: price, Volume: sdk.ZeroDec()}
+			if _, found := tickerPrices[requestedPair]; !found {
+				tickerPrices[requestedPair] = types.TickerPrice{Price: price, Volume: sdk.ZeroDec()}
 			} else {
-				tickerPrices[name].Price.Set(price)
+				tickerPrices[requestedPair].Price.Set(price)
 			}
 		}
 
-		tickerPrices[name].Volume.Set(tickerPrices[name].Volume.Add(vol))
+		tickerPrices[requestedPair].Volume.Set(tickerPrices[requestedPair].Volume.Add(vol))
 	}
 
 	return tickerPrices, nil
 }
 
-func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
+func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (types.CurrencyPairCandles, error) {
 	p.mut.Lock()
 	poolsMinuteDatas := p.poolsMinuteDatas
 	p.mut.Unlock()
 
-	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
+	candlePrices := make(types.CurrencyPairCandles)
 	for _, poolData := range poolsMinuteDatas.PoolMinuteDatas {
 		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
 		symbol1 := strings.ToUpper(poolData.Token1.Symbol) // symbol == quote in a currency pai// r
@@ -334,7 +333,6 @@ func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[stri
 
 		base := requestedPair.Base
 		quote := requestedPair.Quote
-		name := requestedPair.String()
 		var tokenPrice string
 		switch {
 		case base == symbol0 && quote == symbol1:
@@ -351,9 +349,8 @@ func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[stri
 			tokenPrice = poolData.Token1PriceUSD
 
 		default:
-			return nil, fmt.Errorf("price conversion error, pair %s  and quote %s mismatch", base, quote)
+			return nil, fmt.Errorf("price conversion error, pair %s and quote %s mismatch", base, quote)
 		}
-
 		price, err := toSdkDec(tokenPrice)
 		if err != nil {
 			return nil, err
@@ -365,11 +362,13 @@ func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[stri
 		}
 
 		// second to millisecond for filtering
-		candlePrices[name] = append(candlePrices[name], types.CandlePrice{
-			Price:     price,
-			Volume:    vol,
-			TimeStamp: int64(poolData.Timestamp * 1000),
-		})
+		candlePrices[requestedPair] = append(
+			candlePrices[requestedPair], types.CandlePrice{
+				Price:     price,
+				Volume:    vol,
+				TimeStamp: int64(poolData.Timestamp * 1000),
+			},
+		)
 	}
 
 	return candlePrices, nil

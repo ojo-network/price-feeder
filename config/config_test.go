@@ -7,11 +7,10 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
-	"github.com/ojo-network/price-feeder/config"
-	"github.com/ojo-network/price-feeder/oracle/provider"
-	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ojo-network/price-feeder/oracle/types"
 
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/provider"

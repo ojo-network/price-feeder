@@ -11,14 +11,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/cosmos/cosmos-sdk/telemetry"
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
+	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -468,15 +469,7 @@ func NewProvider(
 	case provider.ProviderMock:
 		return provider.NewMockProvider(), nil
 
-	default:
-		// check if any version of uniswap
-		name := strings.Split(providerName.String(), "-")
-
-		// provider is not of type chain-uniswap
-		if len(name) != 2 && name[1] != "uniswap" {
-			break
-		}
-
+	case provider.ProviderEthUniswap:
 		return provider.NewUniswapProvider(ctx, logger, providerName.String(), endpoint, providerPairs...), nil
 	}
 
