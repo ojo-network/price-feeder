@@ -49,6 +49,8 @@ type (
 			Token1Price        string  `graphql:"token1Price"`
 			VolumeUSDTracked   string  `graphql:"volumeUSDTracked"`
 			VolumeUSDUntracked string  `graphql:"volumeUSDUntracked"`
+			Token0Volume       string  `graphql:"token0Volume"`
+			Token1Volume       string  `graphql:"token1Volume"`
 		} `graphql:"poolMinuteDatas(first:$first, after:$after, orderBy: periodStartUnix, orderDirection: asc, where: {poolID_in: $poolIDS, periodStartUnix_gte: $start,periodStartUnix_lte:$stop})"` //nolint:lll
 	}
 
@@ -66,6 +68,8 @@ type (
 			Token1PriceUSD     string  `graphql:"token1PriceUSD"`
 			VolumeUSDTracked   string  `graphql:"volumeUSDTracked"`
 			VolumeUSDUntracked string  `graphql:"volumeUSDUntracked"`
+			Token0Volume       string  `graphql:"token0Volume"`
+			Token1Volume       string  `graphql:"token1Volume"`
 		} `graphql:"poolHourDatas(first: $first,after: $after, orderBy: periodStartUnix, orderDirection: desc, where: {poolID_in: $poolIDS, periodStartUnix_gte:$start,periodStartUnix_lte:$stop})"` //nolint:lll
 	}
 
@@ -246,7 +250,7 @@ func (p *UniswapProvider) getHourAndMinuteData(ctx context.Context) error {
 // SubscribeCurrencyPairs performs a no-op since Uniswap does not use websockets
 func (p *UniswapProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 
-func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (types.CurrencyPairTickers, error) {
+func (p *UniswapProvider) GetTickerPrices(_ ...types.CurrencyPair) (types.CurrencyPairTickers, error) {
 	tickerPrices := make(types.CurrencyPairTickers)
 	latestTimestamp := make(map[string]float64)
 
@@ -255,8 +259,8 @@ func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (types.Cu
 	p.mut.Unlock()
 
 	for _, poolData := range poolHourDatas.PoolHourDatas {
-		symbol0 := strings.ToUpper(poolData.Token0.Symbol) // symbol == base in a currency pair
-		symbol1 := strings.ToUpper(poolData.Token1.Symbol) // symbol == quote in a currency pair
+		symbol0 := strings.ToUpper(poolData.Token0.Symbol)
+		symbol1 := strings.ToUpper(poolData.Token1.Symbol)
 
 		// check if this pair is request
 		requestedPair, found := p.addressToPair[strings.ToLower(poolData.PoolID)]
@@ -268,21 +272,26 @@ func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (types.Cu
 		quote := requestedPair.Quote
 		name := requestedPair.String()
 		var tokenPrice string
+		var tokenVolume string
 		switch {
 		case base == symbol0 && quote == symbol1:
 			tokenPrice = poolData.Token1Price
+			tokenVolume = poolData.Token0Volume
 
 		case base == symbol0 && (quote == USDC && symbol1 != USDC):
 			// consider USDC BASED PRICING
 			tokenPrice = poolData.Token0PriceUSD
+			tokenVolume = poolData.VolumeUSDTracked
 
 		case base == symbol1 && quote == symbol0:
 			// flip prices
 			tokenPrice = poolData.Token0Price
+			tokenVolume = poolData.Token1Volume
 
 		case base == symbol1 && (quote == USDC && symbol0 != USDC):
 			// consider USDC BASED PRICING
 			tokenPrice = poolData.Token1PriceUSD
+			tokenVolume = poolData.VolumeUSDTracked
 
 		default:
 			return nil, fmt.Errorf("price conversion error, pair %s  and quote %s mismatch", base, quote)
@@ -294,7 +303,7 @@ func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (types.Cu
 		}
 
 		timestamp := poolData.PeriodStartUnix
-		vol, err := toSdkDec(poolData.VolumeUSDTracked)
+		vol, err := toSdkDec(tokenVolume)
 		if err != nil {
 			return nil, err
 		}
@@ -315,7 +324,7 @@ func (p *UniswapProvider) GetTickerPrices(pairs ...types.CurrencyPair) (types.Cu
 	return tickerPrices, nil
 }
 
-func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (types.CurrencyPairCandles, error) {
+func (p *UniswapProvider) GetCandlePrices(_ ...types.CurrencyPair) (types.CurrencyPairCandles, error) {
 	p.mut.Lock()
 	poolsMinuteDatas := p.poolsMinuteDatas
 	p.mut.Unlock()
@@ -334,19 +343,27 @@ func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (types.Cu
 		base := requestedPair.Base
 		quote := requestedPair.Quote
 		var tokenPrice string
+		var tokenVolume string
 		switch {
 		case base == symbol0 && quote == symbol1:
 			// pricing
 			tokenPrice = poolData.Token1Price
+			tokenVolume = poolData.Token0Volume
+
 		case base == symbol0 && (quote == USDC && symbol1 != USDC):
 			// consider USDC BASED PRICING
 			tokenPrice = poolData.Token0PriceUSD
+			tokenVolume = poolData.VolumeUSDTracked
+
 		case base == symbol1 && quote == symbol0:
 			// flip prices here
 			tokenPrice = poolData.Token0Price
+			tokenVolume = poolData.Token1Volume
+
 		case base == symbol1 && (quote == USDC && symbol0 != USDC):
 			// consider USDC BASED PRICING
 			tokenPrice = poolData.Token1PriceUSD
+			tokenVolume = poolData.VolumeUSDTracked
 
 		default:
 			return nil, fmt.Errorf("price conversion error, pair %s and quote %s mismatch", base, quote)
@@ -356,7 +373,7 @@ func (p *UniswapProvider) GetCandlePrices(pairs ...types.CurrencyPair) (types.Cu
 			return nil, err
 		}
 
-		vol, err := toSdkDec(poolData.VolumeUSDTracked)
+		vol, err := toSdkDec(tokenVolume)
 		if err != nil {
 			return nil, err
 		}

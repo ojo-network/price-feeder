@@ -46,6 +46,8 @@ type PoolMinuteData struct {
 	Token1           Tokens `json:"token1"`
 	Token0Price      string `json:"token0Price"`
 	Token1Price      string `json:"token1Price"`
+	Token0Volume     string `json:"token0Volume"`
+	Token1Volume     string `json:"token1Volume"`
 	VolumeUSDTracked string `json:"volumeUSDTracked"`
 }
 
@@ -58,6 +60,8 @@ type PoolHourData struct {
 	Token0Price        string  `json:"token0Price"`
 	Token1Price        string  `json:"token1Price"`
 	VolumeUSDTracked   string  `json:"volumeUSDTracked"`
+	Token0Volume       string  `json:"token0Volume"`
+	Token1Volume       string  `json:"token1Volume"`
 	VolumeUSDUntracked string  `json:"volumeUSDUntracked"`
 }
 
@@ -110,8 +114,9 @@ func (p *ProviderTestSuite) setMockData() {
 				Token0Price:      strconv.FormatFloat(rand.Float64()*3000, 'f', -1, 64),
 				Token1Price:      strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64),
 				VolumeUSDTracked: volFloat,
-			},
-			)
+				Token0Volume:     volFloat,
+				Token1Volume:     volFloat,
+			})
 
 			p.totalVolume[i].Set(p.totalVolume[i].Add(vol))
 		}
@@ -120,6 +125,7 @@ func (p *ProviderTestSuite) setMockData() {
 	// generate 10 minute pool data for each pair
 	for i, pair := range p.pairAddress {
 		for j := 0; j < 10; j++ {
+			vol := strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64)
 			p.minuteData = append(p.minuteData, PoolMinuteData{
 				ID:              fmt.Sprintf("%s-%d", pair, j),
 				PoolID:          pair,
@@ -134,9 +140,10 @@ func (p *ProviderTestSuite) setMockData() {
 				},
 				Token0Price:      strconv.FormatFloat(rand.Float64()*3000, 'f', -1, 64),
 				Token1Price:      strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64),
-				VolumeUSDTracked: strconv.FormatFloat(rand.Float64()*10000, 'f', -1, 64),
-			},
-			)
+				VolumeUSDTracked: vol,
+				Token0Volume:     vol,
+				Token1Volume:     vol,
+			})
 		}
 	}
 }
@@ -268,7 +275,7 @@ func (p *ProviderTestSuite) TestGetTickerPrices() {
 		price, err := toSdkDec(hourData.Token1Price)
 		p.NoError(err)
 
-		ticker := data[pair.String()]
+		ticker := data[pair]
 		p.EqualValues(ticker.Price.String(), price.String())
 		p.EqualValues(ticker.Volume.String(), p.totalVolume[i].String())
 	}
@@ -284,7 +291,7 @@ func (p *ProviderTestSuite) TestGetCandlePrices() {
 	p.Len(data, len(p.currencyPairs))
 
 	for i, pair := range p.currencyPairs {
-		candleData := data[pair.String()]
+		candleData := data[pair]
 		minuteData := p.minuteData[i*10 : (i+1)*10]
 
 		for j, candle := range candleData {
@@ -297,7 +304,6 @@ func (p *ProviderTestSuite) TestGetCandlePrices() {
 			p.EqualValues(candle.Price.String(), price.String())
 			p.EqualValues(candle.Volume.String(), vol.String())
 		}
-
 	}
 }
 
