@@ -30,6 +30,26 @@ threshold = "2"
 base = "DAI"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "stOSMO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stATOM"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stJUNO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "JUNO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "SCRT"
+threshold = "2"
+
 [[currency_pairs]]
 base = "USDT"
 providers = [
@@ -193,6 +213,50 @@ providers = [
   "kraken",
 ]
 quote = "USD"
+
+[[currency_pairs]]
+base = "JUNO"
+providers = [
+  "bitget",
+  "mexc",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "JUNO"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "JUNO"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "stJUNO"
+providers = [
+  "osmosisv2",
+]
+quote = "JUNO"
+
+[[currency_pairs]]
+base = "SCRT"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "SCRT"
+providers = [
+  "mexc",
+  "gate"
+]
+quote = "USDT"
 
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
