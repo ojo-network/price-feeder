@@ -64,8 +64,6 @@ quote = "USD"
 base = "USDC"
 providers = [
   "kraken",
-  "coinbase",
-  "crypto",
 ]
 quote = "USD"
 
@@ -131,13 +129,6 @@ providers = [
   "osmosisv2",
 ]
 quote = "ATOM"
-
-[[currency_pairs]]
-base = "USDC"
-providers = [
-  "kraken",
-]
-quote = "USD"
 
 [[currency_pairs]]
 base = "WETH"
