@@ -102,6 +102,10 @@ threshold = "1.5"
 base = "CBETH"
 threshold = "1.5"
 
+[[deviation_thresholds]]
+base = "stJUNO"
+threshold = "2"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -379,6 +383,13 @@ providers = [
   "osmosisv2",
 ]
 quote = "OSMO"
+
+[[currency_pairs]]
+base = "stJUNO"
+providers = [
+  "osmosisv2",
+]
+quote = "JUNO"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
