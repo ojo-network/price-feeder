@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 gas_adjustment = 1.03
 
+=======
+gas_adjustment = 1
+provider_timeout = "1000000s"
+>>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 [server]
 listen_addr = "0.0.0.0:7171"
 read_timeout = "20s"
@@ -139,6 +144,13 @@ providers = [
 quote = "USD"
 
 [[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
 base = "ATOM"
 providers = [
   "okx",
@@ -229,6 +241,7 @@ providers = [
 quote = "ATOM"
 
 [[currency_pairs]]
+<<<<<<< HEAD
 base = "OSMO"
 providers = [
   "bitget",
@@ -242,6 +255,50 @@ providers = [
   "crypto",
 ]
 quote = "USD"
+=======
+base = "WETH"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "USDC"
+[[currency_pairs.pair_address_providers]]
+address = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "WBTC"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "CBETH"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0x840deeef2f115cf50da625f7368c24af6fe74410"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "LINK"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8"
+provider = "eth-uniswap"
+>>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 
 [[currency_pairs]]
 base = "stATOM"
@@ -437,6 +494,7 @@ service-name = "price-feeder"
 prometheus-retention-time = 100
 
 [[provider_endpoints]]
+<<<<<<< HEAD
 name = "osmosisv2"
 rest = "https://api.osmo-api.prod.ojo.network"
 websocket = "api.osmo-api.prod.ojo.network"
@@ -445,3 +503,13 @@ websocket = "api.osmo-api.prod.ojo.network"
 name = "crescent"
 rest = "https://api.cresc-api.prod.ojo.network"
 websocket = "api.cresc-api.prod.ojo.network"
+=======
+name = "binance"
+rest = "https://api1.binance.com"
+websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "eth-uniswap"
+rest = "https://api.studio.thegraph.com/query/46403/unidexer/version/latest"
+websocket = "not supported"
+>>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
