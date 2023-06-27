@@ -11,14 +11,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/cosmos/cosmos-sdk/telemetry"
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
@@ -468,6 +468,9 @@ func NewProvider(
 
 	case provider.ProviderMock:
 		return provider.NewMockProvider(), nil
+
+	case provider.ProviderEthUniswap:
+		return provider.NewUniswapProvider(ctx, logger, providerName.String(), endpoint, providerPairs...), nil
 	}
 
 	return nil, fmt.Errorf("provider %s not found", providerName)
