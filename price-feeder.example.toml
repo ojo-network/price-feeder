@@ -107,11 +107,11 @@ base = "stJUNO"
 threshold = "2"
 
 [[deviation_thresholds]]
-<<<<<<< HEAD
 base = "USK"
-=======
+threshold = "2"
+
+[[deviation_thresholds]]
 base = "stUMEE"
->>>>>>> 295c601 (add stUMEE)
 threshold = "2"
 
 [[currency_pairs]]
