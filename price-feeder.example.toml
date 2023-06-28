@@ -107,7 +107,11 @@ base = "stJUNO"
 threshold = "2"
 
 [[deviation_thresholds]]
+<<<<<<< HEAD
 base = "USK"
+=======
+base = "stUMEE"
+>>>>>>> 295c601 (add stUMEE)
 threshold = "2"
 
 [[currency_pairs]]
@@ -401,6 +405,13 @@ providers = [
   "kujira",
 ]
 quote = "USDC"
+
+[[currency_pairs]]
+base = "stUMEE"
+providers = [
+  "osmosisv2",
+]
+quote = "UMEE"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"

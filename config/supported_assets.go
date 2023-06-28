@@ -43,6 +43,7 @@ var (
 
 		{Base: "OSMO", Quote: "USDT"}: {},
 		{Base: "JUNO", Quote: "USDT"}: {},
+		{Base: "UMEE", Quote: "USDT"}: {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported
