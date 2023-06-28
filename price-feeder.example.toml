@@ -110,6 +110,10 @@ threshold = "2"
 base = "USK"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "stUMEE"
+threshold = "2"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -401,6 +405,13 @@ providers = [
   "kujira",
 ]
 quote = "USDC"
+
+[[currency_pairs]]
+base = "stUMEE"
+providers = [
+  "osmosisv2",
+]
+quote = "UMEE"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
