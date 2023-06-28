@@ -54,10 +54,6 @@ threshold = "2"
 base = "SCRT"
 threshold = "2"
 
-[[deviation_thresholds]]
-base = "USK"
-threshold = "2"
-
 [[currency_pairs]]
 base = "USDT"
 providers = [
@@ -267,13 +263,6 @@ providers = [
 ]
 quote = "USDT"
 
-[[currency_pairs]]
-base = "USK"
-providers = [
-  "kujira",
-]
-quote = "USDC"
-
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
 chain_id = "ojo-testnet"
@@ -281,7 +270,7 @@ validator = "ojovaloper1zypqa76je7pxsdwkfah6mu9a583sju6x6tnq6w"
 
 [keyring]
 backend = "test"
-dir = "/Users/ryanbajollari/.ojo"
+dir = "/Users/username/.ojo"
 
 [rpc]
 grpc_endpoint = "localhost:9090"
