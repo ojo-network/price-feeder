@@ -956,7 +956,7 @@ providers = [
 
 [[currency_pairs]]
 base = "stUMEE"
-quote = "UMEE"
+quote = "BAD_QUOTE"
 providers = [
 	"kraken",
 	"binance",
