@@ -31,7 +31,6 @@ base = "USDC"
 threshold = "1.5"
 
 [[deviation_thresholds]]
-<<<<<<< HEAD
 base = "CRO"
 threshold = "1.5"
 
@@ -40,8 +39,6 @@ base = "DAI"
 threshold = "2"
 
 [[deviation_thresholds]]
-=======
->>>>>>> b6aa047 (feat: add kujira api provider (#157))
 base = "ETH"
 threshold = "2"
 
@@ -109,6 +106,10 @@ threshold = "1.5"
 base = "stJUNO"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "USK"
+threshold = "2"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -152,26 +153,6 @@ quote = "USD"
 [[currency_pairs]]
 base = "USDC"
 providers = [
-<<<<<<< HEAD
-=======
-  "okx",
-  "bitget",
-  "kraken",
-]
-quote = "USDT"
-
-
-[[currency_pairs]]
-base = "USDC"
-providers = [
-  "kraken",
-]
-quote = "USD"
-
-[[currency_pairs]]
-base = "ATOM"
-providers = [
->>>>>>> b6aa047 (feat: add kujira api provider (#157))
   "okx",
   "bitget",
   "kraken",
@@ -413,6 +394,13 @@ providers = [
   "osmosisv2",
 ]
 quote = "JUNO"
+
+[[currency_pairs]]
+base = "USK"
+providers = [
+  "kujira",
+]
+quote = "USDC"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"

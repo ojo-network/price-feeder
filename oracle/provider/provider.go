@@ -9,22 +9,6 @@ import (
 const (
 	defaultTimeout = 10 * time.Second
 
-<<<<<<< HEAD
-	ProviderKraken    types.ProviderName = "kraken"
-	ProviderBinance   types.ProviderName = "binance"
-	ProviderBinanceUS types.ProviderName = "binanceus"
-	ProviderOsmosisV2 types.ProviderName = "osmosisv2"
-	ProviderHuobi     types.ProviderName = "huobi"
-	ProviderOkx       types.ProviderName = "okx"
-	ProviderGate      types.ProviderName = "gate"
-	ProviderCoinbase  types.ProviderName = "coinbase"
-	ProviderBitget    types.ProviderName = "bitget"
-	ProviderMexc      types.ProviderName = "mexc"
-	ProviderCrypto    types.ProviderName = "crypto"
-	ProviderPolygon   types.ProviderName = "polygon"
-	ProviderCrescent  types.ProviderName = "crescent"
-	ProviderMock      types.ProviderName = "mock"
-=======
 	ProviderKraken     types.ProviderName = "kraken"
 	ProviderBinance    types.ProviderName = "binance"
 	ProviderBinanceUS  types.ProviderName = "binanceus"
@@ -41,7 +25,6 @@ const (
 	ProviderEthUniswap types.ProviderName = "eth-uniswap"
 	ProviderKujira     types.ProviderName = "kujira"
 	ProviderMock       types.ProviderName = "mock"
->>>>>>> b6aa047 (feat: add kujira api provider (#157))
 )
 
 var (
