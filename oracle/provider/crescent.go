@@ -18,6 +18,7 @@ const (
 	crescentV2WSPath   = "ws"
 	crescentV2RestHost = "https://api.cresc-api.prod.ojo.network"
 	crescentV2RestPath = "/assetpairs"
+	crescentAckMsg     = "ack"
 )
 
 var _ Provider = (*CrescentProvider)(nil)
@@ -140,7 +141,7 @@ func (p *CrescentProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 
 func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	// check if message is an ack
-	if string(bz) == "ack" {
+	if string(bz) == crescentAckMsg {
 		return
 	}
 

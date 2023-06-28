@@ -15,6 +15,10 @@ base = "ATOM"
 threshold = "1.5"
 
 [[deviation_thresholds]]
+base = "USDC"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "ETH"
 threshold = "2"
 
@@ -59,6 +63,16 @@ providers = [
   "gate",
 ]
 quote = "USD"
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "okx",
+  "bitget",
+  "kraken",
+]
+quote = "USDT"
+
 
 [[currency_pairs]]
 base = "USDC"
