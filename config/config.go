@@ -10,11 +10,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/go-playground/validator/v10"
-	"github.com/ojo-network/price-feeder/oracle/provider"
-	"github.com/ojo-network/price-feeder/oracle/types"
-
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
+
+	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 const (
@@ -65,9 +65,15 @@ type (
 	// CurrencyPair defines a price quote of the exchange rate for two different
 	// currencies and the supported providers for getting the exchange rate.
 	CurrencyPair struct {
-		Base      string               `mapstructure:"base" validate:"required"`
-		Quote     string               `mapstructure:"quote" validate:"required"`
-		Providers []types.ProviderName `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+		Base        string                `mapstructure:"base" validate:"required"`
+		Quote       string                `mapstructure:"quote" validate:"required"`
+		PairAddress []PairAddressProvider `mapstructure:"pair_address_providers" validate:"dive"`
+		Providers   []types.ProviderName  `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+	}
+
+	PairAddressProvider struct {
+		Address  string             `mapstructure:"address" validate:"required"`
+		Provider types.ProviderName `mapstructure:"provider" validate:"required"`
 	}
 
 	// Deviation defines a maximum amount of standard deviations that a given asset can
@@ -143,12 +149,25 @@ func (c Config) ProviderPairs() map[types.ProviderName][]types.CurrencyPair {
 
 	for _, pair := range c.CurrencyPairs {
 		for _, provider := range pair.Providers {
-			providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
-				Base:  pair.Base,
-				Quote: pair.Quote,
-			})
+			if len(pair.PairAddress) > 0 {
+				for _, uniPair := range pair.PairAddress {
+					if (uniPair.Provider == provider) && (uniPair.Address != "") {
+						providerPairs[uniPair.Provider] = append(providerPairs[uniPair.Provider], types.CurrencyPair{
+							Base:    pair.Base,
+							Quote:   pair.Quote,
+							Address: uniPair.Address,
+						})
+					}
+				}
+			} else {
+				providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
+					Base:  pair.Base,
+					Quote: pair.Quote,
+				})
+			}
 		}
 	}
+
 	return providerPairs
 }
 
@@ -305,14 +324,18 @@ func CheckProviderMins(ctx context.Context, logger zerolog.Logger, cfg Config) e
 	}
 
 	for base, providers := range pairs {
+		var minProviders int
+		_, isForexBase := SupportedForexCurrencies[base]
+		_, isUniBase := SupportedUniswapCurrencies[base]
+
 		// If currency provider tracker errored, default to three providers as
 		// the minimum.
-		var minProviders int
-		if currencyProviderTracker != nil {
+		switch {
+		case currencyProviderTracker != nil:
 			minProviders = currencyProviderTracker.CurrencyProviderMin[base]
-		} else if _, ok := SupportedForexCurrencies[base]; ok {
+		case isForexBase || isUniBase:
 			minProviders = 1
-		} else {
+		default:
 			minProviders = 3
 		}
 

@@ -42,6 +42,15 @@ var (
 
 		{Base: "OSMO", Quote: "USDT"}: {},
 		{Base: "JUNO", Quote: "USDT"}: {},
+		{Base: "WETH", Quote: "USDC"}: {},
+		{Base: "WBTC", Quote: "WETH"}: {},
+	}
+
+	SupportedUniswapCurrencies = map[string]struct{}{
+		"WETH":  {},
+		"CBETH": {},
+		"RETH":  {},
+		"WBTC":  {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported

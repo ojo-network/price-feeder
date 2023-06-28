@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	input "github.com/cosmos/cosmos-sdk/client/input"
+	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/gorilla/mux"
@@ -22,6 +22,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	"github.com/ojo-network/ojo/app/params"
+
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
