@@ -24,6 +24,9 @@ const (
 	defaultSrvWriteTimeout = 15 * time.Second
 	defaultSrvReadTimeout  = 15 * time.Second
 	defaultProviderTimeout = 100 * time.Millisecond
+
+	DefaultProviderConfigPath = "provider_config.toml"
+	SampleNodeConfigPath      = "price-feeder.example.toml"
 )
 
 var (
@@ -211,19 +214,24 @@ func (c Config) ExpectedSymbols() []string {
 // ParseConfig attempts to read and parse configuration from the given file path.
 // An error is returned if reading or parsing the config fails.
 func ParseConfig(configPath string) (Config, error) {
-	var cfg Config
+	return ParseConfigs([]string{configPath})
+}
 
-	if configPath == "" {
-		return cfg, ErrEmptyConfigPath
-	}
+func ParseConfigs(configPaths []string) (Config, error) {
+	var cfg Config
 
 	viper.AutomaticEnv()
 	// Allow nested env vars to be read with underscore separators.
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.SetConfigFile(configPath)
 
-	if err := viper.ReadInConfig(); err != nil {
-		return cfg, fmt.Errorf("failed to read config: %w", err)
+	for _, configPath := range configPaths {
+		if configPath == "" {
+			return cfg, ErrEmptyConfigPath
+		}
+		viper.SetConfigFile(configPath)
+		if err := viper.MergeInConfig(); err != nil {
+			return cfg, fmt.Errorf("failed to read config: %w", err)
+		}
 	}
 
 	if err := viper.Unmarshal(&cfg); err != nil {

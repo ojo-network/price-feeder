@@ -41,22 +41,28 @@ The list of current supported providers:
 - [Gate](https://www.gate.io/)
 - [Huobi](https://www.huobi.com/en-us/)
 - [Kraken](https://www.kraken.com/en-us/)
+- [Kujira](https://github.com/ojo-network/kujira-api)
 - [Mexc](https://www.mexc.com/)
 - [Okx](https://www.okx.com/)
 - [Osmosis](https://github.com/ojo-network/osmosis-api)
+- [Polygon](https://api.polygon.io)
 <!-- markdown-link-check-enable -->
 
 ## Usage
 
-The `price-feeder` tool runs off of a single configuration file. This configuration
+The `price-feeder` tool runs off of two configuration files. The provider-config
 file defines what exchange rates to fetch and what providers to get them from.
-In addition, it defines the oracle's keyring and feeder account information.
+The node-config defines the oracle's keyring and feeder account information.
 The keyring's password is defined via environment variables or user input.
 More information on the keyring can be found [here](#keyring)
 Please see the [example configuration](price-feeder.example.toml) for more details.
 
+The default `provider_config.toml` is used when no --provider-config flag is provided.
+
 ```shell
-$ price-feeder /path/to/price_feeder_config.toml
+
+```shell
+$ price-feeder /path/to/price_feeder_config.toml --provider-config provider_config.toml
 ```
 
 Chain rules for checking the free oracle transactions are:
@@ -158,7 +164,7 @@ Ex :
 
 If this environment variable is not set, the price feeder will prompt the user for input.
 
-### Integration tests
+## Integration tests
 
 In order to run the integration price test you need to add the coinmarketcap api environment variable.
 Sign up for a free account [here](https://coinmarketcap.com/api/) and export the api key.
