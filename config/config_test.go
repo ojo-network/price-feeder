@@ -345,8 +345,8 @@ providers = [
 ]
 
 [[currency_pairs]]
-base = "OJO"
-quote = "USDT"
+base = "stOJO"
+quote = "OJO"
 providers = [
 	"kraken",
 	"binance"
@@ -547,6 +547,10 @@ listen_addr = "0.0.0.0:99999"
 read_timeout = "20s"
 verbose_cors = true
 write_timeout = "20s"
+
+[[deviation_thresholds]]
+base = "USDT"
+threshold = "3.0"
 
 [[currency_pairs]]
 base = "ATOM"
