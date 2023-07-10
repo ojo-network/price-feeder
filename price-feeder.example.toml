@@ -1,5 +1,5 @@
 gas_adjustment = 1
-
+provider_timeout = "1000000s"
 [server]
 listen_addr = "0.0.0.0:7171"
 read_timeout = "20s"
@@ -15,6 +15,10 @@ base = "ATOM"
 threshold = "1.5"
 
 [[deviation_thresholds]]
+base = "USDC"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "ETH"
 threshold = "2"
 
@@ -26,12 +30,54 @@ threshold = "2"
 base = "OSMO"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "DAI"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stOSMO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stATOM"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stJUNO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "JUNO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "SCRT"
+threshold = "2"
+
 [[currency_pairs]]
 base = "USDT"
 providers = [
   "kraken",
   "coinbase",
-  "binanceus",
+  "crypto",
+  "gate",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "okx",
+  "bitget",
+  "kraken",
+]
+quote = "USDT"
+
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
 ]
 quote = "USD"
 
@@ -40,6 +86,7 @@ base = "ATOM"
 providers = [
   "okx",
   "bitget",
+  "gate",
 ]
 quote = "USDT"
 
@@ -47,7 +94,6 @@ quote = "USDT"
 base = "ATOM"
 providers = [
   "kraken",
-  "binanceus",
 ]
 quote = "USD"
 
@@ -98,6 +144,125 @@ providers = [
 ]
 quote = "ATOM"
 
+[[currency_pairs]]
+base = "WETH"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "USDC"
+[[currency_pairs.pair_address_providers]]
+address = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "WBTC"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "CBETH"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0x840deeef2f115cf50da625f7368c24af6fe74410"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "LINK"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "stATOM"
+providers = [
+  "osmosisv2",
+  "crescent",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "stOSMO"
+providers = [
+  "osmosisv2",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "DAI"
+providers = [
+  "okx",
+  "bitget",
+  "huobi",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "DAI"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "JUNO"
+providers = [
+  "bitget",
+  "mexc",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "JUNO"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "JUNO"
+providers = [
+  "osmosisv2",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "stJUNO"
+providers = [
+  "osmosisv2",
+]
+quote = "JUNO"
+
+[[currency_pairs]]
+base = "SCRT"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "SCRT"
+providers = [
+  "mexc",
+  "gate"
+]
+quote = "USDT"
+
 [account]
 address = "ojo1zypqa76je7pxsdwkfah6mu9a583sju6xzthge3"
 chain_id = "ojo-testnet"
@@ -125,3 +290,8 @@ prometheus-retention-time = 100
 name = "binance"
 rest = "https://api1.binance.com"
 websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "eth-uniswap"
+rest = "https://api.studio.thegraph.com/query/46403/unidexer/version/latest"
+websocket = "not supported"

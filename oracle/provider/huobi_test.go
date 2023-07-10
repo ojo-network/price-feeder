@@ -16,7 +16,7 @@ func TestHuobiProvider_GetTickerPrices(t *testing.T) {
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
+		ATOMUSDT,
 	)
 	require.NoError(t, err)
 
@@ -33,15 +33,17 @@ func TestHuobiProvider_GetTickerPrices(t *testing.T) {
 			},
 		}
 
-		p.tickers = tickerMap
+		for _, ticker := range tickerMap {
+			p.setTickerPair(ticker, ticker.CH)
+		}
 
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
+		prices, err := p.GetTickerPrices(ATOMUSDT)
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
 		dec, _ := decmath.NewDecFromFloat(lastPrice)
-		require.Equal(t, dec, prices["ATOMUSDT"].Price)
+		require.Equal(t, dec, prices[ATOMUSDT].Price)
 		dec, _ = decmath.NewDecFromFloat(volume)
-		require.Equal(t, dec, prices["ATOMUSDT"].Volume)
+		require.Equal(t, dec, prices[ATOMUSDT].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -66,7 +68,10 @@ func TestHuobiProvider_GetTickerPrices(t *testing.T) {
 			},
 		}
 
-		p.tickers = tickerMap
+		for _, ticker := range tickerMap {
+			p.setTickerPair(ticker, ticker.CH)
+		}
+
 		prices, err := p.GetTickerPrices(
 			types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
 			types.CurrencyPair{Base: "LUNA", Quote: "USDT"},
@@ -74,20 +79,19 @@ func TestHuobiProvider_GetTickerPrices(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
 		dec, _ := decmath.NewDecFromFloat(lastPriceAtom)
-		require.Equal(t, dec, prices["ATOMUSDT"].Price)
+		require.Equal(t, dec, prices[ATOMUSDT].Price)
 
 		dec, _ = decmath.NewDecFromFloat(volume)
-		require.Equal(t, dec, prices["ATOMUSDT"].Volume)
+		require.Equal(t, dec, prices[ATOMUSDT].Volume)
 		dec, _ = decmath.NewDecFromFloat(lastPriceLuna)
-		require.Equal(t, dec, prices["LUNAUSDT"].Price)
+		require.Equal(t, dec, prices[LUNAUSDT].Price)
 		dec, _ = decmath.NewDecFromFloat(volume)
-		require.Equal(t, dec, prices["LUNAUSDT"].Volume)
+		require.Equal(t, dec, prices[LUNAUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
-		require.EqualError(t, err, "huobi has no ticker data for requested pairs: [FOOBAR]")
-		require.Nil(t, prices)
+		prices, _ := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
+		require.Empty(t, prices)
 	})
 }
 
@@ -98,9 +102,7 @@ func TestHuobiCurrencyPairToHuobiPair(t *testing.T) {
 }
 
 func TestHuobiProvider_getSubscriptionMsgs(t *testing.T) {
-	provider := &HuobiProvider{
-		subscribedPairs: map[string]types.CurrencyPair{},
-	}
+	provider := &HuobiProvider{}
 	cps := []types.CurrencyPair{
 		{Base: "ATOM", Quote: "USDT"},
 	}

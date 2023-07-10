@@ -30,13 +30,15 @@ func TestCoinbaseProvider_GetTickerPrices(t *testing.T) {
 			Volume: volume,
 		}
 
-		p.tickers = tickerMap
+		for pair, ticker := range tickerMap {
+			p.setTickerPair(ticker, pair)
+		}
 
 		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPrice), prices["ATOMUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["ATOMUSDT"].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr(lastPrice), prices[ATOMUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -55,30 +57,26 @@ func TestCoinbaseProvider_GetTickerPrices(t *testing.T) {
 			Volume: volume,
 		}
 
-		p.tickers = tickerMap
+		for pair, ticker := range tickerMap {
+			p.setTickerPair(ticker, pair)
+		}
+
 		prices, err := p.GetTickerPrices(
 			types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
 			types.CurrencyPair{Base: "OJO", Quote: "USDT"},
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPriceAtom), prices["ATOMUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["ATOMUSDT"].Volume)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPriceOjo), prices["OJOUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices["OJOUSDT"].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr(lastPriceAtom), prices[ATOMUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr(lastPriceOjo), prices[OJOUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[OJOUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {
-		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
-		require.EqualError(t, err, "coinbase has no ticker data for requested pairs: [FOOBAR]")
-		require.Nil(t, prices)
+		prices, _ := p.GetTickerPrices(types.CurrencyPair{Base: "FOO", Quote: "BAR"})
+		require.Empty(t, prices)
 	})
-}
-
-func TestCoinbasePairToCurrencyPair(t *testing.T) {
-	cp := types.CurrencyPair{Base: "ATOM", Quote: "USDT"}
-	currencyPairSymbol := coinbasePairToCurrencyPair("ATOM-USDT")
-	require.Equal(t, cp.String(), currencyPairSymbol)
 }
 
 func TestCurrencyPairToCoinbasePair(t *testing.T) {
@@ -88,9 +86,7 @@ func TestCurrencyPairToCoinbasePair(t *testing.T) {
 }
 
 func TestCoinbaseProvider_getSubscriptionMsgs(t *testing.T) {
-	provider := &CoinbaseProvider{
-		subscribedPairs: map[string]types.CurrencyPair{},
-	}
+	provider := &CoinbaseProvider{}
 	cps := []types.CurrencyPair{
 		{Base: "ATOM", Quote: "USDT"},
 	}

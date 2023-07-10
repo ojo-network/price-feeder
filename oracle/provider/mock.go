@@ -47,8 +47,8 @@ func (p *MockProvider) StartConnections() {
 // SubscribeCurrencyPairs performs a no-op since mock does not use websockets
 func (p MockProvider) SubscribeCurrencyPairs(...types.CurrencyPair) {}
 
-func (p MockProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
+func (p MockProvider) GetTickerPrices(pairs ...types.CurrencyPair) (types.CurrencyPairTickers, error) {
+	tickerPrices := make(types.CurrencyPairTickers, len(pairs))
 
 	resp, err := p.client.Get(p.baseURL)
 	if err != nil {
@@ -63,35 +63,36 @@ func (p MockProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]t
 		return nil, err
 	}
 
-	tickerMap := make(map[string]struct{})
+	tickerMap := make(map[types.CurrencyPair]struct{})
 	for _, cp := range pairs {
-		tickerMap[strings.ToUpper(cp.String())] = struct{}{}
+		tickerMap[cp] = struct{}{}
 	}
 
 	// Records are of the form [base, quote, price, volume] and we skip the first
 	// record as that contains the header.
 	for _, r := range records[1:] {
-		ticker := strings.ToUpper(r[0] + r[1])
-		if _, ok := tickerMap[ticker]; !ok {
+		currencyPair := types.CurrencyPair{Base: r[0], Quote: r[1]}
+
+		if _, ok := tickerMap[currencyPair]; !ok {
 			// skip records that are not requested
 			continue
 		}
 
 		price, err := sdk.NewDecFromStr(r[2])
 		if err != nil {
-			return nil, fmt.Errorf("failed to read mock price (%s) for %s", r[2], ticker)
+			return nil, fmt.Errorf("failed to read mock price (%s) for %s", r[2], currencyPair)
 		}
 
 		volume, err := sdk.NewDecFromStr(r[3])
 		if err != nil {
-			return nil, fmt.Errorf("failed to read mock volume (%s) for %s", r[3], ticker)
+			return nil, fmt.Errorf("failed to read mock volume (%s) for %s", r[3], currencyPair)
 		}
 
-		if _, ok := tickerPrices[ticker]; ok {
-			return nil, fmt.Errorf("found duplicate ticker: %s", ticker)
+		if _, ok := tickerPrices[currencyPair]; ok {
+			return nil, fmt.Errorf("found duplicate ticker: %s", currencyPair)
 		}
 
-		tickerPrices[ticker] = types.TickerPrice{Price: price, Volume: volume}
+		tickerPrices[currencyPair] = types.TickerPrice{Price: price, Volume: volume}
 	}
 
 	for t := range tickerMap {
@@ -103,12 +104,12 @@ func (p MockProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]t
 	return tickerPrices, nil
 }
 
-func (p MockProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
+func (p MockProvider) GetCandlePrices(pairs ...types.CurrencyPair) (types.CurrencyPairCandles, error) {
 	price, err := p.GetTickerPrices(pairs...)
 	if err != nil {
 		return nil, err
 	}
-	candles := make(map[string][]types.CandlePrice)
+	candles := make(types.CurrencyPairCandles)
 	for pair, price := range price {
 		candles[pair] = []types.CandlePrice{
 			{

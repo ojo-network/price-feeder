@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCrescentProvider_GetTickerPrices(t *testing.T) {
-	p, err := NewCrescentProvider(
+func TestKujiraProvider_GetTickerPrices(t *testing.T) {
+	p, err := NewKujiraProvider(
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		BCREATOM,
+		KUJIATOM,
 	)
 	require.NoError(t, err)
 
@@ -24,18 +24,18 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 		volume := sdk.MustNewDecFromStr("2396974.02000000")
 
 		tickerMap := map[string]types.TickerPrice{}
-		tickerMap["BCRE/ATOM"] = types.TickerPrice{
+		tickerMap["KUJI/ATOM"] = types.TickerPrice{
 			Price:  lastPrice,
 			Volume: volume,
 		}
 
 		p.tickers = tickerMap
 
-		prices, err := p.GetTickerPrices(BCREATOM)
+		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "KUJI", Quote: "ATOM"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, lastPrice, prices[BCREATOM].Price)
-		require.Equal(t, volume, prices[BCREATOM].Volume)
+		require.Equal(t, lastPrice, prices[KUJIATOM].Price)
+		require.Equal(t, volume, prices[KUJIATOM].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -56,8 +56,8 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 
 		p.tickers = tickerMap
 		prices, err := p.GetTickerPrices(
-			ATOMUSDT,
-			LUNAUSDT,
+			types.CurrencyPair{Base: "ATOM", Quote: "USDT"},
+			types.CurrencyPair{Base: "LUNA", Quote: "USDT"},
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
@@ -73,12 +73,12 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 	})
 }
 
-func TestCrescentProvider_GetCandlePrices(t *testing.T) {
-	p, err := NewCrescentProvider(
+func TestKujiraProvider_GetCandlePrices(t *testing.T) {
+	p, err := NewKujiraProvider(
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		BCREATOM,
+		KUJIATOM,
 	)
 	require.NoError(t, err)
 
@@ -87,20 +87,20 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 		volume := "2396974.000000000000000000"
 		time := int64(1000000)
 
-		candle := CrescentCandle{
+		candle := KujiraCandle{
 			Volume:  volume,
 			Close:   price,
 			EndTime: time,
 		}
 
-		p.setCandlePair(candle, "BCRE/ATOM")
+		p.setCandlePair(candle, "KUJI/ATOM")
 
-		prices, err := p.GetCandlePrices(BCREATOM)
+		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "KUJI", Quote: "ATOM"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(price), prices[BCREATOM][0].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[BCREATOM][0].Volume)
-		require.Equal(t, time, prices[BCREATOM][0].TimeStamp)
+		require.Equal(t, sdk.MustNewDecFromStr(price), prices[KUJIATOM][0].Price)
+		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[KUJIATOM][0].Volume)
+		require.Equal(t, time, prices[KUJIATOM][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {
@@ -109,8 +109,8 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 	})
 }
 
-func TestCrescentCurrencyPairToCrescentPair(t *testing.T) {
-	cp := types.CurrencyPair{Base: "BCRE", Quote: "USDT"}
-	crescentSymbol := currencyPairToCrescentPair(cp)
-	require.Equal(t, crescentSymbol, "BCRE/USDT")
+func TestKujiraCurrencyPairToKujiraPair(t *testing.T) {
+	cp := types.CurrencyPair{Base: "ATOM", Quote: "USDT"}
+	kujiraSymbol := currencyPairToKujiraPair(cp)
+	require.Equal(t, kujiraSymbol, "ATOM/USDT")
 }

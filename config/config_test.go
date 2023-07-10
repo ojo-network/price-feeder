@@ -7,10 +7,13 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
-	"github.com/ojo-network/price-feeder/config"
-	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ojo-network/price-feeder/oracle/types"
+
+	"github.com/ojo-network/price-feeder/config"
+	"github.com/ojo-network/price-feeder/oracle/provider"
 )
 
 func TestValidate(t *testing.T) {
@@ -22,7 +25,7 @@ func TestValidate(t *testing.T) {
 				AllowedOrigins: []string{},
 			},
 			CurrencyPairs: []config.CurrencyPair{
-				{Base: "ATOM", Quote: "USDT", Providers: []provider.Name{provider.ProviderKraken}},
+				{Base: "ATOM", Quote: "USDT", Providers: []types.ProviderName{provider.ProviderKraken}},
 			},
 			Account: config.Account{
 				Address:   "fromaddr",
@@ -55,17 +58,17 @@ func TestValidate(t *testing.T) {
 
 	invalidBase := validConfig()
 	invalidBase.CurrencyPairs = []config.CurrencyPair{
-		{Base: "", Quote: "USDT", Providers: []provider.Name{provider.ProviderKraken}},
+		{Base: "", Quote: "USDT", Providers: []types.ProviderName{provider.ProviderKraken}},
 	}
 
 	invalidQuote := validConfig()
 	invalidQuote.CurrencyPairs = []config.CurrencyPair{
-		{Base: "ATOM", Quote: "", Providers: []provider.Name{provider.ProviderKraken}},
+		{Base: "ATOM", Quote: "", Providers: []types.ProviderName{provider.ProviderKraken}},
 	}
 
 	emptyProviders := validConfig()
 	emptyProviders.CurrencyPairs = []config.CurrencyPair{
-		{Base: "ATOM", Quote: "USDT", Providers: []provider.Name{}},
+		{Base: "ATOM", Quote: "USDT", Providers: []types.ProviderName{}},
 	}
 
 	invalidEndpoints := validConfig()
@@ -919,4 +922,136 @@ websocket = "wss://socket.polygon.io/forex"
 
 	_, err = config.ParseConfig(tmpFile.Name())
 	require.EqualError(t, err, "provider polygon requires an API Key")
+}
+
+func TestInvalidCurrencyPairs(t *testing.T) {
+	tmpFile, err := ioutil.TempFile("", "price-feeder*.toml")
+	require.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	content := []byte(`
+gas_adjustment = 1.5
+
+[server]
+listen_addr = "0.0.0.0:99999"
+read_timeout = "20s"
+verbose_cors = true
+write_timeout = "20s"
+
+[[currency_pairs]]
+base = "ATOM"
+quote = "USDT"
+providers = [
+	"kraken",
+	"binance",
+	"huobi"
+]
+
+[[currency_pairs]]
+base = "OJO"
+quote = "USDT"
+providers = [
+	"kraken",
+	"binance",
+	"huobi"
+]
+
+[[currency_pairs]]
+base = "stUMEE"
+quote = "UMEE"
+providers = [
+	"kraken",
+	"binance",
+	"huobi"
+]
+
+[account]
+address = "ojo15nejfgcaanqpw25ru4arvfd0fwy6j8clccvwx4"
+validator = "ojovalcons14rjlkfzp56733j5l5nfk6fphjxymgf8mj04d5p"
+chain_id = "ojo-local-testnet"
+
+[keyring]
+backend = "test"
+dir = "/Users/username/.ojo"
+pass = "keyringPassword"
+
+[rpc]
+tmrpc_endpoint = "http://localhost:26657"
+grpc_endpoint = "localhost:9090"
+rpc_timeout = "100ms"
+
+[telemetry]
+enabled = false
+`)
+	_, err = tmpFile.Write(content)
+	require.NoError(t, err)
+
+	_, err = config.ParseConfig(tmpFile.Name())
+	require.Error(t, err, "currency pair quote UMEE is not supported")
+}
+
+func TestValidCurrencyPairs(t *testing.T) {
+	tmpFile, err := ioutil.TempFile("", "price-feeder*.toml")
+	require.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	content := []byte(`
+gas_adjustment = 1.5
+
+[server]
+listen_addr = "0.0.0.0:99999"
+read_timeout = "20s"
+verbose_cors = true
+write_timeout = "20s"
+
+[[currency_pairs]]
+base = "ATOM"
+quote = "USDT"
+providers = [
+	"kraken",
+	"binance",
+	"huobi"
+]
+
+[[currency_pairs]]
+base = "OJO"
+quote = "USDT"
+providers = [
+	"kraken",
+	"binance",
+	"huobi"
+]
+
+[[currency_pairs]]
+base = "stOSMO"
+quote = "OSMO"
+providers = [
+	"kraken",
+	"binance",
+	"huobi"
+]
+
+[account]
+address = "ojo15nejfgcaanqpw25ru4arvfd0fwy6j8clccvwx4"
+validator = "ojovalcons14rjlkfzp56733j5l5nfk6fphjxymgf8mj04d5p"
+chain_id = "ojo-local-testnet"
+
+[keyring]
+backend = "test"
+dir = "/Users/username/.ojo"
+pass = "keyringPassword"
+
+[rpc]
+tmrpc_endpoint = "http://localhost:26657"
+grpc_endpoint = "localhost:9090"
+rpc_timeout = "100ms"
+
+[telemetry]
+enabled = false
+`)
+	_, err = tmpFile.Write(content)
+	require.NoError(t, err)
+
+	_, err = config.ParseConfig(tmpFile.Name())
+	require.NoError(t, err)
 }

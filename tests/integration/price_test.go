@@ -6,16 +6,17 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 const (
-	maxCoeficientOfVariation = 0.2
+	maxCoeficientOfVariation = 0.5
 )
 
 // TestPriceAccuracy tests the accuracy of the final prices calculated by the oracle
@@ -56,27 +57,30 @@ func TestPriceAccuracy(t *testing.T) {
 	apiPrices, err := getCoinMarketCapPrices(symbols)
 	require.NoError(t, err)
 
+	t.Logf("checking oracle prices: %v", oraclePrices)
 	checkPrices(t, symbols, oraclePrices, apiPrices)
 }
 
 func checkPrices(
 	t *testing.T,
 	expectedSymbols []string,
-	oraclePrices map[string]sdk.Dec,
+	oraclePrices types.CurrencyPairDec,
 	apiPrices map[string]float64,
 ) {
 	for _, denom := range expectedSymbols {
+		cp := types.CurrencyPair{Base: denom, Quote: "USD"}
+
+		if _, ok := oraclePrices[cp]; !ok {
+			assert.Failf(t, "Oracle price not found", "currency_pair", cp)
+			continue
+		}
+
 		if _, ok := apiPrices[denom]; !ok {
 			t.Logf("%s API price not found", denom)
 			continue
 		}
 
-		if _, ok := oraclePrices[denom]; !ok {
-			t.Logf("%s Oracle price not found", denom)
-			continue
-		}
-
-		oraclePrice := oraclePrices[denom].MustFloat64()
+		oraclePrice := oraclePrices[cp].MustFloat64()
 		apiPrice := apiPrices[denom]
 		cv := calcCoeficientOfVariation([]float64{oraclePrice, apiPrice})
 

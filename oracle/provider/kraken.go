@@ -32,13 +32,12 @@ type (
 	//
 	// REF: https://docs.kraken.com/websockets/#overview
 	KrakenProvider struct {
-		wsc             *WebsocketController
-		logger          zerolog.Logger
-		mtx             sync.RWMutex
-		endpoints       Endpoint
-		tickers         map[string]types.TickerPrice  // Symbol => TickerPrice
-		candles         map[string][]KrakenCandle     // Symbol => KrakenCandle
-		subscribedPairs map[string]types.CurrencyPair // Symbol => types.CurrencyPair
+		wsc       *WebsocketController
+		logger    zerolog.Logger
+		mtx       sync.RWMutex
+		endpoints Endpoint
+
+		priceStore
 	}
 
 	// KrakenTicker ticker price response from Kraken ticker channel.
@@ -115,11 +114,9 @@ func NewKrakenProvider(
 	krakenLogger := logger.With().Str("provider", string(ProviderKraken)).Logger()
 
 	provider := &KrakenProvider{
-		logger:          krakenLogger,
-		endpoints:       endpoints,
-		tickers:         map[string]types.TickerPrice{},
-		candles:         map[string][]KrakenCandle{},
-		subscribedPairs: map[string]types.CurrencyPair{},
+		logger:     krakenLogger,
+		endpoints:  endpoints,
+		priceStore: newPriceStore(krakenLogger),
 	}
 
 	confirmedPairs, err := ConfirmPairAvailability(
@@ -195,94 +192,12 @@ func (p *KrakenProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-// GetTickerPrices returns the tickerPrices based on the provided pairs.
-func (p *KrakenProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-
-	tickerErrs := 0
-	for _, cp := range pairs {
-		key := cp.String()
-		price, ok := p.tickers[key]
-		if !ok {
-			p.logger.Warn().Err(fmt.Errorf(
-				types.ErrTickerNotFound.Error(),
-				p.endpoints.Name,
-				key,
-			))
-			tickerErrs++
-			continue
-		}
-		tickerPrices[key] = price
-	}
-
-	if tickerErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoTickers.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return tickerPrices, nil
-}
-
-// GetCandlePrices returns the candlePrices based on the provided pairs.
-func (p *KrakenProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
-
-	candleErrs := 0
-	for _, cp := range pairs {
-		key := cp.String()
-		prices, err := p.getCandlePrices(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			candleErrs++
-			continue
-		}
-		candlePrices[key] = prices
-	}
-
-	if candleErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoCandles.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return candlePrices, nil
-}
-
 func (candle KrakenCandle) toCandlePrice() (types.CandlePrice, error) {
 	return types.NewCandlePrice(
-		string(ProviderKraken),
-		candle.Symbol,
 		candle.Close,
 		candle.Volume,
 		candle.TimeStamp,
 	)
-}
-
-func (p *KrakenProvider) getCandlePrices(key string) ([]types.CandlePrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	candles, ok := p.candles[key]
-	if !ok {
-		return []types.CandlePrice{}, fmt.Errorf(
-			types.ErrCandleNotFound.Error(),
-			p.endpoints.Name,
-			key,
-		)
-	}
-
-	candleList := []types.CandlePrice{}
-	for _, candle := range candles {
-		cp, err := candle.toCandlePrice()
-		if err != nil {
-			return []types.CandlePrice{}, err
-		}
-		candleList = append(candleList, cp)
-	}
-	return candleList, nil
 }
 
 // messageReceived handles any message sent by the provider.
@@ -367,13 +282,7 @@ func (p *KrakenProvider) messageReceivedTickerPrice(bz []byte) error {
 	krakenPair = normalizeKrakenBTCPair(krakenPair)
 	currencyPairSymbol := krakenPairToCurrencyPairSymbol(krakenPair)
 
-	tickerPrice, err := krakenTicker.toTickerPrice(currencyPairSymbol)
-	if err != nil {
-		p.logger.Err(err).Msg("could not parse kraken ticker to ticker price")
-		return err
-	}
-
-	p.setTickerPair(currencyPairSymbol, tickerPrice)
+	p.setTickerPair(krakenTicker, currencyPairSymbol)
 	telemetryWebsocketMessage(ProviderKraken, MessageTypeTicker)
 	return nil
 }
@@ -451,7 +360,7 @@ func (p *KrakenProvider) messageReceivedCandle(bz []byte) error {
 	krakenCandle.Symbol = currencyPairSymbol
 
 	telemetryWebsocketMessage(ProviderKraken, MessageTypeCandle)
-	p.setCandlePair(krakenCandle)
+	p.setCandlePair(krakenCandle, currencyPairSymbol)
 	return nil
 }
 
@@ -474,30 +383,6 @@ func (p *KrakenProvider) messageReceivedSubscriptionStatus(bz []byte) {
 		p.removeSubscribedTickers(krakenPairToCurrencyPairSymbol(subscriptionStatus.Pair))
 		return
 	}
-}
-
-// setTickerPair sets an ticker to the map thread safe by the mutex.
-func (p *KrakenProvider) setTickerPair(symbol string, ticker types.TickerPrice) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-	p.tickers[symbol] = ticker
-}
-
-func (p *KrakenProvider) setCandlePair(candle KrakenCandle) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-	// convert kraken timestamp seconds -> milliseconds
-	candle.TimeStamp = SecondsToMilli(candle.TimeStamp)
-	staleTime := PastUnixTime(providerCandlePeriod)
-	candleList := []KrakenCandle{}
-
-	candleList = append(candleList, candle)
-	for _, c := range p.candles[candle.Symbol] {
-		if staleTime < c.TimeStamp {
-			candleList = append(candleList, c)
-		}
-	}
-	p.candles[candle.Symbol] = candleList
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
@@ -548,13 +433,13 @@ func (p *KrakenProvider) GetAvailablePairs() (map[string]struct{}, error) {
 }
 
 // toTickerPrice return a TickerPrice based on the KrakenTicker.
-func (ticker KrakenTicker) toTickerPrice(symbol string) (types.TickerPrice, error) {
+func (ticker KrakenTicker) toTickerPrice() (types.TickerPrice, error) {
 	if len(ticker.C) != 2 || len(ticker.V) != 2 {
 		return types.TickerPrice{}, fmt.Errorf("error converting KrakenTicker to TickerPrice")
 	}
 	// ticker.C has the Price in the first position.
 	// ticker.V has the totla	Value over last 24 hours in the second position.
-	return types.NewTickerPrice(string(ProviderKraken), symbol, ticker.C[0], ticker.V[1])
+	return types.NewTickerPrice(ticker.C[0], ticker.V[1])
 }
 
 // newKrakenTickerSubscriptionMsg returns a new subscription Msg.

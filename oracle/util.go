@@ -6,7 +6,9 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 var (
@@ -20,8 +22,8 @@ const (
 )
 
 // compute VWAP for each base by dividing the Σ {P * V} by Σ {V}
-func vwap(weightedPrices, volumeSum map[string]sdk.Dec) map[string]sdk.Dec {
-	vwap := make(map[string]sdk.Dec)
+func vwap(weightedPrices, volumeSum types.CurrencyPairDec) types.CurrencyPairDec {
+	vwap := make(types.CurrencyPairDec)
 
 	for base, p := range weightedPrices {
 		if !volumeSum[base].Equal(sdk.ZeroDec()) {
@@ -41,10 +43,10 @@ func vwap(weightedPrices, volumeSum map[string]sdk.Dec) map[string]sdk.Dec {
 // of provider => {<base> => <TickerPrice>, ...}.
 //
 // Ref: https://en.wikipedia.org/wiki/Volume-weighted_average_price
-func ComputeVWAP(prices provider.AggregatedProviderPrices) map[string]sdk.Dec {
+func ComputeVWAP(prices types.AggregatedProviderPrices) types.CurrencyPairDec {
 	var (
-		weightedPrices = make(map[string]sdk.Dec)
-		volumeSum      = make(map[string]sdk.Dec)
+		weightedPrices = make(types.CurrencyPairDec)
+		volumeSum      = make(types.CurrencyPairDec)
 	)
 
 	for _, providerPrices := range prices {
@@ -73,10 +75,10 @@ func ComputeVWAP(prices provider.AggregatedProviderPrices) map[string]sdk.Dec {
 // provider => {<base> => <TickerPrice>, ...}.
 //
 // Ref : https://en.wikipedia.org/wiki/Time-weighted_average_price
-func ComputeTVWAP(prices provider.AggregatedProviderCandles) (map[string]sdk.Dec, error) {
+func ComputeTVWAP(prices types.AggregatedProviderCandles) (types.CurrencyPairDec, error) {
 	var (
-		weightedPrices = make(map[string]sdk.Dec)
-		volumeSum      = make(map[string]sdk.Dec)
+		weightedPrices = make(types.CurrencyPairDec)
+		volumeSum      = make(types.CurrencyPairDec)
 		now            = provider.PastUnixTime(0)
 		timePeriod     = provider.PastUnixTime(tvwapCandlePeriod)
 	)
@@ -136,13 +138,13 @@ func ComputeTVWAP(prices provider.AggregatedProviderCandles) (map[string]sdk.Dec
 // StandardDeviation returns maps of the standard deviations and means of assets.
 // Will skip calculating for an asset if there are less than 3 prices.
 func StandardDeviation(
-	prices map[provider.Name]map[string]sdk.Dec,
-) (map[string]sdk.Dec, map[string]sdk.Dec, error) {
+	prices types.CurrencyPairDecByProvider,
+) (types.CurrencyPairDec, types.CurrencyPairDec, error) {
 	var (
-		deviations = make(map[string]sdk.Dec)
-		means      = make(map[string]sdk.Dec)
-		priceSlice = make(map[string][]sdk.Dec)
-		priceSums  = make(map[string]sdk.Dec)
+		deviations = make(types.CurrencyPairDec)
+		means      = make(types.CurrencyPairDec)
+		priceSlice = make(map[types.CurrencyPair][]sdk.Dec)
+		priceSums  = make(types.CurrencyPairDec)
 	)
 
 	for _, providerPrices := range prices {
@@ -184,7 +186,7 @@ func StandardDeviation(
 
 		standardDeviation, err := variance.ApproxSqrt()
 		if err != nil {
-			return make(map[string]sdk.Dec), make(map[string]sdk.Dec), err
+			return make(types.CurrencyPairDec), make(types.CurrencyPairDec), err
 		}
 
 		deviations[base] = standardDeviation
@@ -195,12 +197,12 @@ func StandardDeviation(
 
 // ComputeTvwapsByProvider computes the tvwap prices from candles for each provider separately and returns them
 // in a map separated by provider name
-func ComputeTvwapsByProvider(prices provider.AggregatedProviderCandles) (map[provider.Name]map[string]sdk.Dec, error) {
-	tvwaps := make(map[provider.Name]map[string]sdk.Dec)
+func ComputeTvwapsByProvider(prices types.AggregatedProviderCandles) (types.CurrencyPairDecByProvider, error) {
+	tvwaps := make(types.CurrencyPairDecByProvider)
 	var err error
 
 	for providerName, candles := range prices {
-		singleProviderCandles := provider.AggregatedProviderCandles{"providerName": candles}
+		singleProviderCandles := types.AggregatedProviderCandles{"providerName": candles}
 		tvwaps[providerName], err = ComputeTVWAP(singleProviderCandles)
 		if err != nil {
 			return nil, err
@@ -211,11 +213,11 @@ func ComputeTvwapsByProvider(prices provider.AggregatedProviderCandles) (map[pro
 
 // ComputeVwapsByProvider computes the vwap prices from tickers for each provider separately and returns them
 // in a map separated by provider name
-func ComputeVwapsByProvider(prices provider.AggregatedProviderPrices) map[provider.Name]map[string]sdk.Dec {
-	vwaps := make(map[provider.Name]map[string]sdk.Dec)
+func ComputeVwapsByProvider(prices types.AggregatedProviderPrices) types.CurrencyPairDecByProvider {
+	vwaps := make(types.CurrencyPairDecByProvider)
 
 	for providerName, tickers := range prices {
-		singleProviderCandles := provider.AggregatedProviderPrices{"providerName": tickers}
+		singleProviderCandles := types.AggregatedProviderPrices{"providerName": tickers}
 		vwaps[providerName] = ComputeVWAP(singleProviderCandles)
 	}
 	return vwaps
