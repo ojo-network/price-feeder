@@ -60,7 +60,6 @@ providers = [
   "kraken",
   "coinbase",
   "crypto",
-  "gate",
 ]
 quote = "USD"
 
