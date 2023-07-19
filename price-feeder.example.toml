@@ -135,7 +135,6 @@ providers = [
   "kraken",
   "coinbase",
   "crypto",
-<<<<<<< HEAD
 ]
 quote = "USD"
 
@@ -152,8 +151,6 @@ base = "ATOM"
 providers = [
   "kraken",
   "crypto",
-=======
->>>>>>> 8f4f712 (feat: skip specific denoms in integration test (#192))
 ]
 quote = "USD"
 
