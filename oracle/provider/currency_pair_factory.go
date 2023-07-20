@@ -13,6 +13,8 @@ var (
 	OSMOATOM = types.CurrencyPair{Base: "OSMO", Quote: "ATOM"}
 	BCREATOM = types.CurrencyPair{Base: "BCRE", Quote: "ATOM"}
 
+	KUJIATOM = types.CurrencyPair{Base: "KUJI", Quote: "ATOM"}
+
 	EURUSD = types.CurrencyPair{Base: "EUR", Quote: "USD"}
 	JPYUSD = types.CurrencyPair{Base: "JPY", Quote: "USD"}
 )
