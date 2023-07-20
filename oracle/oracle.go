@@ -11,19 +11,21 @@ import (
 	"sync"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/cosmos/cosmos-sdk/telemetry"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	pfsync "github.com/ojo-network/price-feeder/pkg/sync"
-	oracletypes "github.com/umee-network/umee/v4/x/oracle/types"
+	oracletypes "github.com/umee-network/umee/v5/x/oracle/types"
+
+	"github.com/cosmos/cosmos-sdk/telemetry"
 )
 
 // We define tickerSleep as the minimum timeout between each oracle loop. We
@@ -288,7 +290,6 @@ func (o *Oracle) GetComputedPrices(
 	providerCandles types.AggregatedProviderCandles,
 	providerPrices types.AggregatedProviderPrices,
 ) (types.CurrencyPairDec, error) {
-
 	conversionRates, err := CalcCurrencyPairRates(
 		providerCandles,
 		providerPrices,
