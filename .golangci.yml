@@ -17,7 +17,6 @@ linters:
     # - wsl
     - asciicheck
     - bodyclose
-    - depguard
     - dogsled
     - errcheck
     - exportloopref
@@ -46,6 +45,9 @@ linters:
 
 issues:
   exclude-rules:
+    - path: tests/*
+      linters:
+        - unused
     - path: _test\.go
       linters:
         - gosec

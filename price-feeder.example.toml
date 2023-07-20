@@ -7,6 +7,14 @@ verbose_cors = true
 write_timeout = "20s"
 
 [[deviation_thresholds]]
+base = "MARS"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "CMST"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "USDT"
 threshold = "1.5"
 
@@ -35,8 +43,8 @@ base = "ETH"
 threshold = "2"
 
 [[deviation_thresholds]]
-base = "WBTC"
-threshold = "1.5"
+base = "BTC"
+threshold = "2"
 
 [[deviation_thresholds]]
 base = "BNB"
@@ -94,6 +102,18 @@ threshold = "1.5"
 base = "CBETH"
 threshold = "1.5"
 
+[[deviation_thresholds]]
+base = "stJUNO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "USK"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stUMEE"
+threshold = "2"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -114,7 +134,7 @@ base = "USDT"
 providers = [
   "kraken",
   "coinbase",
-  "binanceus",
+  "crypto",
 ]
 quote = "USD"
 
@@ -130,7 +150,7 @@ quote = "USDT"
 base = "ATOM"
 providers = [
   "kraken",
-  "binanceus",
+  "crypto",
 ]
 quote = "USD"
 
@@ -195,7 +215,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "BNB"
 providers = [
-  "binanceus",
+  "mexc",
   "bitget",
   "okx",
 ]
@@ -358,6 +378,41 @@ base = "CBETH"
 quote = "USD"
 providers = [ "coinbase",]
 
+[[currency_pairs]]
+base = "CMST"
+providers = [
+  "crescent",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "MARS"
+providers = [
+  "osmosisv2",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "stJUNO"
+providers = [
+  "osmosisv2",
+]
+quote = "JUNO"
+
+[[currency_pairs]]
+base = "USK"
+providers = [
+  "kujira",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "stUMEE"
+providers = [
+  "osmosisv2",
+]
+quote = "UMEE"
+
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
 chain_id = "umee-local-testnet"
@@ -382,11 +437,11 @@ service-name = "price-feeder"
 prometheus-retention-time = 100
 
 [[provider_endpoints]]
-name = "binance"
-rest = "https://api1.binance.com"
-websocket = "stream.binance.com:9443"
-
-[[provider_endpoints]]
 name = "osmosisv2"
 rest = "https://api.osmo-api.prod.ojo.network"
 websocket = "api.osmo-api.prod.ojo.network"
+
+[[provider_endpoints]]
+name = "crescent"
+rest = "https://api.cresc-api.prod.ojo.network"
+websocket = "api.cresc-api.prod.ojo.network"

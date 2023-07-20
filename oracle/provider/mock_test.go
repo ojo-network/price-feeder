@@ -30,8 +30,8 @@ ATOM,USDC,21.84,1827884.77
 		prices, err := mp.GetTickerPrices(types.CurrencyPair{Base: "OJO", Quote: "USDT"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr("3.04"), prices["OJOUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr("1827884.77"), prices["OJOUSDT"].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr("3.04"), prices[OJOUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr("1827884.77"), prices[OJOUSDT].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -54,10 +54,10 @@ ATOM,USDC,21.84,1827884.77
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, sdk.MustNewDecFromStr("3.04"), prices["OJOUSDT"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr("1827884.77"), prices["OJOUSDT"].Volume)
-		require.Equal(t, sdk.MustNewDecFromStr("21.84"), prices["ATOMUSDC"].Price)
-		require.Equal(t, sdk.MustNewDecFromStr("1827884.77"), prices["ATOMUSDC"].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr("3.04"), prices[OJOUSDT].Price)
+		require.Equal(t, sdk.MustNewDecFromStr("1827884.77"), prices[OJOUSDT].Volume)
+		require.Equal(t, sdk.MustNewDecFromStr("21.84"), prices[ATOMUSDC].Price)
+		require.Equal(t, sdk.MustNewDecFromStr("1827884.77"), prices[ATOMUSDC].Volume)
 	})
 
 	t.Run("invalid_request_bad_response", func(t *testing.T) {

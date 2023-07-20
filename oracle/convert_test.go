@@ -1,297 +1,150 @@
-package oracle
+package oracle_test
 
 import (
 	"testing"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/types"
-	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
-var (
-	atomPrice  = sdk.MustNewDecFromStr("29.93")
-	atomVolume = sdk.MustNewDecFromStr("894123.00")
-	usdtPrice  = sdk.MustNewDecFromStr("0.98")
-	usdtVolume = sdk.MustNewDecFromStr("894123.00")
-
-	atomPair = types.CurrencyPair{
-		Base:  "ATOM",
-		Quote: "USDT",
-	}
-	usdtPair = types.CurrencyPair{
-		Base:  "USDT",
-		Quote: "USD",
-	}
-)
-
-func TestGetUSDBasedProviders(t *testing.T) {
-	providerPairs := make(map[provider.Name][]types.CurrencyPair, 3)
-	providerPairs[provider.ProviderCoinbase] = []types.CurrencyPair{
-		{
-			Base:  "FOO",
-			Quote: "USD",
-		},
-	}
-	providerPairs[provider.ProviderHuobi] = []types.CurrencyPair{
-		{
-			Base:  "FOO",
-			Quote: "USD",
-		},
-	}
-	providerPairs[provider.ProviderKraken] = []types.CurrencyPair{
-		{
-			Base:  "FOO",
-			Quote: "USDT",
-		},
-	}
-	providerPairs[provider.ProviderBinance] = []types.CurrencyPair{
-		{
-			Base:  "USDT",
-			Quote: "USD",
-		},
+func TestConvertRatesToUSD(t *testing.T) {
+	rates := types.CurrencyPairDec{
+		types.CurrencyPair{Base: "ATOM", Quote: "USD"}:  sdk.NewDec(10),
+		types.CurrencyPair{Base: "OSMO", Quote: "ATOM"}: sdk.NewDec(3),
+		types.CurrencyPair{Base: "JUNO", Quote: "ATOM"}: sdk.NewDec(20),
+		types.CurrencyPair{Base: "LTC", Quote: "USDT"}:  sdk.NewDec(20),
 	}
 
-	pairs, err := getUSDBasedProviders("FOO", providerPairs)
-	require.NoError(t, err)
-	expectedPairs := map[provider.Name]struct{}{
-		provider.ProviderCoinbase: {},
-		provider.ProviderHuobi:    {},
+	expected := types.CurrencyPairDec{
+		types.CurrencyPair{Base: "ATOM", Quote: "USD"}: sdk.NewDec(10),
+		types.CurrencyPair{Base: "OSMO", Quote: "USD"}: sdk.NewDec(30),
+		types.CurrencyPair{Base: "JUNO", Quote: "USD"}: sdk.NewDec(200),
 	}
-	require.Equal(t, pairs, expectedPairs)
 
-	pairs, err = getUSDBasedProviders("USDT", providerPairs)
-	require.NoError(t, err)
-	expectedPairs = map[provider.Name]struct{}{
-		provider.ProviderBinance: {},
+	convertedRates := oracle.ConvertRatesToUSD(rates)
+
+	if len(convertedRates) != len(expected) {
+		t.Errorf("Unexpected length of converted rates. Expected: %d, Got: %d", len(expected), len(convertedRates))
 	}
-	require.Equal(t, pairs, expectedPairs)
 
-	_, err = getUSDBasedProviders("BAR", providerPairs)
-	require.Error(t, err)
+	for cp, expectedRate := range expected {
+		convertedRate, ok := convertedRates[cp]
+		if !ok {
+			t.Errorf("Missing converted rate for currency pair: %v", cp)
+		}
+
+		if !convertedRate.Equal(expectedRate) {
+			t.Errorf("Unexpected converted rate for currency pair: %v. Expected: %s, Got: %s", cp, expectedRate.String(), convertedRate.String())
+		}
+	}
 }
 
-func TestConvertCandlesToUSD(t *testing.T) {
-	providerCandles := make(provider.AggregatedProviderCandles, 2)
+func TestConvertAggregatedCandles(t *testing.T) {
 
-	binanceCandles := map[string][]types.CandlePrice{
-		"ATOM": {{
-			Price:     atomPrice,
-			Volume:    atomVolume,
-			TimeStamp: provider.PastUnixTime(1 * time.Minute),
-		}},
+	candles := types.AggregatedProviderCandles{
+		"Provider1": types.CurrencyPairCandles{
+			types.CurrencyPair{Base: "ATOM", Quote: "USDC"}: []types.CandlePrice{
+				{Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"), TimeStamp: 1},
+				{Price: sdk.MustNewDecFromStr("40"), Volume: sdk.MustNewDecFromStr("1500"), TimeStamp: 2},
+			},
+			types.CurrencyPair{Base: "UMEE", Quote: "USDC"}: []types.CandlePrice{
+				{Price: sdk.MustNewDecFromStr("18"), Volume: sdk.MustNewDecFromStr("500"), TimeStamp: 1},
+				{Price: sdk.MustNewDecFromStr("22"), Volume: sdk.MustNewDecFromStr("800"), TimeStamp: 2},
+			},
+		},
+		"Provider2": types.CurrencyPairCandles{
+			types.CurrencyPair{Base: "ATOM", Quote: "USDT"}: []types.CandlePrice{
+				{Price: sdk.MustNewDecFromStr("30"), Volume: sdk.MustNewDecFromStr("800"), TimeStamp: 1},
+				{Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"), TimeStamp: 2},
+			},
+			types.CurrencyPair{Base: "JUNO", Quote: "USDT"}: []types.CandlePrice{
+				{Price: sdk.MustNewDecFromStr("5"), Volume: sdk.MustNewDecFromStr("200"), TimeStamp: 1},
+				{Price: sdk.MustNewDecFromStr("6"), Volume: sdk.MustNewDecFromStr("300"), TimeStamp: 2},
+			},
+		},
 	}
-	providerCandles[provider.ProviderBinance] = binanceCandles
 
-	krakenCandles := map[string][]types.CandlePrice{
-		"USDT": {{
-			Price:     usdtPrice,
-			Volume:    usdtVolume,
-			TimeStamp: provider.PastUnixTime(1 * time.Minute),
-		}},
-	}
-	providerCandles[provider.ProviderKraken] = krakenCandles
-
-	providerPairs := map[provider.Name][]types.CurrencyPair{
-		provider.ProviderBinance: {atomPair},
-		provider.ProviderKraken:  {usdtPair},
+	rates := types.CurrencyPairDec{
+		types.CurrencyPair{Base: "USDT", Quote: "USD"}: sdk.MustNewDecFromStr("2"),
+		types.CurrencyPair{Base: "USDC", Quote: "USD"}: sdk.MustNewDecFromStr("1"),
 	}
 
-	convertedCandles := ConvertCandlesToUSD(
-		zerolog.Nop(),
-		providerCandles,
-		providerPairs,
-		make(map[string]sdk.Dec),
-	)
+	expectedResult := types.AggregatedProviderCandles{
+		"Provider1": types.CurrencyPairCandles{
+			types.CurrencyPair{Base: "ATOM", Quote: "USD"}: []types.CandlePrice{
+				{Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"), TimeStamp: 1},
+				{Price: sdk.MustNewDecFromStr("40"), Volume: sdk.MustNewDecFromStr("1500"), TimeStamp: 2},
+			},
+			types.CurrencyPair{Base: "UMEE", Quote: "USD"}: []types.CandlePrice{
+				{Price: sdk.MustNewDecFromStr("18"), Volume: sdk.MustNewDecFromStr("500"), TimeStamp: 1},
+				{Price: sdk.MustNewDecFromStr("22"), Volume: sdk.MustNewDecFromStr("800"), TimeStamp: 2},
+			},
+		},
+		"Provider2": types.CurrencyPairCandles{
+			types.CurrencyPair{Base: "ATOM", Quote: "USD"}: []types.CandlePrice{
+				{Price: sdk.MustNewDecFromStr("60"), Volume: sdk.MustNewDecFromStr("800"), TimeStamp: 1},
+				{Price: sdk.MustNewDecFromStr("70"), Volume: sdk.MustNewDecFromStr("1000"), TimeStamp: 2},
+			},
+			types.CurrencyPair{Base: "JUNO", Quote: "USD"}: []types.CandlePrice{
+				{Price: sdk.MustNewDecFromStr("10"), Volume: sdk.MustNewDecFromStr("200"), TimeStamp: 1},
+				{Price: sdk.MustNewDecFromStr("12"), Volume: sdk.MustNewDecFromStr("300"), TimeStamp: 2},
+			},
+		},
+	}
 
-	require.Equal(
-		t,
-		atomPrice.Mul(usdtPrice),
-		convertedCandles[provider.ProviderBinance]["ATOM"][0].Price,
-	)
+	result := oracle.ConvertAggregatedCandles(candles, rates)
+
+	assert.Equal(t, expectedResult, result, "The converted candles do not match the expected result.")
 }
 
-func TestConvertCandlesToUSDFiltering(t *testing.T) {
-	providerCandles := make(provider.AggregatedProviderCandles, 2)
+func TestConvertAggregatedTickers(t *testing.T) {
 
-	binanceCandles := map[string][]types.CandlePrice{
-		"ATOM": {{
-			Price:     atomPrice,
-			Volume:    atomVolume,
-			TimeStamp: provider.PastUnixTime(1 * time.Minute),
-		}},
-	}
-	providerCandles[provider.ProviderBinance] = binanceCandles
-
-	krakenCandles := map[string][]types.CandlePrice{
-		"USDT": {{
-			Price:     usdtPrice,
-			Volume:    usdtVolume,
-			TimeStamp: provider.PastUnixTime(1 * time.Minute),
-		}},
-	}
-	providerCandles[provider.ProviderKraken] = krakenCandles
-
-	gateCandles := map[string][]types.CandlePrice{
-		"USDT": {{
-			Price:     usdtPrice,
-			Volume:    usdtVolume,
-			TimeStamp: provider.PastUnixTime(1 * time.Minute),
-		}},
-	}
-	providerCandles[provider.ProviderGate] = gateCandles
-
-	okxCandles := map[string][]types.CandlePrice{
-		"USDT": {{
-			Price:     sdk.MustNewDecFromStr("100.0"),
-			Volume:    usdtVolume,
-			TimeStamp: provider.PastUnixTime(1 * time.Minute),
-		}},
-	}
-	providerCandles[provider.ProviderOkx] = okxCandles
-
-	providerPairs := map[provider.Name][]types.CurrencyPair{
-		provider.ProviderBinance: {atomPair},
-		provider.ProviderKraken:  {usdtPair},
-		provider.ProviderGate:    {usdtPair},
-		provider.ProviderOkx:     {usdtPair},
-	}
-
-	convertedCandles := ConvertCandlesToUSD(
-		zerolog.Nop(),
-		providerCandles,
-		providerPairs,
-		make(map[string]sdk.Dec),
-	)
-
-	require.Equal(
-		t,
-		atomPrice.Mul(usdtPrice),
-		convertedCandles[provider.ProviderBinance]["ATOM"][0].Price,
-	)
-}
-
-func TestConvertCandlesToUSDNotFound(t *testing.T) {
-	providerCandles := make(provider.AggregatedProviderCandles, 2)
-
-	binanceCandles := map[string][]types.CandlePrice{
-		"ATOM": {{
-			Price:     atomPrice,
-			Volume:    atomVolume,
-			TimeStamp: provider.PastUnixTime(1 * time.Minute),
-		}},
-	}
-	providerCandles[provider.ProviderBinance] = binanceCandles
-
-	providerPairs := map[provider.Name][]types.CurrencyPair{
-		provider.ProviderBinance: {atomPair},
-		provider.ProviderKraken:  {usdtPair},
-		provider.ProviderGate:    {usdtPair},
-		provider.ProviderOkx:     {usdtPair},
-	}
-
-	convertedCandles := ConvertCandlesToUSD(
-		zerolog.Nop(),
-		providerCandles,
-		providerPairs,
-		make(map[string]sdk.Dec),
-	)
-
-	require.Empty(
-		t,
-		convertedCandles[provider.ProviderBinance]["ATOM"],
-	)
-}
-
-func TestConvertTickersToUSD(t *testing.T) {
-	providerPrices := make(provider.AggregatedProviderPrices, 2)
-
-	binanceTickers := map[string]types.TickerPrice{
-		"ATOM": {
-			Price:  atomPrice,
-			Volume: atomVolume,
+	tickers := types.AggregatedProviderPrices{
+		"Provider1": types.CurrencyPairTickers{
+			types.CurrencyPair{Base: "ATOM", Quote: "USDC"}: types.TickerPrice{
+				Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"),
+			},
+			types.CurrencyPair{Base: "UMEE", Quote: "USDC"}: types.TickerPrice{
+				Price: sdk.MustNewDecFromStr("18"), Volume: sdk.MustNewDecFromStr("500"),
+			},
+		},
+		"Provider2": types.CurrencyPairTickers{
+			types.CurrencyPair{Base: "ATOM", Quote: "USDT"}: types.TickerPrice{
+				Price: sdk.MustNewDecFromStr("30"), Volume: sdk.MustNewDecFromStr("800"),
+			},
+			types.CurrencyPair{Base: "JUNO", Quote: "USDT"}: types.TickerPrice{
+				Price: sdk.MustNewDecFromStr("5"), Volume: sdk.MustNewDecFromStr("200"),
+			},
 		},
 	}
-	providerPrices[provider.ProviderBinance] = binanceTickers
 
-	krakenTicker := map[string]types.TickerPrice{
-		"USDT": {
-			Price:  usdtPrice,
-			Volume: usdtVolume,
+	rates := types.CurrencyPairDec{
+		types.CurrencyPair{Base: "USDT", Quote: "USD"}: sdk.MustNewDecFromStr("2"),
+		types.CurrencyPair{Base: "USDC", Quote: "USD"}: sdk.MustNewDecFromStr("1"),
+	}
+
+	expectedResult := types.AggregatedProviderPrices{
+		"Provider1": types.CurrencyPairTickers{
+			types.CurrencyPair{Base: "ATOM", Quote: "USD"}: types.TickerPrice{
+				Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"),
+			},
+			types.CurrencyPair{Base: "UMEE", Quote: "USD"}: types.TickerPrice{
+				Price: sdk.MustNewDecFromStr("18"), Volume: sdk.MustNewDecFromStr("500"),
+			},
+		},
+		"Provider2": types.CurrencyPairTickers{
+			types.CurrencyPair{Base: "ATOM", Quote: "USD"}: types.TickerPrice{
+				Price: sdk.MustNewDecFromStr("60"), Volume: sdk.MustNewDecFromStr("800"),
+			},
+			types.CurrencyPair{Base: "JUNO", Quote: "USD"}: types.TickerPrice{
+				Price: sdk.MustNewDecFromStr("10"), Volume: sdk.MustNewDecFromStr("200"),
+			},
 		},
 	}
-	providerPrices[provider.ProviderKraken] = krakenTicker
 
-	providerPairs := map[provider.Name][]types.CurrencyPair{
-		provider.ProviderBinance: {atomPair},
-		provider.ProviderKraken:  {usdtPair},
-	}
+	result := oracle.ConvertAggregatedTickers(tickers, rates)
 
-	convertedTickers := ConvertTickersToUSD(
-		zerolog.Nop(),
-		providerPrices,
-		providerPairs,
-		make(map[string]sdk.Dec),
-	)
-
-	require.Equal(
-		t,
-		atomPrice.Mul(usdtPrice),
-		convertedTickers[provider.ProviderBinance]["ATOM"].Price,
-	)
-}
-
-func TestConvertTickersToUSDFiltering(t *testing.T) {
-	providerPrices := make(provider.AggregatedProviderPrices, 2)
-
-	binanceTickers := map[string]types.TickerPrice{
-		"ATOM": {
-			Price:  atomPrice,
-			Volume: atomVolume,
-		},
-	}
-	providerPrices[provider.ProviderBinance] = binanceTickers
-
-	krakenTicker := map[string]types.TickerPrice{
-		"USDT": {
-			Price:  usdtPrice,
-			Volume: usdtVolume,
-		},
-	}
-	providerPrices[provider.ProviderKraken] = krakenTicker
-
-	gateTicker := map[string]types.TickerPrice{
-		"USDT": krakenTicker["USDT"],
-	}
-	providerPrices[provider.ProviderGate] = gateTicker
-
-	huobiTicker := map[string]types.TickerPrice{
-		"USDT": {
-			Price:  sdk.MustNewDecFromStr("10000"),
-			Volume: usdtVolume,
-		},
-	}
-	providerPrices[provider.ProviderHuobi] = huobiTicker
-
-	providerPairs := map[provider.Name][]types.CurrencyPair{
-		provider.ProviderBinance: {atomPair},
-		provider.ProviderKraken:  {usdtPair},
-		provider.ProviderGate:    {usdtPair},
-		provider.ProviderHuobi:   {usdtPair},
-	}
-
-	covertedDeviation := ConvertTickersToUSD(
-		zerolog.Nop(),
-		providerPrices,
-		providerPairs,
-		make(map[string]sdk.Dec),
-	)
-
-	require.Equal(
-		t,
-		atomPrice.Mul(usdtPrice),
-		covertedDeviation[provider.ProviderBinance]["ATOM"].Price,
-	)
+	assert.Equal(t, expectedResult, result, "The converted tickers do not match the expected result.")
 }
