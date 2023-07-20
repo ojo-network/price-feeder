@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 type APIKeyRequired bool
@@ -9,35 +10,40 @@ type APIKeyRequired bool
 var (
 	// SupportedProviders defines a lookup table of all the supported currency API
 	// providers and whether or not they require an API key to be passed in.
-	SupportedProviders = map[provider.Name]APIKeyRequired{
-		provider.ProviderKraken:    false,
-		provider.ProviderBinance:   false,
-		provider.ProviderBinanceUS: false,
-		provider.ProviderCrescent:  false,
-		provider.ProviderOsmosis:   false,
-		provider.ProviderOsmosisV2: false,
-		provider.ProviderOkx:       false,
-		provider.ProviderHuobi:     false,
-		provider.ProviderGate:      false,
-		provider.ProviderCoinbase:  false,
-		provider.ProviderBitget:    false,
-		provider.ProviderMexc:      false,
-		provider.ProviderCrypto:    false,
-		provider.ProviderPolygon:   true,
-		provider.ProviderMock:      false,
+	SupportedProviders = map[types.ProviderName]APIKeyRequired{
+		provider.ProviderKraken:     false,
+		provider.ProviderBinance:    false,
+		provider.ProviderBinanceUS:  false,
+		provider.ProviderCrescent:   false,
+		provider.ProviderOsmosisV2:  false,
+		provider.ProviderOkx:        false,
+		provider.ProviderHuobi:      false,
+		provider.ProviderGate:       false,
+		provider.ProviderCoinbase:   false,
+		provider.ProviderBitget:     false,
+		provider.ProviderMexc:       false,
+		provider.ProviderCrypto:     false,
+		provider.ProviderPolygon:    true,
+		provider.ProviderEthUniswap: false,
+		provider.ProviderKujira:     false,
+		provider.ProviderMock:       false,
 	}
 
-	// SupportedQuotes defines a lookup table for which assets we support
-	// using as quotes.
-	SupportedQuotes = map[string]struct{}{
-		DenomUSD: {},
-		"USDC":   {},
-		"USDT":   {},
-		"DAI":    {},
-		"BTC":    {},
-		"ETH":    {},
-		"ATOM":   {},
-		"OSMO":   {},
+	// SupportedConversions defines a lookup table for which currency pairs we
+	// support converting prices with. Each currency pair with a non-USD quote
+	// requires a corresponding USD conversion rate.
+	SupportedConversions = map[types.CurrencyPair]struct{}{
+		{Base: "USDC", Quote: "USD"}: {},
+		{Base: "USDT", Quote: "USD"}: {},
+		{Base: "DAI", Quote: "USD"}:  {},
+		{Base: "BTC", Quote: "USD"}:  {},
+		{Base: "ETH", Quote: "USD"}:  {},
+		{Base: "ATOM", Quote: "USD"}: {},
+		{Base: "OSMO", Quote: "USD"}: {},
+
+		{Base: "OSMO", Quote: "USDT"}: {},
+		{Base: "JUNO", Quote: "USDT"}: {},
+		{Base: "UMEE", Quote: "USDT"}: {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported
@@ -202,3 +208,11 @@ var (
 		"ZWL": {},
 	}
 )
+
+func SupportedConversionSlice() []types.CurrencyPair {
+	pairs := make([]types.CurrencyPair, 0, len(SupportedConversions))
+	for pair := range SupportedConversions {
+		pairs = append(pairs, pair)
+	}
+	return pairs
+}

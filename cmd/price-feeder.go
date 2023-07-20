@@ -21,9 +21,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	// "github.com/ojo-network/ojo/app/params"
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
@@ -162,13 +160,9 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to parse provider timeout: %w", err)
 	}
 
-	deviations := make(map[string]sdk.Dec, len(cfg.Deviations))
-	for _, deviation := range cfg.Deviations {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
-		if err != nil {
-			return err
-		}
-		deviations[deviation.Base] = threshold
+	deviations, err := cfg.DeviationsMap()
+	if err != nil {
+		return err
 	}
 
 	oracle := oracle.New(

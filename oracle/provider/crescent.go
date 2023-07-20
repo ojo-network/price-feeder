@@ -3,13 +3,11 @@ package provider
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
@@ -20,6 +18,7 @@ const (
 	crescentV2WSPath   = "ws"
 	crescentV2RestHost = "https://api.cresc-api.prod.ojo.network"
 	crescentV2RestPath = "/assetpairs"
+	crescentAckMsg     = "ack"
 )
 
 var _ Provider = (*CrescentProvider)(nil)
@@ -28,14 +27,13 @@ type (
 	// CrescentProvider defines an Oracle provider implemented by OJO's
 	// Crescent API.
 	CrescentProvider struct {
-		wsc             *WebsocketController
-		wsURL           url.URL
-		logger          zerolog.Logger
-		mtx             sync.RWMutex
-		endpoints       Endpoint
-		tickers         map[string]types.TickerPrice   // Symbol => TickerPrice
-		candles         map[string][]types.CandlePrice // Symbol => CandlePrice
-		subscribedPairs map[string]types.CurrencyPair  // Symbol => types.CurrencyPair
+		wsc       *WebsocketController
+		wsURL     url.URL
+		logger    zerolog.Logger
+		mtx       sync.RWMutex
+		endpoints Endpoint
+
+		priceStore
 	}
 
 	CrescentTicker struct {
@@ -85,13 +83,12 @@ func NewCrescentProvider(
 	crescentV2Logger := logger.With().Str("provider", "crescent").Logger()
 
 	provider := &CrescentProvider{
-		wsURL:           wsURL,
-		logger:          crescentV2Logger,
-		endpoints:       endpoints,
-		tickers:         map[string]types.TickerPrice{},
-		candles:         map[string][]types.CandlePrice{},
-		subscribedPairs: map[string]types.CurrencyPair{},
+		wsURL:      wsURL,
+		logger:     crescentV2Logger,
+		endpoints:  endpoints,
+		priceStore: newPriceStore(crescentV2Logger),
 	}
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToCrescentPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
@@ -142,96 +139,9 @@ func (p *CrescentProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-// GetTickerPrices returns the tickerPrices based on the saved map.
-func (p *CrescentProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-
-	tickerErrs := 0
-	for _, cp := range pairs {
-		key := currencyPairToCrescentPair(cp)
-		price, err := p.getTickerPrice(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			tickerErrs++
-			continue
-		}
-		tickerPrices[cp.String()] = price
-	}
-
-	if tickerErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoTickers.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return tickerPrices, nil
-}
-
-// GetCandlePrices returns the candlePrices based on the saved map
-func (p *CrescentProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
-
-	candleErrs := 0
-	for _, cp := range pairs {
-		key := currencyPairToCrescentPair(cp)
-		prices, err := p.getCandlePrices(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			candleErrs++
-			continue
-		}
-		candlePrices[cp.String()] = prices
-	}
-
-	if candleErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoCandles.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return candlePrices, nil
-}
-
-func (p *CrescentProvider) getTickerPrice(key string) (types.TickerPrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	ticker, ok := p.tickers[key]
-	if !ok {
-		return types.TickerPrice{}, fmt.Errorf(
-			types.ErrTickerNotFound.Error(),
-			p.endpoints.Name,
-			key,
-		)
-	}
-
-	return ticker, nil
-}
-
-func (p *CrescentProvider) getCandlePrices(key string) ([]types.CandlePrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	candles, ok := p.candles[key]
-	if !ok {
-		return []types.CandlePrice{}, fmt.Errorf(
-			types.ErrCandleNotFound.Error(),
-			p.endpoints.Name,
-			key,
-		)
-	}
-
-	candleList := []types.CandlePrice{}
-	candleList = append(candleList, candles...)
-
-	return candleList, nil
-}
-
 func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	// check if message is an ack
-	if string(bz) == "ack" {
+	if string(bz) == crescentAckMsg {
 		return
 	}
 
@@ -270,8 +180,8 @@ func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 					continue
 				}
 				p.setTickerPair(
-					crescentPair,
 					tickerResp,
+					crescentPair,
 				)
 				telemetryWebsocketMessage(ProviderCrescent, MessageTypeTicker)
 				continue
@@ -293,8 +203,8 @@ func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 				}
 				for _, singleCandle := range candleResp {
 					p.setCandlePair(
-						crescentPair,
 						singleCandle,
+						crescentPair,
 					)
 				}
 				telemetryWebsocketMessage(ProviderCrescent, MessageTypeCandle)
@@ -304,57 +214,19 @@ func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 	}
 }
 
-func (p *CrescentProvider) setTickerPair(symbol string, tickerPair CrescentTicker) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	price, err := sdk.NewDecFromStr(tickerPair.Price)
-	if err != nil {
-		p.logger.Warn().Err(err).Msg("crescent: failed to parse ticker price")
-		return
-	}
-	volume, err := sdk.NewDecFromStr(tickerPair.Volume)
-	if err != nil {
-		p.logger.Warn().Err(err).Msg("crescent: failed to parse ticker volume")
-		return
-	}
-
-	p.tickers[symbol] = types.TickerPrice{
-		Price:  price,
-		Volume: volume,
-	}
+func (ct CrescentTicker) toTickerPrice() (types.TickerPrice, error) {
+	return types.NewTickerPrice(
+		ct.Price,
+		ct.Volume,
+	)
 }
 
-func (p *CrescentProvider) setCandlePair(symbol string, candlePair CrescentCandle) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	close, err := sdk.NewDecFromStr(candlePair.Close)
-	if err != nil {
-		p.logger.Warn().Err(err).Msg("crescent: failed to parse candle close")
-		return
-	}
-	volume, err := sdk.NewDecFromStr(candlePair.Volume)
-	if err != nil {
-		p.logger.Warn().Err(err).Msg("crescent: failed to parse candle volume")
-		return
-	}
-	candle := types.CandlePrice{
-		Price:     close,
-		Volume:    volume,
-		TimeStamp: candlePair.EndTime,
-	}
-
-	staleTime := PastUnixTime(providerCandlePeriod)
-	candleList := []types.CandlePrice{}
-	candleList = append(candleList, candle)
-	for _, c := range p.candles[symbol] {
-		if staleTime < c.TimeStamp {
-			candleList = append(candleList, c)
-		}
-	}
-
-	p.candles[symbol] = candleList
+func (cc CrescentCandle) toCandlePrice() (types.CandlePrice, error) {
+	return types.NewCandlePrice(
+		cc.Close,
+		cc.Volume,
+		cc.EndTime,
+	)
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
