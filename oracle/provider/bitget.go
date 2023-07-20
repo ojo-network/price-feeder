@@ -36,13 +36,12 @@ type (
 	// REF: https://bitgetlimited.github.io/apidoc/en/spot/#tickers-channel
 	// REF: https://bitgetlimited.github.io/apidoc/en/spot/#candlesticks-channel
 	BitgetProvider struct {
-		wsc             *WebsocketController
-		logger          zerolog.Logger
-		mtx             sync.RWMutex
-		endpoints       Endpoint
-		tickers         map[string]BitgetTicker       // Symbol => BitgetTicker
-		candles         map[string][]BitgetCandle     // Symbol => BitgetCandle
-		subscribedPairs map[string]types.CurrencyPair // Symbol => types.CurrencyPair
+		wsc       *WebsocketController
+		logger    zerolog.Logger
+		mtx       sync.RWMutex
+		endpoints Endpoint
+
+		priceStore
 	}
 
 	// BitgetSubscriptionMsg Msg to subscribe all at once.
@@ -130,11 +129,9 @@ func NewBitgetProvider(
 	bitgetLogger := logger.With().Str("provider", string(ProviderBitget)).Logger()
 
 	provider := &BitgetProvider{
-		logger:          bitgetLogger,
-		endpoints:       endpoints,
-		tickers:         map[string]BitgetTicker{},
-		candles:         map[string][]BitgetCandle{},
-		subscribedPairs: map[string]types.CurrencyPair{},
+		logger:     bitgetLogger,
+		endpoints:  endpoints,
+		priceStore: newPriceStore(bitgetLogger),
 	}
 
 	confirmedPairs, err := ConfirmPairAvailability(
@@ -180,12 +177,7 @@ func (p *BitgetProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
-	newPairs := []types.CurrencyPair{}
-	for _, cp := range cps {
-		if _, ok := p.subscribedPairs[cp.String()]; !ok {
-			newPairs = append(newPairs, cp)
-		}
-	}
+	newPairs := p.addSubscribedPairs(cps...)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		p,
@@ -204,57 +196,6 @@ func (p *BitgetProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 		defaultPingDuration,
 		websocket.PingMessage,
 	)
-	p.setSubscribedPairs(confirmedPairs...)
-}
-
-// GetTickerPrices returns the tickerPrices based on the provided pairs.
-func (p *BitgetProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-
-	tickerErrs := 0
-	for _, cp := range pairs {
-		price, err := p.getTickerPrice(cp)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			tickerErrs++
-			continue
-		}
-		tickerPrices[cp.String()] = price
-	}
-
-	if tickerErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoTickers.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return tickerPrices, nil
-}
-
-// GetCandlePrices returns the candlePrices based on the provided pairs.
-func (p *BitgetProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
-
-	candleErrs := 0
-	for _, cp := range pairs {
-		prices, err := p.getCandlePrices(cp)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			candleErrs++
-			continue
-		}
-		candlePrices[cp.String()] = prices
-	}
-
-	if candleErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoCandles.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return candlePrices, nil
 }
 
 // messageReceived handles the received data from the Bitget websocket.
@@ -290,7 +231,7 @@ func (p *BitgetProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byt
 
 	tickerErr = json.Unmarshal(bz, &tickerResp)
 	if tickerResp.Arg.Channel == tickerChannel {
-		p.setTickerPair(tickerResp)
+		p.setTickerPair(tickerResp, tickerResp.Arg.InstID)
 		telemetryWebsocketMessage(ProviderBitget, MessageTypeTicker)
 		return
 	}
@@ -304,7 +245,7 @@ func (p *BitgetProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byt
 				AnErr("candle", err).
 				Msg("Unable to parse bitget candle")
 		}
-		p.setCandlePair(candle)
+		p.setCandlePair(candle, candleResp.Arg.InstID)
 		telemetryWebsocketMessage(ProviderBitget, MessageTypeCandle)
 		return
 	}
@@ -336,74 +277,6 @@ func (bcr BitgetCandleResponse) ToBitgetCandle() (BitgetCandle, error) {
 		Close:     bcr.Data[0][4],
 		Volume:    bcr.Data[0][5],
 	}, nil
-}
-
-func (p *BitgetProvider) setTickerPair(ticker BitgetTicker) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-	p.tickers[ticker.Arg.InstID] = ticker
-}
-
-func (p *BitgetProvider) setCandlePair(candle BitgetCandle) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-	staleTime := PastUnixTime(providerCandlePeriod)
-	candleList := []BitgetCandle{}
-	candleList = append(candleList, candle)
-
-	for _, c := range p.candles[candle.Arg.InstID] {
-		if staleTime < c.TimeStamp {
-			candleList = append(candleList, c)
-		}
-	}
-	p.candles[candle.Arg.InstID] = candleList
-}
-
-func (p *BitgetProvider) getTickerPrice(cp types.CurrencyPair) (types.TickerPrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	ticker, ok := p.tickers[cp.String()]
-	if !ok {
-		return types.TickerPrice{}, fmt.Errorf(
-			types.ErrTickerNotFound.Error(),
-			p.endpoints.Name,
-			cp.String(),
-		)
-	}
-
-	return ticker.toTickerPrice()
-}
-
-func (p *BitgetProvider) getCandlePrices(cp types.CurrencyPair) ([]types.CandlePrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	candles, ok := p.candles[cp.String()]
-	if !ok {
-		return []types.CandlePrice{}, fmt.Errorf(
-			types.ErrCandleNotFound.Error(),
-			p.endpoints.Name,
-			cp.String(),
-		)
-	}
-
-	candleList := []types.CandlePrice{}
-	for _, candle := range candles {
-		cp, err := candle.toCandlePrice()
-		if err != nil {
-			return []types.CandlePrice{}, err
-		}
-		candleList = append(candleList, cp)
-	}
-	return candleList, nil
-}
-
-// setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
-func (p *BitgetProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
-	for _, cp := range cps {
-		p.subscribedPairs[cp.String()] = cp
-	}
 }
 
 // GetAvailablePairs returns all pairs to which the provider can subscribe.
@@ -440,8 +313,6 @@ func (ticker BitgetTicker) toTickerPrice() (types.TickerPrice, error) {
 		return types.TickerPrice{}, fmt.Errorf("ticker has no data")
 	}
 	return types.NewTickerPrice(
-		string(ProviderBitget),
-		ticker.Arg.InstID,
 		ticker.Data[0].Price,
 		ticker.Data[0].Volume,
 	)
@@ -449,8 +320,6 @@ func (ticker BitgetTicker) toTickerPrice() (types.TickerPrice, error) {
 
 func (candle BitgetCandle) toCandlePrice() (types.CandlePrice, error) {
 	return types.NewCandlePrice(
-		string(ProviderBitget),
-		candle.Arg.InstID,
 		candle.Close,
 		candle.Volume,
 		candle.TimeStamp,

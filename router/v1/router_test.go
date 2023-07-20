@@ -14,27 +14,31 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	"github.com/ojo-network/price-feeder/config"
-	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle/types"
 	v1 "github.com/ojo-network/price-feeder/router/v1"
 )
 
 var (
 	_ v1.Oracle = (*mockOracle)(nil)
 
-	mockPrices = map[string]sdk.Dec{
-		"ATOM": sdk.MustNewDecFromStr("34.84"),
-		"OJO":  sdk.MustNewDecFromStr("4.21"),
+	ATOMUSD = types.CurrencyPair{Base: "ATOM", Quote: "USD"}
+	OJOUSD  = types.CurrencyPair{Base: "OJO", Quote: "USD"}
+	FOOUSD  = types.CurrencyPair{Base: "FOO", Quote: "USD"}
+
+	mockPrices = types.CurrencyPairDec{
+		ATOMUSD: sdk.MustNewDecFromStr("34.84"),
+		OJOUSD:  sdk.MustNewDecFromStr("4.21"),
 	}
 
-	mockComputedPrices = map[provider.Name]map[string]sdk.Dec{
+	mockComputedPrices = types.CurrencyPairDecByProvider{
 		provider.ProviderBinance: {
-			"ATOM": sdk.MustNewDecFromStr("28.21000000"),
-			"OJO":  sdk.MustNewDecFromStr("1.13000000"),
+			ATOMUSD: sdk.MustNewDecFromStr("28.21000000"),
+			OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
 		},
 		provider.ProviderKraken: {
-			"ATOM": sdk.MustNewDecFromStr("28.268700"),
-			"OJO":  sdk.MustNewDecFromStr("1.13000000"),
+			ATOMUSD: sdk.MustNewDecFromStr("28.268700"),
+			OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
 		},
 	}
 )
@@ -45,15 +49,15 @@ func (m mockOracle) GetLastPriceSyncTimestamp() time.Time {
 	return time.Now()
 }
 
-func (m mockOracle) GetPrices() map[string]sdk.Dec {
+func (m mockOracle) GetPrices() types.CurrencyPairDec {
 	return mockPrices
 }
 
-func (m mockOracle) GetTvwapPrices() oracle.PricesByProvider {
+func (m mockOracle) GetTvwapPrices() types.CurrencyPairDecByProvider {
 	return mockComputedPrices
 }
 
-func (m mockOracle) GetVwapPrices() oracle.PricesByProvider {
+func (m mockOracle) GetVwapPrices() types.CurrencyPairDecByProvider {
 	return mockComputedPrices
 }
 
@@ -119,9 +123,9 @@ func (rts *RouterTestSuite) TestPrices() {
 
 	var respBody v1.PricesResponse
 	rts.Require().NoError(json.Unmarshal(response.Body.Bytes(), &respBody))
-	rts.Require().Equal(respBody.Prices["ATOM"], mockPrices["ATOM"])
-	rts.Require().Equal(respBody.Prices["OJO"], mockPrices["OJO"])
-	rts.Require().Equal(respBody.Prices["FOO"], sdk.Dec{})
+	rts.Require().Equal(respBody.Prices[ATOMUSD], mockPrices[ATOMUSD])
+	rts.Require().Equal(respBody.Prices[OJOUSD], mockPrices[OJOUSD])
+	rts.Require().Equal(respBody.Prices[FOOUSD], sdk.Dec{})
 }
 
 func (rts *RouterTestSuite) TestTvwap() {
@@ -133,8 +137,8 @@ func (rts *RouterTestSuite) TestTvwap() {
 	var respBody v1.PricesPerProviderResponse
 	rts.Require().NoError(json.Unmarshal(response.Body.Bytes(), &respBody))
 	rts.Require().Equal(
-		respBody.Prices[provider.ProviderBinance]["ATOM"],
-		mockComputedPrices[provider.ProviderBinance]["ATOM"],
+		respBody.Prices[provider.ProviderBinance][ATOMUSD],
+		mockComputedPrices[provider.ProviderBinance][ATOMUSD],
 	)
 }
 
@@ -147,7 +151,7 @@ func (rts *RouterTestSuite) TestVwap() {
 	var respBody v1.PricesPerProviderResponse
 	rts.Require().NoError(json.Unmarshal(response.Body.Bytes(), &respBody))
 	rts.Require().Equal(
-		respBody.Prices[provider.ProviderBinance]["ATOM"],
-		mockComputedPrices[provider.ProviderBinance]["ATOM"],
+		respBody.Prices[provider.ProviderBinance][ATOMUSD],
+		mockComputedPrices[provider.ProviderBinance][ATOMUSD],
 	)
 }

@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -41,13 +40,12 @@ type (
 	//
 	// REF: https://exchange-docs.crypto.com/spot/index.html#introduction
 	CryptoProvider struct {
-		wsc             *WebsocketController
-		logger          zerolog.Logger
-		mtx             sync.RWMutex
-		endpoints       Endpoint
-		tickers         map[string]types.TickerPrice   // Symbol => TickerPrice
-		candles         map[string][]types.CandlePrice // Symbol => CandlePrice
-		subscribedPairs map[string]types.CurrencyPair  // Symbol => types.CurrencyPair
+		wsc       *WebsocketController
+		logger    zerolog.Logger
+		mtx       sync.RWMutex
+		endpoints Endpoint
+
+		priceStore
 	}
 
 	CryptoTickerResponse struct {
@@ -128,12 +126,12 @@ func NewCryptoProvider(
 	cryptoLogger := logger.With().Str("provider", "crypto").Logger()
 
 	provider := &CryptoProvider{
-		logger:          cryptoLogger,
-		endpoints:       endpoints,
-		tickers:         map[string]types.TickerPrice{},
-		candles:         map[string][]types.CandlePrice{},
-		subscribedPairs: map[string]types.CurrencyPair{},
+		logger:     cryptoLogger,
+		endpoints:  endpoints,
+		priceStore: newPriceStore(cryptoLogger),
 	}
+	provider.candlePeriod = cryptoCandlePeriod
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToCryptoPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
@@ -214,93 +212,6 @@ func (p *CryptoProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-// GetTickerPrices returns the tickerPrices based on the provided pairs.
-func (p *CryptoProvider) GetTickerPrices(pairs ...types.CurrencyPair) (map[string]types.TickerPrice, error) {
-	tickerPrices := make(map[string]types.TickerPrice, len(pairs))
-
-	tickerErrs := 0
-	for _, cp := range pairs {
-		key := currencyPairToCryptoPair(cp)
-		price, err := p.getTickerPrice(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			tickerErrs++
-			continue
-		}
-		tickerPrices[cp.String()] = price
-	}
-
-	if tickerErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoTickers.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return tickerPrices, nil
-}
-
-// GetCandlePrices returns the candlePrices based on the provided pairs.
-func (p *CryptoProvider) GetCandlePrices(pairs ...types.CurrencyPair) (map[string][]types.CandlePrice, error) {
-	candlePrices := make(map[string][]types.CandlePrice, len(pairs))
-
-	candleErrs := 0
-	for _, cp := range pairs {
-		key := currencyPairToCryptoPair(cp)
-		prices, err := p.getCandlePrices(key)
-		if err != nil {
-			p.logger.Warn().Err(err)
-			candleErrs++
-			continue
-		}
-		candlePrices[cp.String()] = prices
-	}
-
-	if candleErrs == len(pairs) {
-		return nil, fmt.Errorf(
-			types.ErrNoCandles.Error(),
-			p.endpoints.Name,
-			pairs,
-		)
-	}
-	return candlePrices, nil
-}
-
-func (p *CryptoProvider) getTickerPrice(key string) (types.TickerPrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	ticker, ok := p.tickers[key]
-	if !ok {
-		return types.TickerPrice{}, fmt.Errorf(
-			types.ErrTickerNotFound.Error(),
-			p.endpoints.Name,
-			key,
-		)
-	}
-
-	return ticker, nil
-}
-
-func (p *CryptoProvider) getCandlePrices(key string) ([]types.CandlePrice, error) {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
-	candles, ok := p.candles[key]
-	if !ok {
-		return []types.CandlePrice{}, fmt.Errorf(
-			types.ErrCandleNotFound.Error(),
-			p.endpoints.Name,
-			key,
-		)
-	}
-
-	candleList := []types.CandlePrice{}
-	candleList = append(candleList, candles...)
-
-	return candleList, nil
-}
-
 func (p *CryptoProvider) messageReceived(messageType int, conn *WebsocketConnection, bz []byte) {
 	if messageType != websocket.TextMessage {
 		return
@@ -326,8 +237,8 @@ func (p *CryptoProvider) messageReceived(messageType int, conn *WebsocketConnect
 	if tickerResp.Result.Channel == cryptoTickerChannel {
 		for _, tickerPair := range tickerResp.Result.Data {
 			p.setTickerPair(
-				tickerResp.Result.InstrumentName,
 				tickerPair,
+				tickerResp.Result.InstrumentName,
 			)
 			telemetryWebsocketMessage(ProviderCrypto, MessageTypeTicker)
 		}
@@ -338,8 +249,8 @@ func (p *CryptoProvider) messageReceived(messageType int, conn *WebsocketConnect
 	if candleResp.Result.Channel == cryptoCandleChannel {
 		for _, candlePair := range candleResp.Result.Data {
 			p.setCandlePair(
-				candleResp.Result.InstrumentName,
 				candlePair,
+				candleResp.Result.InstrumentName,
 			)
 			telemetryWebsocketMessage(ProviderCrypto, MessageTypeCandle)
 		}
@@ -371,51 +282,12 @@ func (p *CryptoProvider) pong(conn *WebsocketConnection, heartbeatResp CryptoHea
 	}
 }
 
-func (p *CryptoProvider) setTickerPair(symbol string, tickerPair CryptoTicker) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	tickerPrice, err := types.NewTickerPrice(
-		string(ProviderCrypto),
-		symbol,
-		tickerPair.LatestTrade,
-		tickerPair.Volume,
-	)
-	if err != nil {
-		p.logger.Warn().Err(err).Msg("crypto: failed to parse ticker")
-		return
-	}
-
-	p.tickers[symbol] = tickerPrice
+func (ct CryptoTicker) toTickerPrice() (types.TickerPrice, error) {
+	return types.NewTickerPrice(ct.LatestTrade, ct.Volume)
 }
 
-func (p *CryptoProvider) setCandlePair(symbol string, candlePair CryptoCandle) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
-	candle, err := types.NewCandlePrice(
-		string(ProviderCrypto),
-		symbol,
-		candlePair.Close,
-		candlePair.Volume,
-		candlePair.Timestamp,
-	)
-	if err != nil {
-		p.logger.Warn().Err(err).Msg("crypto: failed to parse candle")
-		return
-	}
-
-	staleTime := PastUnixTime(cryptoCandlePeriod)
-	candleList := []types.CandlePrice{}
-	candleList = append(candleList, candle)
-
-	for _, c := range p.candles[symbol] {
-		if staleTime < c.TimeStamp {
-			candleList = append(candleList, c)
-		}
-	}
-
-	p.candles[symbol] = candleList
+func (ct CryptoCandle) toCandlePrice() (types.CandlePrice, error) {
+	return types.NewCandlePrice(ct.Close, ct.Volume, ct.Timestamp)
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.

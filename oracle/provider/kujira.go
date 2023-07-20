@@ -16,21 +16,21 @@ import (
 )
 
 const (
-	osmosisV2WSHost   = "api.osmo-api.prod.ojo.network"
-	osmosisV2WSPath   = "ws"
-	osmosisV2RestHost = "https://api.osmo-api.prod.ojo.network"
-	osmosisV2RestPath = "/assetpairs"
-	osmosisv2AckMsg   = "ack"
+	kujiraWSHost   = "api.kujira-api.prod.ojo.network"
+	kujiraWSPath   = "ws"
+	kujiraRestHost = "https://api.kujira-api.prod.ojo.network"
+	kujiraRestPath = "/assetpairs"
+	kujiraAckMsg   = "ack"
 )
 
-var _ Provider = (*OsmosisV2Provider)(nil)
+var _ Provider = (*KujiraProvider)(nil)
 
 type (
-	// OsmosisV2Provider defines an Oracle provider implemented by OJO's
-	// Osmosis API.
+	// KujiraProvider defines an Oracle provider implemented by OJO's
+	// Kujira API.
 	//
-	// REF: https://github.com/ojo-network/osmosis-api
-	OsmosisV2Provider struct {
+	// REF: https://github.com/ojo-network/kujira-api
+	KujiraProvider struct {
 		wsc       *WebsocketController
 		wsURL     url.URL
 		logger    zerolog.Logger
@@ -40,65 +40,59 @@ type (
 		priceStore
 	}
 
-	OsmosisV2Ticker struct {
+	KujiraTicker struct {
 		Price  string `json:"Price"`
 		Volume string `json:"Volume"`
 	}
 
-	OsmosisV2Candle struct {
+	KujiraCandle struct {
 		Close   string `json:"Close"`
 		Volume  string `json:"Volume"`
 		EndTime int64  `json:"EndTime"`
 	}
 
-	// OsmosisV2PairsSummary defines the response structure for an Osmosis pairs
+	// KujiraPairsSummary defines the response structure for an Kujira pairs
 	// summary.
-	OsmosisV2PairsSummary struct {
-		Data []OsmosisPairData `json:"data"`
+	KujiraPairsSummary struct {
+		Data []KujiraPairData `json:"data"`
 	}
 
-	// OsmosisPairData defines the data response structure for an Osmosis pair.
-	OsmosisPairData struct {
-		Base  string `json:"base_symbol"`
-		Quote string `json:"quote_symbol"`
-	}
-
-	// OsmosisV2PairData defines the data response structure for an Osmosis pair.
-	OsmosisV2PairData struct {
+	// KujiraPairData defines the data response structure for an Kujira pair.
+	KujiraPairData struct {
 		Base  string `json:"base"`
 		Quote string `json:"quote"`
 	}
 )
 
-func NewOsmosisV2Provider(
+func NewKujiraProvider(
 	ctx context.Context,
 	logger zerolog.Logger,
 	endpoints Endpoint,
 	pairs ...types.CurrencyPair,
-) (*OsmosisV2Provider, error) {
-	if endpoints.Name != ProviderOsmosisV2 {
+) (*KujiraProvider, error) {
+	if endpoints.Name != ProviderKujira {
 		endpoints = Endpoint{
-			Name:      ProviderOsmosisV2,
-			Rest:      osmosisV2RestHost,
-			Websocket: osmosisV2WSHost,
+			Name:      ProviderKujira,
+			Rest:      kujiraRestHost,
+			Websocket: kujiraWSHost,
 		}
 	}
 
 	wsURL := url.URL{
 		Scheme: "wss",
 		Host:   endpoints.Websocket,
-		Path:   osmosisV2WSPath,
+		Path:   kujiraWSPath,
 	}
 
-	osmosisV2Logger := logger.With().Str("provider", "osmosisv2").Logger()
+	kujiraLogger := logger.With().Str("provider", "kujira").Logger()
 
-	provider := &OsmosisV2Provider{
+	provider := &KujiraProvider{
 		wsURL:      wsURL,
-		logger:     osmosisV2Logger,
+		logger:     kujiraLogger,
 		endpoints:  endpoints,
-		priceStore: newPriceStore(osmosisV2Logger),
+		priceStore: newPriceStore(kujiraLogger),
 	}
-	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToOsmosisV2Pair)
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToKujiraPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
@@ -120,19 +114,19 @@ func NewOsmosisV2Provider(
 		provider.messageReceived,
 		defaultPingDuration,
 		websocket.PingMessage,
-		osmosisV2Logger,
+		kujiraLogger,
 	)
 
 	return provider, nil
 }
 
-func (p *OsmosisV2Provider) StartConnections() {
+func (p *KujiraProvider) StartConnections() {
 	p.wsc.StartConnections()
 }
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *OsmosisV2Provider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
+func (p *KujiraProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -149,18 +143,18 @@ func (p *OsmosisV2Provider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-func (p *OsmosisV2Provider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
+func (p *KujiraProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	// check if message is an ack
-	if string(bz) == osmosisv2AckMsg {
+	if string(bz) == kujiraAckMsg {
 		return
 	}
 
 	var (
 		messageResp map[string]interface{}
 		messageErr  error
-		tickerResp  OsmosisV2Ticker
+		tickerResp  KujiraTicker
 		tickerErr   error
-		candleResp  []OsmosisV2Candle
+		candleResp  []KujiraCandle
 		candleErr   error
 	)
 
@@ -175,8 +169,8 @@ func (p *OsmosisV2Provider) messageReceived(_ int, _ *WebsocketConnection, bz []
 	// Check the response for currency pairs that the provider is subscribed
 	// to and determine whether it is a ticker or candle.
 	for _, pair := range p.subscribedPairs {
-		osmosisV2Pair := currencyPairToOsmosisV2Pair(pair)
-		if msg, ok := messageResp[osmosisV2Pair]; ok {
+		kujiraPair := currencyPairToKujiraPair(pair)
+		if msg, ok := messageResp[kujiraPair]; ok {
 			switch v := msg.(type) {
 			// ticker response
 			case map[string]interface{}:
@@ -191,9 +185,9 @@ func (p *OsmosisV2Provider) messageReceived(_ int, _ *WebsocketConnection, bz []
 				}
 				p.setTickerPair(
 					tickerResp,
-					osmosisV2Pair,
+					kujiraPair,
 				)
-				telemetryWebsocketMessage(ProviderOsmosisV2, MessageTypeTicker)
+				telemetryWebsocketMessage(ProviderKujira, MessageTypeTicker)
 				continue
 
 			// candle response
@@ -214,24 +208,24 @@ func (p *OsmosisV2Provider) messageReceived(_ int, _ *WebsocketConnection, bz []
 				for _, singleCandle := range candleResp {
 					p.setCandlePair(
 						singleCandle,
-						osmosisV2Pair,
+						kujiraPair,
 					)
 				}
-				telemetryWebsocketMessage(ProviderOsmosisV2, MessageTypeCandle)
+				telemetryWebsocketMessage(ProviderKujira, MessageTypeCandle)
 				continue
 			}
 		}
 	}
 }
 
-func (o OsmosisV2Ticker) toTickerPrice() (types.TickerPrice, error) {
+func (o KujiraTicker) toTickerPrice() (types.TickerPrice, error) {
 	price, err := sdk.NewDecFromStr(o.Price)
 	if err != nil {
-		return types.TickerPrice{}, fmt.Errorf("osmosisv2: failed to parse ticker price: %w", err)
+		return types.TickerPrice{}, fmt.Errorf("kujira: failed to parse ticker price: %w", err)
 	}
 	volume, err := sdk.NewDecFromStr(o.Volume)
 	if err != nil {
-		return types.TickerPrice{}, fmt.Errorf("osmosisv2: failed to parse ticker volume: %w", err)
+		return types.TickerPrice{}, fmt.Errorf("kujira: failed to parse ticker volume: %w", err)
 	}
 
 	tickerPrice := types.TickerPrice{
@@ -241,14 +235,14 @@ func (o OsmosisV2Ticker) toTickerPrice() (types.TickerPrice, error) {
 	return tickerPrice, nil
 }
 
-func (o OsmosisV2Candle) toCandlePrice() (types.CandlePrice, error) {
+func (o KujiraCandle) toCandlePrice() (types.CandlePrice, error) {
 	close, err := sdk.NewDecFromStr(o.Close)
 	if err != nil {
-		return types.CandlePrice{}, fmt.Errorf("osmosisv2: failed to parse candle price: %w", err)
+		return types.CandlePrice{}, fmt.Errorf("kujira: failed to parse candle price: %w", err)
 	}
 	volume, err := sdk.NewDecFromStr(o.Volume)
 	if err != nil {
-		return types.CandlePrice{}, fmt.Errorf("osmosisv2: failed to parse candle volume: %w", err)
+		return types.CandlePrice{}, fmt.Errorf("kujira: failed to parse candle volume: %w", err)
 	}
 	candlePrice := types.CandlePrice{
 		Price:     close,
@@ -259,7 +253,7 @@ func (o OsmosisV2Candle) toCandlePrice() (types.CandlePrice, error) {
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
-func (p *OsmosisV2Provider) setSubscribedPairs(cps ...types.CurrencyPair) {
+func (p *KujiraProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
 	for _, cp := range cps {
 		p.subscribedPairs[cp.String()] = cp
 	}
@@ -267,14 +261,14 @@ func (p *OsmosisV2Provider) setSubscribedPairs(cps ...types.CurrencyPair) {
 
 // GetAvailablePairs returns all pairs to which the provider can subscribe.
 // ex.: map["ATOMUSDT" => {}, "OJOUSDC" => {}].
-func (p *OsmosisV2Provider) GetAvailablePairs() (map[string]struct{}, error) {
-	resp, err := http.Get(p.endpoints.Rest + osmosisV2RestPath)
+func (p *KujiraProvider) GetAvailablePairs() (map[string]struct{}, error) {
+	resp, err := http.Get(p.endpoints.Rest + kujiraRestPath)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var pairsSummary []OsmosisV2PairData
+	var pairsSummary []KujiraPairData
 	if err := json.NewDecoder(resp.Body).Decode(&pairsSummary); err != nil {
 		return nil, err
 	}
@@ -291,8 +285,8 @@ func (p *OsmosisV2Provider) GetAvailablePairs() (map[string]struct{}, error) {
 	return availablePairs, nil
 }
 
-// currencyPairToOsmosisV2Pair receives a currency pair and return osmosisv2
+// currencyPairToKujiraPair receives a currency pair and return kujira
 // ticker symbol atomusdt@ticker.
-func currencyPairToOsmosisV2Pair(cp types.CurrencyPair) string {
+func currencyPairToKujiraPair(cp types.CurrencyPair) string {
 	return cp.Base + "/" + cp.Quote
 }
