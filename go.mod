@@ -5,21 +5,28 @@ go 1.19
 require (
 	cosmossdk.io/errors v1.0.0
 	github.com/armon/go-metrics v0.4.1
-	github.com/cosmos/cosmos-sdk v0.46.12
+	github.com/cosmos/cosmos-sdk v0.46.13
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/golangci/golangci-lint v1.53.3
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
+<<<<<<< HEAD
 	github.com/ojo-network/ojo v0.1.2
+=======
+	github.com/ojo-network/ojo v0.1.4
+>>>>>>> 9e90a2a (build(deps): bump github.com/ojo-network/ojo from 0.1.3 to 0.1.4 (#175))
 	github.com/rs/cors v1.9.0
 	github.com/rs/zerolog v1.29.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tendermint/tendermint v0.34.28
+<<<<<<< HEAD
 	github.com/umee-network/umee/v4 v4.4.2
+=======
+>>>>>>> 9e90a2a (build(deps): bump github.com/ojo-network/ojo from 0.1.3 to 0.1.4 (#175))
 	golang.org/x/sync v0.3.0
 	google.golang.org/grpc v1.56.2
 	gopkg.in/yaml.v3 v3.0.1
@@ -33,7 +40,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.28.1 // indirect
-	cosmossdk.io/math v1.0.0 // indirect
+	cosmossdk.io/math v1.0.1 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/4meepo/tagalign v1.2.2 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -43,8 +50,11 @@ require (
 	github.com/Antonboom/nilnil v0.1.5 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
+<<<<<<< HEAD
 	github.com/CosmWasm/wasmd v0.31.0 // indirect
 	github.com/CosmWasm/wasmvm v1.2.1 // indirect
+=======
+>>>>>>> 9e90a2a (build(deps): bump github.com/ojo-network/ojo from 0.1.3 to 0.1.4 (#175))
 	github.com/Djarvur/go-err113 v0.0.0-20210108212216-aea10b59be24 // indirect
 	github.com/GaijinEntertainment/go-exhaustruct/v2 v2.3.0 // indirect
 	github.com/Gravity-Bridge/Gravity-Bridge/module v1.5.3 // indirect
@@ -84,7 +94,11 @@ require (
 	github.com/cosmos/gogoproto v1.4.6 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/iavl v0.19.6 // indirect
+<<<<<<< HEAD
 	github.com/cosmos/ibc-go/v6 v6.1.1 // indirect
+=======
+	github.com/cosmos/ibc-go/v5 v5.3.1 // indirect
+>>>>>>> 9e90a2a (build(deps): bump github.com/ojo-network/ojo from 0.1.3 to 0.1.4 (#175))
 	github.com/cosmos/ledger-cosmos-go v0.12.2 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
@@ -203,7 +217,11 @@ require (
 	github.com/matoous/godox v0.0.0-20230222163458-006bad1f9d26 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
+<<<<<<< HEAD
 	github.com/mattn/go-runewidth v0.0.14 // indirect
+=======
+	github.com/mattn/go-runewidth v0.0.10 // indirect
+>>>>>>> 9e90a2a (build(deps): bump github.com/ojo-network/ojo from 0.1.3 to 0.1.4 (#175))
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mbilski/exhaustivestruct v1.2.0 // indirect
 	github.com/mgechev/revive v1.3.2 // indirect
@@ -325,6 +343,9 @@ replace (
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+<<<<<<< HEAD
 	github.com/osmosis-labs/bech32-ibc => github.com/umee-network/bech32-ibc v0.3.3
+=======
+>>>>>>> 9e90a2a (build(deps): bump github.com/ojo-network/ojo from 0.1.3 to 0.1.4 (#175))
 	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.28
 )
