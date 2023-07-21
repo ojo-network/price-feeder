@@ -50,7 +50,7 @@ install: go.sum
 ###############################################################################
 
 docker-build:
-	@DOCKER_BUILDKIT=1 docker build -t ghcr.io/ojo-network/price-feeder-ojo .
+	@DOCKER_BUILDKIT=1 docker build --platform x86_64 -t ghcr.io/ojo-network/price-feeder-ojo .
 
 docker-push:
 	@docker push ghcr.io/ojo-network/price-feeder-ojo
