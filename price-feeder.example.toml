@@ -11,6 +11,10 @@ base = "USDT"
 threshold = "1.5"
 
 [[deviation_thresholds]]
+base = "USDC"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "ATOM"
 threshold = "1.5"
 
@@ -73,6 +77,13 @@ providers = [
 ]
 quote = "USDT"
 
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+]
+quote = "USD"
 
 [[currency_pairs]]
 base = "USDC"
@@ -270,7 +281,7 @@ validator = "ojovaloper1zypqa76je7pxsdwkfah6mu9a583sju6x6tnq6w"
 
 [keyring]
 backend = "test"
-dir = "/Users/username/.ojo"
+dir = "/Users/ryanbajollari/.ojo"
 
 [rpc]
 grpc_endpoint = "localhost:9090"

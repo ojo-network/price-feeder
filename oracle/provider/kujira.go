@@ -79,7 +79,7 @@ func NewKujiraProvider(
 	}
 
 	wsURL := url.URL{
-		Scheme: "wss",
+		Scheme: "ws",
 		Host:   endpoints.Websocket,
 		Path:   kujiraWSPath,
 	}
