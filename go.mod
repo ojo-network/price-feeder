@@ -14,7 +14,7 @@ require (
 	github.com/hasura/go-graphql-client v0.9.3
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ojo-network/ojo v0.1.4-0.20230706144625-18ecb63332a5
+	github.com/ojo-network/ojo v0.1.4-0.20230722121153-9f0cf33296d8
 	github.com/rs/cors v1.9.0
 	github.com/rs/zerolog v1.29.1
 	github.com/spf13/cobra v1.7.0
