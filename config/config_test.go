@@ -1095,7 +1095,7 @@ enabled = false
 	_, err = tmpFile.Write(content)
 	require.NoError(t, err)
 
-	tmpFile2, err := ioutil.TempFile("", "provider_config*.toml")
+	tmpFile2, err := ioutil.TempFile("", "provider-config*.toml")
 	require.NoError(t, err)
 	defer os.Remove(tmpFile2.Name())
 

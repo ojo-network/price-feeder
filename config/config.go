@@ -25,7 +25,7 @@ const (
 	defaultSrvReadTimeout  = 15 * time.Second
 	defaultProviderTimeout = 100 * time.Millisecond
 
-	DefaultProviderConfigPath = "provider_config.toml"
+	DefaultProviderConfigPath = "provider-config.toml"
 	SampleNodeConfigPath      = "price-feeder.example.toml"
 )
 
@@ -217,6 +217,8 @@ func ParseConfig(configPath string) (Config, error) {
 	return ParseConfigs([]string{configPath})
 }
 
+// ParseConfigs attempts to read and parse configuration from the given file paths.
+// An error is returned if reading or parsing the configs fails.
 func ParseConfigs(configPaths []string) (Config, error) {
 	var cfg Config
 
@@ -224,6 +226,7 @@ func ParseConfigs(configPaths []string) (Config, error) {
 	// Allow nested env vars to be read with underscore separators.
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
+	// Loop over each config path and merge its values into the previous one
 	for _, configPath := range configPaths {
 		if configPath == "" {
 			return cfg, ErrEmptyConfigPath
