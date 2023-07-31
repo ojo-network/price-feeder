@@ -184,7 +184,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 
 		priceProvider, err := o.getOrSetProvider(ctx, providerName)
 		if err != nil {
-			// If initialization of one of the providers fails do not cause an oracle tick failure
+			// If initialization of one of the providers fails, do not cause an oracle tick failure.
 			o.logger.Error().Err(err).Msgf("failed to initialize %s provider", providerName)
 			continue
 		}
