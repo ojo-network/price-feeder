@@ -54,6 +54,26 @@ threshold = "2"
 base = "SCRT"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "WETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "WBTC"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "CBETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "LINK"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "RETH"
+threshold = "2"
+
 [[currency_pairs]]
 base = "USDT"
 providers = [
