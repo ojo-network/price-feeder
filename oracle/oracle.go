@@ -184,7 +184,9 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 
 		priceProvider, err := o.getOrSetProvider(ctx, providerName)
 		if err != nil {
-			return err
+			// If initialization of one of the providers fails, do not cause an oracle tick failure.
+			o.logger.Error().Err(err).Msgf("failed to initialize %s provider", providerName)
+			continue
 		}
 
 		for _, pair := range currencyPairs {
@@ -243,7 +245,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 	}
 
 	if err := g.Wait(); err != nil {
-		o.logger.Err(err).Msg("failed to get ticker prices from provider")
+		o.logger.Info().Err(err).Msg("failed to get prices from provider")
 	}
 
 	computedPrices, err := o.GetComputedPrices(
