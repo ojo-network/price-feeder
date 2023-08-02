@@ -50,19 +50,17 @@ The list of current supported providers:
 
 ## Usage
 
-The `price-feeder` tool runs off of two configuration files. The provider-config
-file defines what exchange rates to fetch and what providers to get them from.
-The node-config defines the oracle's keyring and feeder account information.
+The `price-feeder` tool runs off of one or many configuration files. 
+
+The node-config contains the oracle's keyring and feeder account information.
 The keyring's password is defined via environment variables or user input.
 More information on the keyring can be found [here](#keyring)
-Please see the [example configuration](price-feeder.example.toml) for more details.
+Please see the [example configuration](price-feeder.example.toml) for more details. The path to the node-config is required as the first argument. You can optionally add all configuration options to the node-config file or use the config-dir flag to point to a directory containing the other configuration files.
 
-The default `provider_config.toml` is used when no --provider-config flag is provided.
-
-```shell
+The files in the provider-config folder define what exchange rates to fetch and what providers to get them from. They also contain deviation thresholds and API endpoints. Please see the [example configuration](ojo-provider-config) for more details.
 
 ```shell
-$ price-feeder /path/to/price_feeder_config.toml --provider-config provider_config.toml
+$ price-feeder /path/to/price_feeder_config.toml
 ```
 
 Chain rules for checking the free oracle transactions are:

@@ -34,10 +34,10 @@ func TestPriceAccuracy(t *testing.T) {
 	}
 
 	logger := getLogger()
-	cfg, err := config.ParseConfigs([]string{
+	cfg, err := config.LoadConfigFromFlags(
 		fmt.Sprintf("../../%s", config.SampleNodeConfigPath),
-		fmt.Sprintf("../../%s", config.DefaultProviderConfigPath),
-	})
+		"../../",
+	)
 	require.NoError(t, err)
 
 	providerTimeout, err := time.ParseDuration(cfg.ProviderTimeout)

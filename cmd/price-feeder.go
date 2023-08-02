@@ -36,7 +36,6 @@ const (
 	flagLogLevel          = "log-level"
 	flagLogFormat         = "log-format"
 	flagSkipProviderCheck = "skip-provider-check"
-	flagProviderConfig    = "provider-config"
 
 	envVariablePass = "PRICE_FEEDER_PASS"
 )
@@ -62,7 +61,6 @@ func init() {
 	rootCmd.PersistentFlags().String(flagLogLevel, zerolog.InfoLevel.String(), "logging level")
 	rootCmd.PersistentFlags().String(flagLogFormat, logLevelText, "logging format; must be either json or text")
 	rootCmd.PersistentFlags().Bool(flagSkipProviderCheck, false, "skip the coingecko API provider check")
-	rootCmd.PersistentFlags().String(flagProviderConfig, config.DefaultProviderConfigPath, "provider config file path")
 
 	rootCmd.AddCommand(getVersionCmd())
 }
@@ -97,11 +95,6 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	providerConfig, err := cmd.Flags().GetString(flagProviderConfig)
-	if err != nil {
-		return err
-	}
-
 	var logWriter io.Writer
 	switch strings.ToLower(logFormatStr) {
 	case logLevelJSON:
@@ -116,7 +109,7 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 
 	logger := zerolog.New(logWriter).Level(logLvl).With().Timestamp().Logger()
 
-	cfg, err := config.ParseConfigs([]string{args[0], providerConfig})
+	cfg, err := config.LoadConfigFromFlags(args[0], "")
 	if err != nil {
 		return err
 	}
