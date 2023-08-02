@@ -9,17 +9,18 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-COPY . .
-RUN mv ./umee ../umee
-# RUN go mod download
+COPY go.mod go.sum ./
+RUN go mod download
 
 # Cosmwasm - Download correct libwasmvm version
-RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v1.2.4/libwasmvm_muslc.x86_64.a \
-      -O /lib/libwasmvm_muslc.a
+RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
+      -O /lib/libwasmvm_muslc.a && \
     # verify checksum
-RUN wget https://github.com/CosmWasm/wasmvm/releases/download/v1.2.4/checksums.txt -O /tmp/checksums.txt && \
-    sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep x86_64.a | cut -d ' ' -f 1)
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
+    sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
 
+COPY . .
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
 
 # Runner
