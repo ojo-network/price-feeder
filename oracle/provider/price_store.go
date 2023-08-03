@@ -103,8 +103,8 @@ func (ps *priceStore) isSubscribed(currencyPair string) bool {
 	return false
 }
 
-// GetTickerPrices returns the tickerPrices based on the provided pairs. Returns an
-// error if ANY of the currency pairs are not available.
+// GetTickerPrices returns the tickerPrices based on the provided pairs. Logs a
+// warning for each currency pair that is not available.
 func (ps *priceStore) GetTickerPrices(pairs ...types.CurrencyPair) (types.CurrencyPairTickers, error) {
 	ps.tickerMtx.RLock()
 	defer ps.tickerMtx.RUnlock()
@@ -114,7 +114,7 @@ func (ps *priceStore) GetTickerPrices(pairs ...types.CurrencyPair) (types.Curren
 		key := ps.currencyPairToTickerPair(cp)
 		ticker, ok := ps.tickers[key]
 		if !ok {
-			ps.logger.Error().Msgf("failed to get ticker price for %s", key)
+			ps.logger.Warn().Msgf("failed to get ticker price for %s", key)
 			continue
 		}
 		tickerPrices[cp] = ticker
@@ -123,7 +123,7 @@ func (ps *priceStore) GetTickerPrices(pairs ...types.CurrencyPair) (types.Curren
 }
 
 // GetCandlePrices returns a copy of the the candlePrices based on the provided pairs.
-// Returns an error if ANY of the currency pairs are not available
+// Logs a warning for each currency pair that is not available.
 func (ps *priceStore) GetCandlePrices(pairs ...types.CurrencyPair) (types.CurrencyPairCandles, error) {
 	ps.candleMtx.RLock()
 	defer ps.candleMtx.RUnlock()
@@ -133,7 +133,7 @@ func (ps *priceStore) GetCandlePrices(pairs ...types.CurrencyPair) (types.Curren
 		key := ps.curencyPairToCandlePair(cp)
 		candles, ok := ps.candles[key]
 		if !ok {
-			ps.logger.Error().Msgf("failed to get candle prices for %s", key)
+			ps.logger.Warn().Msgf("failed to get candle prices for %s", key)
 			continue
 		}
 		candlesCopy := make([]types.CandlePrice, 0, len(candles))
