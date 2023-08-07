@@ -58,6 +58,26 @@ threshold = "2"
 base = "SCRT"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "WETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "WBTC"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "CBETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "LINK"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "RETH"
+threshold = "2"
+
 [[currency_pairs]]
 base = "USDT"
 providers = [
@@ -196,6 +216,17 @@ providers = [
 quote = "WETH"
 [[currency_pairs.pair_address_providers]]
 address = "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "RETH"
+providers = [
+  "eth-uniswap",
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0xa4e0faA58465A2D369aa21B3e42d43374c6F9613"
 provider = "eth-uniswap"
 
 [[currency_pairs]]
