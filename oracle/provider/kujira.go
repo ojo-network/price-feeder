@@ -17,7 +17,7 @@ import (
 
 const (
 	kujiraWSHost   = "api.kujira-api.prod.ojo.network"
-	kujiraWSPath   = "wss"
+	kujiraWSPath   = "ws"
 	kujiraRestHost = "https://api.kujira-api.prod.ojo.network"
 	kujiraRestPath = "/assetpairs"
 	kujiraAckMsg   = "ack"
@@ -79,7 +79,7 @@ func NewKujiraProvider(
 	}
 
 	wsURL := url.URL{
-		Scheme: "ws",
+		Scheme: "wss",
 		Host:   endpoints.Websocket,
 		Path:   kujiraWSPath,
 	}
