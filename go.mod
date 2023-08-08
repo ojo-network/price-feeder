@@ -5,13 +5,8 @@ go 1.19
 require (
 	cosmossdk.io/errors v1.0.0
 	github.com/armon/go-metrics v0.4.1
-<<<<<<< HEAD
-	github.com/cosmos/cosmos-sdk v0.46.12
-	github.com/go-playground/validator/v10 v10.14.1
-=======
 	github.com/cosmos/cosmos-sdk v0.46.13
 	github.com/go-playground/validator/v10 v10.15.0
->>>>>>> 27b86cd (build(deps): bump github.com/go-playground/validator/v10 (#218))
 	github.com/golangci/golangci-lint v1.53.3
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
