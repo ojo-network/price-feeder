@@ -159,7 +159,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "OSMO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
@@ -221,7 +221,7 @@ provider = "eth-uniswap"
 [[currency_pairs]]
 base = "stATOM"
 providers = [
-  "osmosisv2",
+  "osmosis",
   "crescent",
 ]
 quote = "ATOM"
@@ -229,7 +229,7 @@ quote = "ATOM"
 [[currency_pairs]]
 base = "stOSMO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "OSMO"
 
@@ -267,14 +267,14 @@ quote = "USD"
 [[currency_pairs]]
 base = "JUNO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
 [[currency_pairs]]
 base = "stJUNO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "JUNO"
 
@@ -300,7 +300,7 @@ validator = "ojovaloper1zypqa76je7pxsdwkfah6mu9a583sju6x6tnq6w"
 
 [keyring]
 backend = "test"
-dir = "/Users/username/.ojo"
+dir = "/Users/ryanbajollari/.ojo"
 
 [rpc]
 grpc_endpoint = "localhost:9090"
