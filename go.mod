@@ -110,6 +110,7 @@ require (
 	github.com/firefart/nonamedreturns v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-gonic/gin v1.7.0 // indirect
 	github.com/go-critic/go-critic v0.8.1 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
