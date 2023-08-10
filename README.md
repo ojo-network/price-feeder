@@ -43,8 +43,7 @@ The list of current supported providers:
 - [Kraken](https://www.kraken.com/en-us/)
 - [Mexc](https://www.mexc.com/)
 - [Okx](https://www.okx.com/)
-- [Osmosis](https://app.osmosis.zone/)
-- [OsmosisV2](https://github.com/ojo-network/osmosis-api)
+- [Osmosis](https://github.com/ojo-network/osmosis-api)
 <!-- markdown-link-check-enable -->
 
 ## Usage
