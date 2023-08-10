@@ -11,6 +11,10 @@ base = "USDT"
 threshold = "1.5"
 
 [[deviation_thresholds]]
+base = "USDC"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "ATOM"
 threshold = "1.5"
 
@@ -92,6 +96,13 @@ providers = [
 ]
 quote = "USDT"
 
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+]
+quote = "USD"
 
 [[currency_pairs]]
 base = "USDC"

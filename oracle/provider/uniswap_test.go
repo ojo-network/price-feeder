@@ -13,11 +13,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/hasura/go-graphql-client"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/libs/rand"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
