@@ -21,8 +21,7 @@ const (
 	defaultSrvReadTimeout  = 15 * time.Second
 	defaultProviderTimeout = 100 * time.Millisecond
 
-	DefaultProviderConfigFolder = "provider-config"
-	SampleNodeConfigPath        = "price-feeder.example.toml"
+	SampleNodeConfigPath = "price-feeder.example.toml"
 )
 
 var (

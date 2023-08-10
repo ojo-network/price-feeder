@@ -50,7 +50,7 @@ The list of current supported providers:
 
 ## Usage
 
-The `price-feeder` tool runs off of one or many configuration files. 
+The `price-feeder` tool runs off of one or many configuration files.
 
 The node-config contains the oracle's keyring and feeder account information.
 The keyring's password is defined via environment variables or user input.
