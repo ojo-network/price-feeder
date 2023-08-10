@@ -3,6 +3,10 @@ base = "USDT"
 threshold = "1.5"
 
 [[deviation_thresholds]]
+base = "USDC"
+threshold = "1.5"
+
+[[deviation_thresholds]]
 base = "ATOM"
 threshold = "1.5"
 
@@ -44,4 +48,24 @@ threshold = "2"
 
 [[deviation_thresholds]]
 base = "SCRT"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "WETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "WBTC"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "CBETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "LINK"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "RETH"
 threshold = "2"
