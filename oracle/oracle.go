@@ -438,8 +438,8 @@ func NewProvider(
 	case provider.ProviderKraken:
 		return provider.NewKrakenProvider(ctx, logger, endpoint, providerPairs...)
 
-	case provider.ProviderOsmosisV2:
-		return provider.NewOsmosisV2Provider(ctx, logger, endpoint, providerPairs...)
+	case provider.ProviderOsmosis:
+		return provider.NewOsmosisProvider(ctx, logger, endpoint, providerPairs...)
 
 	case provider.ProviderHuobi:
 		return provider.NewHuobiProvider(ctx, logger, endpoint, providerPairs...)

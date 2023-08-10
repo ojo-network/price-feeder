@@ -12,15 +12,15 @@ import (
 )
 
 const (
-	coinGeckoRestURL            = "https://api.coingecko.com/api/v3/coins"
-	coinGeckoListEndpoint       = "list"
-	coinGeckoTickersEndpoint    = "tickers"
-	osmosisV2RestURL            = "https://api.osmo-api.prod.ojo.network"
-	osmosisV2AssetPairsEndpoint = "assetpairs"
-	crescentRestURL             = "https://api.cresc-api.prod.ojo.network"
-	crescentAssetPairsEndpoint  = "assetpairs"
-	requestTimeout              = time.Second * 2
-	trackingPeriod              = time.Hour * 24
+	coinGeckoRestURL           = "https://api.coingecko.com/api/v3/coins"
+	coinGeckoListEndpoint      = "list"
+	coinGeckoTickersEndpoint   = "tickers"
+	osmosisRestURL             = "https://api.osmo-api.prod.ojo.network"
+	osmosisAssetPairsEndpoint  = "assetpairs"
+	crescentRestURL            = "https://api.cresc-api.prod.ojo.network"
+	crescentAssetPairsEndpoint = "assetpairs"
+	requestTimeout             = time.Second * 2
+	trackingPeriod             = time.Hour * 24
 )
 
 type (
@@ -140,7 +140,7 @@ func (t *CurrencyProviderTracker) getOsmosisAPIPairs() (map[string]string, error
 	}
 	osmosisAPIPairs := make(map[string]string)
 
-	osmosisResp, err := client.Get(fmt.Sprintf("%s/%s", osmosisV2RestURL, osmosisV2AssetPairsEndpoint))
+	osmosisResp, err := client.Get(fmt.Sprintf("%s/%s", osmosisRestURL, osmosisAssetPairsEndpoint))
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (t *CurrencyProviderTracker) setCurrencyProviders(
 	for _, pair := range t.pairs {
 		// check if its a pair supported by the osmosis api
 		if osmosisAPIPairs[strings.ToUpper(pair.Base)] == strings.ToUpper(pair.Quote) {
-			t.CurrencyProviders[pair.Base] = append(t.CurrencyProviders[pair.Base], "osmosisv2")
+			t.CurrencyProviders[pair.Base] = append(t.CurrencyProviders[pair.Base], "osmosis")
 		}
 
 		// check if its a pair supported by the crescent api
