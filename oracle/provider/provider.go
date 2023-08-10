@@ -12,7 +12,7 @@ const (
 	ProviderKraken     types.ProviderName = "kraken"
 	ProviderBinance    types.ProviderName = "binance"
 	ProviderBinanceUS  types.ProviderName = "binanceus"
-	ProviderOsmosisV2  types.ProviderName = "osmosisv2"
+	ProviderOsmosis    types.ProviderName = "osmosis"
 	ProviderHuobi      types.ProviderName = "huobi"
 	ProviderOkx        types.ProviderName = "okx"
 	ProviderGate       types.ProviderName = "gate"

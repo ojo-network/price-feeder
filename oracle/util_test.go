@@ -318,7 +318,7 @@ func TestStandardDeviation(t *testing.T) {
 					ATOMUSD: sdk.MustNewDecFromStr("28.23000000"),
 					OJOUSD:  sdk.MustNewDecFromStr("1.13050000"),
 				},
-				provider.ProviderOsmosisV2: {
+				provider.ProviderOsmosis: {
 					ATOMUSD: sdk.MustNewDecFromStr("28.40000000"),
 					OJOUSD:  sdk.MustNewDecFromStr("1.14000000"),
 					LUNAUSD: sdk.MustNewDecFromStr("64.10000000"),
@@ -348,7 +348,7 @@ func TestStandardDeviation(t *testing.T) {
 					OJOUSD:  sdk.MustNewDecFromStr("1.13050000"),
 					LUNAUSD: sdk.MustNewDecFromStr("64.85000000"),
 				},
-				provider.ProviderOsmosisV2: {
+				provider.ProviderOsmosis: {
 					ATOMUSD: sdk.MustNewDecFromStr("28.40000000"),
 					OJOUSD:  sdk.MustNewDecFromStr("1.14000000"),
 					LUNAUSD: sdk.MustNewDecFromStr("64.10000000"),

@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOsmosisV2Provider_GetTickerPrices(t *testing.T) {
-	p, err := NewOsmosisV2Provider(
+func TestOsmosisProvider_GetTickerPrices(t *testing.T) {
+	p, err := NewOsmosisProvider(
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
@@ -73,8 +73,8 @@ func TestOsmosisV2Provider_GetTickerPrices(t *testing.T) {
 	})
 }
 
-func TestOsmosisV2Provider_GetCandlePrices(t *testing.T) {
-	p, err := NewOsmosisV2Provider(
+func TestOsmosisProvider_GetCandlePrices(t *testing.T) {
+	p, err := NewOsmosisProvider(
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
@@ -87,7 +87,7 @@ func TestOsmosisV2Provider_GetCandlePrices(t *testing.T) {
 		volume := "2396974.000000000000000000"
 		time := int64(1000000)
 
-		candle := OsmosisV2Candle{
+		candle := OsmosisCandle{
 			Volume:  volume,
 			Close:   price,
 			EndTime: time,
@@ -109,8 +109,8 @@ func TestOsmosisV2Provider_GetCandlePrices(t *testing.T) {
 	})
 }
 
-func TestOsmosisV2CurrencyPairToOsmosisV2Pair(t *testing.T) {
+func TestOsmosisCurrencyPairToOsmosisPair(t *testing.T) {
 	cp := types.CurrencyPair{Base: "ATOM", Quote: "USDT"}
-	osmosisv2Symbol := currencyPairToOsmosisV2Pair(cp)
-	require.Equal(t, osmosisv2Symbol, "ATOM/USDT")
+	osmosisSymbol := currencyPairToOsmosisPair(cp)
+	require.Equal(t, osmosisSymbol, "ATOM/USDT")
 }

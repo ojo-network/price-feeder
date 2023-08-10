@@ -123,7 +123,7 @@ func (ots *OracleTestSuite) SetupSuite() {
 					Quote: "USD",
 				},
 			},
-			provider.ProviderOsmosisV2: {
+			provider.ProviderOsmosis: {
 				{
 					Base:  "XBT",
 					Quote: "USDT",
@@ -207,11 +207,11 @@ func (ots *OracleTestSuite) TestPrices() {
 	ots.Require().Len(prices, 0)
 
 	providerPair := map[types.ProviderName][]types.CurrencyPair{
-		provider.ProviderBinance:   {OJOUSDT},
-		provider.ProviderKraken:    {OJOUSDC},
-		provider.ProviderHuobi:     {USDCUSD},
-		provider.ProviderCoinbase:  {USDTUSD},
-		provider.ProviderOsmosisV2: {XBTUSDT},
+		provider.ProviderBinance:  {OJOUSDT},
+		provider.ProviderKraken:   {OJOUSDC},
+		provider.ProviderHuobi:    {USDCUSD},
+		provider.ProviderCoinbase: {USDTUSD},
+		provider.ProviderOsmosis:  {XBTUSDT},
 	}
 	ots.oracle.providerPairs = providerPair
 
@@ -249,7 +249,7 @@ func (ots *OracleTestSuite) TestPrices() {
 				},
 			},
 		},
-		provider.ProviderOsmosisV2: mockProvider{
+		provider.ProviderOsmosis: mockProvider{
 			prices: types.CurrencyPairTickers{
 				XBTUSDT: {
 					Price:  sdk.MustNewDecFromStr("3.717"),
@@ -302,7 +302,7 @@ func (ots *OracleTestSuite) TestPrices() {
 				},
 			},
 		},
-		provider.ProviderOsmosisV2: mockProvider{
+		provider.ProviderOsmosis: mockProvider{
 			prices: types.CurrencyPairTickers{
 				XBTUSDT: {
 					Price:  sdk.MustNewDecFromStr("3.717"),
@@ -354,7 +354,7 @@ func (ots *OracleTestSuite) TestPrices() {
 				},
 			},
 		},
-		provider.ProviderOsmosisV2: mockProvider{
+		provider.ProviderOsmosis: mockProvider{
 			prices: types.CurrencyPairTickers{
 				XBTUSDT: {
 					Price:  sdk.MustNewDecFromStr("3.717"),
