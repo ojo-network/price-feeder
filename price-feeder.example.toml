@@ -125,7 +125,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "UMEE"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
@@ -224,7 +224,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "OSMO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
@@ -246,7 +246,7 @@ quote = "USD"
 [[currency_pairs]]
 base = "stATOM"
 providers = [
-  "osmosisv2",
+  "osmosis",
   "crescent",
 ]
 quote = "ATOM"
@@ -254,14 +254,14 @@ quote = "ATOM"
 [[currency_pairs]]
 base = "stOSMO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "IST"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "OSMO"
 
@@ -302,7 +302,7 @@ providers = [ "kraken",]
 [[currency_pairs]]
 base = "JUNO"
 quote = "ATOM"
-providers = [ "osmosisv2",]
+providers = [ "osmosis",]
 
 [[currency_pairs]]
 base = "LUNA"
@@ -369,7 +369,7 @@ quote = "ATOM"
 [[currency_pairs]]
 base = "qATOM"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
@@ -388,14 +388,14 @@ quote = "USDC"
 [[currency_pairs]]
 base = "MARS"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "stJUNO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "JUNO"
 
@@ -409,7 +409,7 @@ quote = "USDC"
 [[currency_pairs]]
 base = "stUMEE"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "UMEE"
 
@@ -437,7 +437,7 @@ service-name = "price-feeder"
 prometheus-retention-time = 100
 
 [[provider_endpoints]]
-name = "osmosisv2"
+name = "osmosis"
 rest = "https://api.osmo-api.prod.ojo.network"
 websocket = "api.osmo-api.prod.ojo.network"
 
