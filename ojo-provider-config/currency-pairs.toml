@@ -90,7 +90,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "OSMO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
@@ -152,7 +152,7 @@ provider = "eth-uniswap"
 [[currency_pairs]]
 base = "stATOM"
 providers = [
-  "osmosisv2",
+  "osmosis",
   "crescent",
 ]
 quote = "ATOM"
@@ -160,7 +160,7 @@ quote = "ATOM"
 [[currency_pairs]]
 base = "stOSMO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "OSMO"
 
@@ -198,14 +198,14 @@ quote = "USD"
 [[currency_pairs]]
 base = "JUNO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
 [[currency_pairs]]
 base = "stJUNO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "JUNO"
 
