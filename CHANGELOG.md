@@ -29,6 +29,7 @@ Deprecated: for soon-to-be removed features.
 Bug Fixes: for any bug fixes.
 Client Breaking: for client breaking changes.
 API Breaking: for breaking exported Go APIs used by developers.
+Config: updates to the recommended configuration files
 
 To release a new version, ensure an appropriate release branch exists. Add a
 release version and date to the existing Unreleased section which takes the form
@@ -46,9 +47,28 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## [Unreleased]
 
+## [v0.1.5](https://github.com/ojo-network/price-feeder/releases/tag/v0.1.6-rc1) - 2023-08-10
+
+
+### Features
+
+- [210](https://github.com/ojo-network/price-feeder/pull/210) Error handling updates
+
+### Improvements
+- [220](https://github.com/ojo-network/price-feeder/pull/220) Change OsmosisV2 provider to Osmosis
+
+### Config
+
+- [215](https://github.com/ojo-network/price-feeder/pull/215) Add rETH to sample config
+
 ## [v0.1.5](https://github.com/ojo-network/price-feeder/releases/tag/v0.1.5) - 2023-08-10
 
 ### Features
 
 - [192](https://github.com/ojo-network/price-feeder/pull/192) Skip specific denoms in integration test.
+- [157](https://github.com/ojo-network/price-feeder/pull/157) Add Kujira provider.
 - [137](https://github.com/ojo-network/price-feeder/pull/137) Uniswap v3 integration.
+
+### Config
+
+- [183](https://github.com/ojo-network/price-feeder/pull/183) Add SCRT, JUNO, and stJUNO to sample config.
