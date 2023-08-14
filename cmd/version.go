@@ -20,7 +20,7 @@ var (
 	// Commit defines the application commit hash (defined at compile time)
 	Commit = ""
 
-	// SDKVersion defines the sdk version (defined at compile time)
+	// SDKVersion defines the cosmos sdk version (defined at compile time)
 	SDKVersion = ""
 
 	versionFormat string
