@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 gas_adjustment = 1.03
+=======
+config_dir = "ojo-provider-config"
+
+gas_adjustment = 1
+provider_timeout = "1000000s"
+>>>>>>> 91b83c6 (feat: split config into node and provider configs (#195))
 
 [server]
 listen_addr = "0.0.0.0:7171"
@@ -6,6 +13,7 @@ read_timeout = "20s"
 verbose_cors = true
 write_timeout = "20s"
 
+<<<<<<< HEAD
 [[deviation_thresholds]]
 base = "MARS"
 threshold = "1.5"
@@ -413,6 +421,8 @@ providers = [
 ]
 quote = "UMEE"
 
+=======
+>>>>>>> 91b83c6 (feat: split config into node and provider configs (#195))
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
 chain_id = "umee-local-testnet"
@@ -435,6 +445,7 @@ enabled = true
 global-labels = [["chain_id", "umee-local-testnet"]]
 service-name = "price-feeder"
 prometheus-retention-time = 100
+<<<<<<< HEAD
 
 [[provider_endpoints]]
 name = "osmosisv2"
@@ -445,3 +456,5 @@ websocket = "api.osmo-api.prod.ojo.network"
 name = "crescent"
 rest = "https://api.cresc-api.prod.ojo.network"
 websocket = "api.cresc-api.prod.ojo.network"
+=======
+>>>>>>> 91b83c6 (feat: split config into node and provider configs (#195))

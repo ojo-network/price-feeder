@@ -343,8 +343,8 @@ providers = [
 ]
 
 [[currency_pairs]]
-base = "OJO"
-quote = "USDT"
+base = "stOJO"
+quote = "OJO"
 providers = [
 	"kraken",
 	"binance"
@@ -545,6 +545,10 @@ listen_addr = "0.0.0.0:99999"
 read_timeout = "20s"
 verbose_cors = true
 write_timeout = "20s"
+
+[[deviation_thresholds]]
+base = "USDT"
+threshold = "3.0"
 
 [[currency_pairs]]
 base = "ATOM"
@@ -1051,5 +1055,79 @@ enabled = false
 	require.NoError(t, err)
 
 	_, err = config.ParseConfig(tmpFile.Name())
+	require.NoError(t, err)
+}
+
+func TestMultipleConfigs(t *testing.T) {
+	tmpFile, err := ioutil.TempFile("", "price-feeder*.toml")
+	require.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	content := []byte(`
+gas_adjustment = 1.5
+
+[server]
+listen_addr = "0.0.0.0:99999"
+read_timeout = "20s"
+verbose_cors = true
+write_timeout = "20s"
+
+[account]
+address = "ojo15nejfgcaanqpw25ru4arvfd0fwy6j8clccvwx4"
+validator = "ojovalcons14rjlkfzp56733j5l5nfk6fphjxymgf8mj04d5p"
+chain_id = "ojo-local-testnet"
+
+[keyring]
+backend = "test"
+dir = "/Users/username/.ojo"
+pass = "keyringPassword"
+
+[rpc]
+tmrpc_endpoint = "http://localhost:26657"
+grpc_endpoint = "localhost:9090"
+rpc_timeout = "100ms"
+
+[telemetry]
+enabled = false
+`)
+	_, err = tmpFile.Write(content)
+	require.NoError(t, err)
+
+	tmpFile2, err := ioutil.TempFile("", "provider-config*.toml")
+	require.NoError(t, err)
+	defer os.Remove(tmpFile2.Name())
+
+	content2 := []byte(`
+[[currency_pairs]]
+base = "ATOM"
+quote = "USDT"
+providers = [
+	"kraken",
+	"binance",
+	"huobi"
+]
+
+[[currency_pairs]]
+base = "OJO"
+quote = "USDT"
+providers = [
+	"kraken",
+	"binance",
+	"huobi"
+]
+
+[[currency_pairs]]
+base = "stOSMO"
+quote = "OSMO"
+providers = [
+	"kraken",
+	"binance",
+	"huobi"
+]
+`)
+	_, err = tmpFile2.Write(content2)
+	require.NoError(t, err)
+
+	_, err = config.ParseConfigs([]string{tmpFile.Name(), tmpFile2.Name()})
 	require.NoError(t, err)
 }
