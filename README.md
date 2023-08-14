@@ -41,19 +41,23 @@ The list of current supported providers:
 - [Gate](https://www.gate.io/)
 - [Huobi](https://www.huobi.com/en-us/)
 - [Kraken](https://www.kraken.com/en-us/)
+- [Kujira](https://github.com/ojo-network/kujira-api)
 - [Mexc](https://www.mexc.com/)
 - [Okx](https://www.okx.com/)
 - [Osmosis](https://github.com/ojo-network/osmosis-api)
+- [Polygon](https://api.polygon.io)
 <!-- markdown-link-check-enable -->
 
 ## Usage
 
-The `price-feeder` tool runs off of a single configuration file. This configuration
-file defines what exchange rates to fetch and what providers to get them from.
-In addition, it defines the oracle's keyring and feeder account information.
+The `price-feeder` tool runs off of one or many configuration files.
+
+The node-config contains the oracle's keyring and feeder account information.
 The keyring's password is defined via environment variables or user input.
 More information on the keyring can be found [here](#keyring)
-Please see the [example configuration](price-feeder.example.toml) for more details.
+Please see the [example configuration](price-feeder.example.toml) for more details. The path to the node-config is required as the first argument. You can optionally add all configuration options to the node-config file or use the config-dir flag to point to a directory containing the other configuration files.
+
+The files in the provider-config folder define what exchange rates to fetch and what providers to get them from. They also contain deviation thresholds and API endpoints. Please see the [example configuration](ojo-provider-config) for more details.
 
 ```shell
 $ price-feeder /path/to/price_feeder_config.toml
@@ -158,7 +162,7 @@ Ex :
 
 If this environment variable is not set, the price feeder will prompt the user for input.
 
-### Integration tests
+## Integration tests
 
 In order to run the integration price test you need to add the coinmarketcap api environment variable.
 Sign up for a free account [here](https://coinmarketcap.com/api/) and export the api key.

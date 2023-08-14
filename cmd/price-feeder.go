@@ -109,7 +109,7 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 
 	logger := zerolog.New(logWriter).Level(logLvl).With().Timestamp().Logger()
 
-	cfg, err := config.ParseConfig(args[0])
+	cfg, err := config.LoadConfigFromFlags(args[0], "")
 	if err != nil {
 		return err
 	}
