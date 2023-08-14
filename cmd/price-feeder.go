@@ -21,10 +21,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
-<<<<<<< HEAD
-=======
-	"github.com/ojo-network/ojo/app/params"
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"

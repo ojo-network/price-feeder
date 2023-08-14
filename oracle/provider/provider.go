@@ -12,11 +12,7 @@ const (
 	ProviderKraken     types.ProviderName = "kraken"
 	ProviderBinance    types.ProviderName = "binance"
 	ProviderBinanceUS  types.ProviderName = "binanceus"
-<<<<<<< HEAD
 	ProviderOsmosis    types.ProviderName = "osmosis"
-=======
-	ProviderOsmosisV2  types.ProviderName = "osmosisv2"
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 	ProviderHuobi      types.ProviderName = "huobi"
 	ProviderOkx        types.ProviderName = "okx"
 	ProviderGate       types.ProviderName = "gate"
@@ -27,10 +23,7 @@ const (
 	ProviderPolygon    types.ProviderName = "polygon"
 	ProviderCrescent   types.ProviderName = "crescent"
 	ProviderEthUniswap types.ProviderName = "eth-uniswap"
-<<<<<<< HEAD
 	ProviderKujira     types.ProviderName = "kujira"
-=======
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 	ProviderMock       types.ProviderName = "mock"
 )
 

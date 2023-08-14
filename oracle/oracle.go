@@ -13,22 +13,17 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/rs/zerolog"
+	oracletypes "github.com/umee-network/umee/v4/x/oracle/types"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-<<<<<<< HEAD
-	"github.com/cosmos/cosmos-sdk/telemetry"
-=======
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	pfsync "github.com/ojo-network/price-feeder/pkg/sync"
-	oracletypes "github.com/umee-network/umee/v4/x/oracle/types"
 )
 
 // We define tickerSleep as the minimum timeout between each oracle loop. We

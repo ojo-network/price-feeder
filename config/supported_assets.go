@@ -15,11 +15,7 @@ var (
 		provider.ProviderBinance:    false,
 		provider.ProviderBinanceUS:  false,
 		provider.ProviderCrescent:   false,
-<<<<<<< HEAD
 		provider.ProviderOsmosis:    false,
-=======
-		provider.ProviderOsmosisV2:  false,
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 		provider.ProviderOkx:        false,
 		provider.ProviderHuobi:      false,
 		provider.ProviderGate:       false,
@@ -29,10 +25,7 @@ var (
 		provider.ProviderCrypto:     false,
 		provider.ProviderPolygon:    true,
 		provider.ProviderEthUniswap: false,
-<<<<<<< HEAD
 		provider.ProviderKujira:     false,
-=======
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 		provider.ProviderMock:       false,
 	}
 
@@ -50,9 +43,7 @@ var (
 
 		{Base: "OSMO", Quote: "USDT"}: {},
 		{Base: "JUNO", Quote: "USDT"}: {},
-<<<<<<< HEAD
 		{Base: "UMEE", Quote: "USDT"}: {},
-=======
 		{Base: "WETH", Quote: "USDC"}: {},
 		{Base: "WBTC", Quote: "WETH"}: {},
 	}
@@ -62,7 +53,6 @@ var (
 		"CBETH": {},
 		"RETH":  {},
 		"WBTC":  {},
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported

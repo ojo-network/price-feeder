@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 gas_adjustment = 1.03
 
-=======
-gas_adjustment = 1
-provider_timeout = "1000000s"
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 [server]
 listen_addr = "0.0.0.0:7171"
 read_timeout = "20s"
@@ -119,6 +114,10 @@ threshold = "2"
 base = "stUMEE"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "RETH"
+threshold = "2"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -130,7 +129,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "UMEE"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
@@ -236,12 +235,11 @@ quote = "USDT"
 [[currency_pairs]]
 base = "OSMO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
 [[currency_pairs]]
-<<<<<<< HEAD
 base = "OSMO"
 providers = [
   "bitget",
@@ -255,7 +253,8 @@ providers = [
   "crypto",
 ]
 quote = "USD"
-=======
+
+[[currency_pairs]]
 base = "WETH"
 providers = [
   "eth-uniswap"
@@ -298,12 +297,11 @@ quote = "WETH"
 [[currency_pairs.pair_address_providers]]
 address = "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8"
 provider = "eth-uniswap"
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
 
 [[currency_pairs]]
 base = "stATOM"
 providers = [
-  "osmosisv2",
+  "osmosis",
   "crescent",
 ]
 quote = "ATOM"
@@ -311,14 +309,14 @@ quote = "ATOM"
 [[currency_pairs]]
 base = "stOSMO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "IST"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "OSMO"
 
@@ -359,7 +357,7 @@ providers = [ "kraken",]
 [[currency_pairs]]
 base = "JUNO"
 quote = "ATOM"
-providers = [ "osmosisv2",]
+providers = [ "osmosis",]
 
 [[currency_pairs]]
 base = "LUNA"
@@ -426,7 +424,7 @@ quote = "ATOM"
 [[currency_pairs]]
 base = "qATOM"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "ATOM"
 
@@ -445,14 +443,14 @@ quote = "USDC"
 [[currency_pairs]]
 base = "MARS"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "stJUNO"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "JUNO"
 
@@ -466,9 +464,20 @@ quote = "USDC"
 [[currency_pairs]]
 base = "stUMEE"
 providers = [
-  "osmosisv2",
+  "osmosis",
 ]
 quote = "UMEE"
+
+[[currency_pairs]]
+base = "RETH"
+providers = [
+  "eth-uniswap",
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0xa4e0faA58465A2D369aa21B3e42d43374c6F9613"
+provider = "eth-uniswap"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
@@ -494,8 +503,7 @@ service-name = "price-feeder"
 prometheus-retention-time = 100
 
 [[provider_endpoints]]
-<<<<<<< HEAD
-name = "osmosisv2"
+name = "osmosis"
 rest = "https://api.osmo-api.prod.ojo.network"
 websocket = "api.osmo-api.prod.ojo.network"
 
@@ -503,7 +511,8 @@ websocket = "api.osmo-api.prod.ojo.network"
 name = "crescent"
 rest = "https://api.cresc-api.prod.ojo.network"
 websocket = "api.cresc-api.prod.ojo.network"
-=======
+
+[[provider_endpoints]]
 name = "binance"
 rest = "https://api1.binance.com"
 websocket = "stream.binance.com:9443"
@@ -512,4 +521,3 @@ websocket = "stream.binance.com:9443"
 name = "eth-uniswap"
 rest = "https://api.studio.thegraph.com/query/46403/unidexer/version/latest"
 websocket = "not supported"
->>>>>>> ee9fd34 (feat(price-feeder): uniswap v3 integration (#137))
