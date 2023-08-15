@@ -29,7 +29,6 @@ require (
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
 	4d63.com/gochecknoglobals v0.2.1 // indirect
-<<<<<<< HEAD
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute v1.19.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -37,15 +36,7 @@ require (
 	cloud.google.com/go/storage v1.28.1 // indirect
 	cosmossdk.io/math v1.0.0 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
-	github.com/4meepo/tagalign v1.2.2 // indirect
-=======
-	cosmossdk.io/api v0.3.1 // indirect
-	cosmossdk.io/core v0.5.1 // indirect
-	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
-	cosmossdk.io/math v1.0.1 // indirect
-	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/4meepo/tagalign v1.3.2 // indirect
->>>>>>> 7efd5f6 (build(deps): bump github.com/golangci/golangci-lint from 1.53.3 to 1.54.1 (#228))
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/Abirdcfly/dupword v0.0.12 // indirect
@@ -56,12 +47,8 @@ require (
 	github.com/CosmWasm/wasmd v0.31.0 // indirect
 	github.com/CosmWasm/wasmvm v1.2.1 // indirect
 	github.com/Djarvur/go-err113 v0.0.0-20210108212216-aea10b59be24 // indirect
-<<<<<<< HEAD
-	github.com/GaijinEntertainment/go-exhaustruct/v2 v2.3.0 // indirect
-	github.com/Gravity-Bridge/Gravity-Bridge/module v1.5.3 // indirect
-=======
 	github.com/GaijinEntertainment/go-exhaustruct/v3 v3.1.0 // indirect
->>>>>>> 7efd5f6 (build(deps): bump github.com/golangci/golangci-lint from 1.53.3 to 1.54.1 (#228))
+	github.com/Gravity-Bridge/Gravity-Bridge/module v1.5.3 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/OpenPeeDeeP/depguard/v2 v2.1.0 // indirect
 	github.com/Workiva/go-datastructures v1.0.53 // indirect
@@ -124,12 +111,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
-<<<<<<< HEAD
-	github.com/go-critic/go-critic v0.8.1 // indirect
-=======
-	github.com/gin-gonic/gin v1.7.0 // indirect
 	github.com/go-critic/go-critic v0.9.0 // indirect
->>>>>>> 7efd5f6 (build(deps): bump github.com/golangci/golangci-lint from 1.53.3 to 1.54.1 (#228))
 	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
@@ -293,12 +275,8 @@ require (
 	github.com/tomarrell/wrapcheck/v2 v2.8.1 // indirect
 	github.com/tommy-muehle/go-mnd/v2 v2.5.1 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
-<<<<<<< HEAD
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	github.com/ultraware/funlen v0.0.3 // indirect
-=======
 	github.com/ultraware/funlen v0.1.0 // indirect
->>>>>>> 7efd5f6 (build(deps): bump github.com/golangci/golangci-lint from 1.53.3 to 1.54.1 (#228))
 	github.com/ultraware/whitespace v0.0.5 // indirect
 	github.com/uudashr/gocognit v1.0.7 // indirect
 	github.com/xen0n/gosmopolitan v1.2.1 // indirect
@@ -307,30 +285,9 @@ require (
 	github.com/ykadowak/zerologlint v0.1.3 // indirect
 	github.com/zondax/hid v0.9.1 // indirect
 	github.com/zondax/ledger-go v0.14.1 // indirect
-<<<<<<< HEAD
-	gitlab.com/bosi/decorder v0.2.3 // indirect
-	go.etcd.io/bbolt v1.3.6 // indirect
-	go.opencensus.io v0.24.0 // indirect
-	go.tmz.dev/musttag v0.7.0 // indirect
-	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/multierr v1.8.0 // indirect
-	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
-	golang.org/x/exp/typeparams v0.0.0-20230224173230-c95f2b4c22f2 // indirect
-	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/net v0.12.0 // indirect
-	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
-	golang.org/x/term v0.10.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
-	golang.org/x/tools v0.9.3 // indirect
-	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
-	google.golang.org/api v0.122.0 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
-=======
 	gitlab.com/bosi/decorder v0.4.0 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
+	go.opencensus.io v0.24.0 // indirect
 	go.tmz.dev/musttag v0.7.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
@@ -340,11 +297,14 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/term v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/tools v0.12.0 // indirect
->>>>>>> 7efd5f6 (build(deps): bump github.com/golangci/golangci-lint from 1.53.3 to 1.54.1 (#228))
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+	google.golang.org/api v0.122.0 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230629202037-9506855d4529 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230526203410-71b5a4ffd15e // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230706204954-ccb25ca9f130 // indirect
