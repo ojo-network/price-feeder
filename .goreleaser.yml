@@ -7,6 +7,7 @@ env:
 before:
   hooks:
     - go mod download
+    - scripts/extract_dependency_versions.sh github.com/cosmos/cosmos-sdk
 
 builds:
   - main: ./
@@ -17,7 +18,12 @@ builds:
       - -tags=badgerdb ledger netgo
       - -trimpath
     ldflags:
-      - -s -w -X umee.commit={{.Commit}} -X umee.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.AppName=price-feeder -X github.com/cosmos/cosmos-sdk/version.Version={{ replace .Version "umee/" "umee-" }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -s -w
+      - -X umee.commit={{.Commit}}
+      - -X umee.date={{ .CommitDate }}
+      - -X github.com/cosmos/cosmos-sdk/version.Version={{ replace .Version "umee/" "umee-" }}
+      - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -X github.com/ojo-network/price-feeder/cmd.SDKVersion={{ .Env.GITHUB_COM_COSMOS_COSMOS_SDK_VERSION }}
     goos:
       - linux
     goarch:
