@@ -1,20 +1,16 @@
 package config
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/go-playground/validator/v10"
+
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
-
-	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -24,6 +20,8 @@ const (
 	defaultSrvWriteTimeout = 15 * time.Second
 	defaultSrvReadTimeout  = 15 * time.Second
 	defaultProviderTimeout = 100 * time.Millisecond
+
+	SampleNodeConfigPath = "price-feeder.example.toml"
 )
 
 var (
@@ -40,6 +38,7 @@ var (
 type (
 	// Config defines all necessary price-feeder configuration parameters.
 	Config struct {
+		ConfigDir           string              `mapstructure:"config_dir"`
 		Server              Server              `mapstructure:"server"`
 		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs" validate:"required,gt=0,dive,required"`
 		Deviations          []Deviation         `mapstructure:"deviation_thresholds"`
@@ -65,9 +64,15 @@ type (
 	// CurrencyPair defines a price quote of the exchange rate for two different
 	// currencies and the supported providers for getting the exchange rate.
 	CurrencyPair struct {
-		Base      string               `mapstructure:"base" validate:"required"`
-		Quote     string               `mapstructure:"quote" validate:"required"`
-		Providers []types.ProviderName `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+		Base        string                `mapstructure:"base" validate:"required"`
+		Quote       string                `mapstructure:"quote" validate:"required"`
+		PairAddress []PairAddressProvider `mapstructure:"pair_address_providers" validate:"dive"`
+		Providers   []types.ProviderName  `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+	}
+
+	PairAddressProvider struct {
+		Address  string             `mapstructure:"address" validate:"required"`
+		Provider types.ProviderName `mapstructure:"provider" validate:"required"`
 	}
 
 	// Deviation defines a maximum amount of standard deviations that a given asset can
@@ -132,12 +137,88 @@ func hasAPIKey(endpointName types.ProviderName, endpoints []provider.Endpoint) b
 }
 
 // Validate returns an error if the Config object is invalid.
-func (c Config) Validate() error {
+func (c Config) Validate() (err error) {
+	if err = c.validateCurrencyPairs(); err != nil {
+		return err
+	}
+
+	if err = c.validateDeviations(); err != nil {
+		return err
+	}
+
 	validate.RegisterStructValidation(telemetryValidation, telemetry.Config{})
 	validate.RegisterStructValidation(endpointValidation, provider.Endpoint{})
 	return validate.Struct(c)
 }
 
+func (c Config) validateDeviations() error {
+	for _, deviation := range c.Deviations {
+		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		if err != nil {
+			return fmt.Errorf("deviation thresholds must be numeric: %w", err)
+		}
+
+		if threshold.GT(maxDeviationThreshold) {
+			return fmt.Errorf("deviation thresholds must not exceed 3.0")
+		}
+	}
+	return nil
+}
+
+func (c Config) validateCurrencyPairs() error {
+OUTER:
+	for _, cp := range c.CurrencyPairs {
+		if cp.Base == "" {
+			return fmt.Errorf("currency pair base cannot be empty")
+		}
+		if cp.Quote == "" {
+			return fmt.Errorf("currency pair quote cannot be empty")
+		}
+		if cp.Base == cp.Quote {
+			return fmt.Errorf("currency pair base and quote cannot be the same")
+		}
+		if len(cp.Providers) == 0 {
+			return fmt.Errorf("currency pair must have at least one provider")
+		}
+		for _, prov := range cp.Providers {
+			if _, ok := SupportedProviders[prov]; !ok {
+				return fmt.Errorf("unsupported provider: %s", prov)
+			}
+			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, c.ProviderEndpoints) {
+				return fmt.Errorf("provider %s requires an API Key", prov)
+			}
+		}
+		if cp.Quote == DenomUSD {
+			continue
+		}
+		// verify a conversion pair exists for the quote currency
+		for _, conversionPair := range SupportedConversionSlice() {
+			if cp.Quote == conversionPair.Base {
+				continue OUTER
+			}
+		}
+		return fmt.Errorf("currency pair quote %s is not supported", cp.Quote)
+	}
+	return nil
+}
+
+func (c *Config) setDefaults() {
+	if c.Server.ListenAddr == "" {
+		c.Server.ListenAddr = defaultListenAddr
+	}
+	if c.Server.WriteTimeout == "" {
+		c.Server.WriteTimeout = defaultSrvWriteTimeout.String()
+	}
+	if c.Server.ReadTimeout == "" {
+		c.Server.ReadTimeout = defaultSrvReadTimeout.String()
+	}
+	if c.ProviderTimeout == "" {
+		c.ProviderTimeout = defaultProviderTimeout.String()
+	}
+}
+
+// ProviderPairs returns a map of provider.CurrencyPair where the key is the
+// provider name.
 func (c Config) ProviderPairs() map[types.ProviderName][]types.CurrencyPair {
 	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
 
@@ -187,139 +268,4 @@ func (c Config) ExpectedSymbols() []string {
 		expectedSymbols = append(expectedSymbols, b)
 	}
 	return expectedSymbols
-}
-
-// ParseConfig attempts to read and parse configuration from the given file path.
-// An error is returned if reading or parsing the config fails.
-func ParseConfig(configPath string) (Config, error) {
-	var cfg Config
-
-	if configPath == "" {
-		return cfg, ErrEmptyConfigPath
-	}
-
-	viper.AutomaticEnv()
-	// Allow nested env vars to be read with underscore separators.
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.SetConfigFile(configPath)
-
-	if err := viper.ReadInConfig(); err != nil {
-		return cfg, fmt.Errorf("failed to read config: %w", err)
-	}
-
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return cfg, fmt.Errorf("failed to decode config: %w", err)
-	}
-
-	if cfg.Server.ListenAddr == "" {
-		cfg.Server.ListenAddr = defaultListenAddr
-	}
-	if len(cfg.Server.WriteTimeout) == 0 {
-		cfg.Server.WriteTimeout = defaultSrvWriteTimeout.String()
-	}
-	if len(cfg.Server.ReadTimeout) == 0 {
-		cfg.Server.ReadTimeout = defaultSrvReadTimeout.String()
-	}
-	if len(cfg.ProviderTimeout) == 0 {
-		cfg.ProviderTimeout = defaultProviderTimeout.String()
-	}
-
-	err := cfg.validateCurrencyPairs()
-	if err != nil {
-		return cfg, err
-	}
-
-	for _, deviation := range cfg.Deviations {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
-		if err != nil {
-			return cfg, fmt.Errorf("deviation thresholds must be numeric: %w", err)
-		}
-
-		if threshold.GT(maxDeviationThreshold) {
-			return cfg, fmt.Errorf("deviation thresholds must not exceed 3.0")
-		}
-	}
-
-	return cfg, cfg.Validate()
-}
-
-func (c Config) validateCurrencyPairs() error {
-OUTER:
-	for _, cp := range c.CurrencyPairs {
-		if cp.Base == "" {
-			return fmt.Errorf("currency pair base cannot be empty")
-		}
-		if cp.Quote == "" {
-			return fmt.Errorf("currency pair quote cannot be empty")
-		}
-		if cp.Base == cp.Quote {
-			return fmt.Errorf("currency pair base and quote cannot be the same")
-		}
-		if len(cp.Providers) == 0 {
-			return fmt.Errorf("currency pair must have at least one provider")
-		}
-		for _, prov := range cp.Providers {
-			if _, ok := SupportedProviders[prov]; !ok {
-				return fmt.Errorf("unsupported provider: %s", prov)
-			}
-			if bool(SupportedProviders[prov]) && !hasAPIKey(prov, c.ProviderEndpoints) {
-				return fmt.Errorf("provider %s requires an API Key", prov)
-			}
-		}
-		if cp.Quote == DenomUSD {
-			continue
-		}
-		// verify a conversion pair exists for the quote currency
-		for _, conversionPair := range SupportedConversionSlice() {
-			if cp.Quote == conversionPair.Base {
-				continue OUTER
-			}
-		}
-		return fmt.Errorf("currency pair quote %s is not supported", cp.Quote)
-	}
-	return nil
-}
-
-// CheckProviderMins starts the currency provider tracker to check the amount of
-// providers available for a currency by querying CoinGecko's API. It will enforce
-// a provider minimum for a given currency based on its available providers.
-func CheckProviderMins(ctx context.Context, logger zerolog.Logger, cfg Config) error {
-	currencyProviderTracker, err := NewCurrencyProviderTracker(ctx, logger, cfg.CurrencyPairs...)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to start currency provider tracker")
-		// If currency tracker errors out and override flag is set, the price-feeder
-		// will run without enforcing provider minimums.
-		if cfg.ProviderMinOverride {
-			return nil
-		}
-	}
-
-	pairs := make(map[string]map[types.ProviderName]struct{})
-	for _, cp := range cfg.CurrencyPairs {
-		if _, ok := pairs[cp.Base]; !ok {
-			pairs[cp.Base] = make(map[types.ProviderName]struct{})
-		}
-		for _, provider := range cp.Providers {
-			pairs[cp.Base][provider] = struct{}{}
-		}
-	}
-
-	for base, providers := range pairs {
-		// If currency provider tracker errored, default to three providers as
-		// the minimum.
-		var minProviders int
-		if currencyProviderTracker != nil {
-			minProviders = currencyProviderTracker.CurrencyProviderMin[base]
-		} else if _, ok := SupportedForexCurrencies[base]; ok {
-			minProviders = 1
-		} else {
-			minProviders = 3
-		}
-
-		if _, ok := pairs[base][provider.ProviderMock]; !ok && len(providers) < minProviders {
-			return fmt.Errorf("must have at least %d providers for %s", minProviders, base)
-		}
-	}
-
-	return nil
 }
