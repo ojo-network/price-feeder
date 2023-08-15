@@ -7,7 +7,6 @@ env:
 before:
   hooks:
     - go mod download
-    - scripts/extract_dependency_versions.sh github.com/cosmos/cosmos-sdk
 
 builds:
   - main: ./
@@ -19,11 +18,18 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
+<<<<<<< HEAD
       - -X umee.commit={{.Commit}}
       - -X umee.date={{ .CommitDate }}
       - -X github.com/cosmos/cosmos-sdk/version.Version={{ replace .Version "umee/" "umee-" }}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
       - -X github.com/ojo-network/price-feeder/cmd.SDKVersion={{ .Env.GITHUB_COM_COSMOS_COSMOS_SDK_VERSION }}
+=======
+      - -X main.commit={{.Commit}}
+      - -X main.date={{ .CommitDate }} 
+      - -X github.com/ojo-network/price-feeder/cmd.Version={{ .Version }}
+      - -X github.com/ojo-network/price-feeder/cmd.Commit={{ .Commit }}
+>>>>>>> 12fe031 (remove cosmos-sdk version env variable (#237))
     goos:
       - linux
     goarch:
