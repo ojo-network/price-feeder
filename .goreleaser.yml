@@ -7,7 +7,6 @@ env:
 before:
   hooks:
     - go mod download
-    - scripts/extract_dependency_versions.sh github.com/cosmos/cosmos-sdk
 
 builds:
   - main: ./
@@ -23,7 +22,6 @@ builds:
       - -X main.date={{ .CommitDate }} 
       - -X github.com/ojo-network/price-feeder/cmd.Version={{ .Version }}
       - -X github.com/ojo-network/price-feeder/cmd.Commit={{ .Commit }}
-      - -X github.com/ojo-network/price-feeder/cmd.SDKVersion={{ .Env.GITHUB_COM_COSMOS_COSMOS_SDK_VERSION }}
     goos:
       - linux
     goarch:
