@@ -34,7 +34,10 @@ func TestPriceAccuracy(t *testing.T) {
 	}
 
 	logger := getLogger()
-	cfg, err := config.ParseConfig("../../price-feeder.example.toml")
+	cfg, err := config.LoadConfigFromFlags(
+		fmt.Sprintf("../../%s", config.SampleNodeConfigPath),
+		"../../",
+	)
 	require.NoError(t, err)
 
 	providerTimeout, err := time.ParseDuration(cfg.ProviderTimeout)
