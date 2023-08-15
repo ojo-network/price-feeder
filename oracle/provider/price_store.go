@@ -5,8 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
+
+	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 const (

@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/go-playground/validator/v10"
+
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
@@ -63,9 +64,15 @@ type (
 	// CurrencyPair defines a price quote of the exchange rate for two different
 	// currencies and the supported providers for getting the exchange rate.
 	CurrencyPair struct {
-		Base      string               `mapstructure:"base" validate:"required"`
-		Quote     string               `mapstructure:"quote" validate:"required"`
-		Providers []types.ProviderName `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+		Base        string                `mapstructure:"base" validate:"required"`
+		Quote       string                `mapstructure:"quote" validate:"required"`
+		PairAddress []PairAddressProvider `mapstructure:"pair_address_providers" validate:"dive"`
+		Providers   []types.ProviderName  `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+	}
+
+	PairAddressProvider struct {
+		Address  string             `mapstructure:"address" validate:"required"`
+		Provider types.ProviderName `mapstructure:"provider" validate:"required"`
 	}
 
 	// Deviation defines a maximum amount of standard deviations that a given asset can

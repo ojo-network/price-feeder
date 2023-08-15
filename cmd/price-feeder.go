@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	input "github.com/cosmos/cosmos-sdk/client/input"
+	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/gorilla/mux"
