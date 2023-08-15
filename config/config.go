@@ -1,17 +1,13 @@
 package config
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/go-playground/validator/v10"
-	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
 
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -24,6 +20,8 @@ const (
 	defaultSrvWriteTimeout = 15 * time.Second
 	defaultSrvReadTimeout  = 15 * time.Second
 	defaultProviderTimeout = 100 * time.Millisecond
+
+	SampleNodeConfigPath = "price-feeder.example.toml"
 )
 
 var (
@@ -40,6 +38,7 @@ var (
 type (
 	// Config defines all necessary price-feeder configuration parameters.
 	Config struct {
+		ConfigDir           string              `mapstructure:"config_dir"`
 		Server              Server              `mapstructure:"server"`
 		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs" validate:"required,gt=0,dive,required"`
 		Deviations          []Deviation         `mapstructure:"deviation_thresholds"`
@@ -138,128 +137,32 @@ func hasAPIKey(endpointName types.ProviderName, endpoints []provider.Endpoint) b
 }
 
 // Validate returns an error if the Config object is invalid.
-func (c Config) Validate() error {
+func (c Config) Validate() (err error) {
+	if err = c.validateCurrencyPairs(); err != nil {
+		return err
+	}
+
+	if err = c.validateDeviations(); err != nil {
+		return err
+	}
+
 	validate.RegisterStructValidation(telemetryValidation, telemetry.Config{})
 	validate.RegisterStructValidation(endpointValidation, provider.Endpoint{})
 	return validate.Struct(c)
 }
 
-func (c Config) ProviderPairs() map[types.ProviderName][]types.CurrencyPair {
-	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
-
-	for _, pair := range c.CurrencyPairs {
-		for _, provider := range pair.Providers {
-			if len(pair.PairAddress) > 0 {
-				for _, uniPair := range pair.PairAddress {
-					if (uniPair.Provider == provider) && (uniPair.Address != "") {
-						providerPairs[uniPair.Provider] = append(providerPairs[uniPair.Provider], types.CurrencyPair{
-							Base:    pair.Base,
-							Quote:   pair.Quote,
-							Address: uniPair.Address,
-						})
-					}
-				}
-			} else {
-				providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
-					Base:  pair.Base,
-					Quote: pair.Quote,
-				})
-			}
-		}
-	}
-
-	return providerPairs
-}
-
-// ProviderEndpointsMap converts the provider_endpoints from the config
-// file into a map of provider.Endpoint where the key is the provider name.
-func (c Config) ProviderEndpointsMap() map[types.ProviderName]provider.Endpoint {
-	endpoints := make(map[types.ProviderName]provider.Endpoint, len(c.ProviderEndpoints))
-	for _, endpoint := range c.ProviderEndpoints {
-		endpoints[endpoint.Name] = endpoint
-	}
-	return endpoints
-}
-
-// DeviationsMap converts the deviation_thresholds from the config file into
-// a map of sdk.Dec where the key is the base asset.
-func (c Config) DeviationsMap() (map[string]sdk.Dec, error) {
-	deviations := make(map[string]sdk.Dec, len(c.Deviations))
+func (c Config) validateDeviations() error {
 	for _, deviation := range c.Deviations {
 		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
 		if err != nil {
-			return nil, err
-		}
-		deviations[deviation.Base] = threshold
-	}
-	return deviations, nil
-}
-
-// ExpectedSymbols returns a slice of all unique base symbols from the config object.
-func (c Config) ExpectedSymbols() []string {
-	bases := make(map[string]interface{}, len(c.CurrencyPairs))
-	for _, pair := range c.CurrencyPairs {
-		bases[pair.Base] = struct{}{}
-	}
-	expectedSymbols := make([]string, 0, len(bases))
-	for b := range bases {
-		expectedSymbols = append(expectedSymbols, b)
-	}
-	return expectedSymbols
-}
-
-// ParseConfig attempts to read and parse configuration from the given file path.
-// An error is returned if reading or parsing the config fails.
-func ParseConfig(configPath string) (Config, error) {
-	var cfg Config
-
-	if configPath == "" {
-		return cfg, ErrEmptyConfigPath
-	}
-
-	viper.AutomaticEnv()
-	// Allow nested env vars to be read with underscore separators.
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.SetConfigFile(configPath)
-
-	if err := viper.ReadInConfig(); err != nil {
-		return cfg, fmt.Errorf("failed to read config: %w", err)
-	}
-
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return cfg, fmt.Errorf("failed to decode config: %w", err)
-	}
-
-	if cfg.Server.ListenAddr == "" {
-		cfg.Server.ListenAddr = defaultListenAddr
-	}
-	if len(cfg.Server.WriteTimeout) == 0 {
-		cfg.Server.WriteTimeout = defaultSrvWriteTimeout.String()
-	}
-	if len(cfg.Server.ReadTimeout) == 0 {
-		cfg.Server.ReadTimeout = defaultSrvReadTimeout.String()
-	}
-	if len(cfg.ProviderTimeout) == 0 {
-		cfg.ProviderTimeout = defaultProviderTimeout.String()
-	}
-
-	err := cfg.validateCurrencyPairs()
-	if err != nil {
-		return cfg, err
-	}
-
-	for _, deviation := range cfg.Deviations {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
-		if err != nil {
-			return cfg, fmt.Errorf("deviation thresholds must be numeric: %w", err)
+			return fmt.Errorf("deviation thresholds must be numeric: %w", err)
 		}
 
 		if threshold.GT(maxDeviationThreshold) {
-			return cfg, fmt.Errorf("deviation thresholds must not exceed 3.0")
+			return fmt.Errorf("deviation thresholds must not exceed 3.0")
 		}
 	}
-
-	return cfg, cfg.Validate()
+	return nil
 }
 
 func (c Config) validateCurrencyPairs() error {
@@ -299,50 +202,70 @@ OUTER:
 	return nil
 }
 
-// CheckProviderMins starts the currency provider tracker to check the amount of
-// providers available for a currency by querying CoinGecko's API. It will enforce
-// a provider minimum for a given currency based on its available providers.
-func CheckProviderMins(ctx context.Context, logger zerolog.Logger, cfg Config) error {
-	currencyProviderTracker, err := NewCurrencyProviderTracker(ctx, logger, cfg.CurrencyPairs...)
-	if err != nil {
-		logger.Error().Err(err).Msg("failed to start currency provider tracker")
-		// If currency tracker errors out and override flag is set, the price-feeder
-		// will run without enforcing provider minimums.
-		if cfg.ProviderMinOverride {
-			return nil
+func (c *Config) setDefaults() {
+	if c.Server.ListenAddr == "" {
+		c.Server.ListenAddr = defaultListenAddr
+	}
+	if c.Server.WriteTimeout == "" {
+		c.Server.WriteTimeout = defaultSrvWriteTimeout.String()
+	}
+	if c.Server.ReadTimeout == "" {
+		c.Server.ReadTimeout = defaultSrvReadTimeout.String()
+	}
+	if c.ProviderTimeout == "" {
+		c.ProviderTimeout = defaultProviderTimeout.String()
+	}
+}
+
+// ProviderPairs returns a map of provider.CurrencyPair where the key is the
+// provider name.
+func (c Config) ProviderPairs() map[types.ProviderName][]types.CurrencyPair {
+	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
+
+	for _, pair := range c.CurrencyPairs {
+		for _, provider := range pair.Providers {
+			providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
+				Base:  pair.Base,
+				Quote: pair.Quote,
+			})
 		}
 	}
+	return providerPairs
+}
 
-	pairs := make(map[string]map[types.ProviderName]struct{})
-	for _, cp := range cfg.CurrencyPairs {
-		if _, ok := pairs[cp.Base]; !ok {
-			pairs[cp.Base] = make(map[types.ProviderName]struct{})
-		}
-		for _, provider := range cp.Providers {
-			pairs[cp.Base][provider] = struct{}{}
-		}
+// ProviderEndpointsMap converts the provider_endpoints from the config
+// file into a map of provider.Endpoint where the key is the provider name.
+func (c Config) ProviderEndpointsMap() map[types.ProviderName]provider.Endpoint {
+	endpoints := make(map[types.ProviderName]provider.Endpoint, len(c.ProviderEndpoints))
+	for _, endpoint := range c.ProviderEndpoints {
+		endpoints[endpoint.Name] = endpoint
 	}
+	return endpoints
+}
 
-	for base, providers := range pairs {
-		var minProviders int
-		_, isForexBase := SupportedForexCurrencies[base]
-		_, isUniBase := SupportedUniswapCurrencies[base]
-
-		// If currency provider tracker errored, default to three providers as
-		// the minimum.
-		switch {
-		case currencyProviderTracker != nil:
-			minProviders = currencyProviderTracker.CurrencyProviderMin[base]
-		case isForexBase || isUniBase:
-			minProviders = 1
-		default:
-			minProviders = 3
+// DeviationsMap converts the deviation_thresholds from the config file into
+// a map of sdk.Dec where the key is the base asset.
+func (c Config) DeviationsMap() (map[string]sdk.Dec, error) {
+	deviations := make(map[string]sdk.Dec, len(c.Deviations))
+	for _, deviation := range c.Deviations {
+		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		if err != nil {
+			return nil, err
 		}
-
-		if _, ok := pairs[base][provider.ProviderMock]; !ok && len(providers) < minProviders {
-			return fmt.Errorf("must have at least %d providers for %s", minProviders, base)
-		}
+		deviations[deviation.Base] = threshold
 	}
+	return deviations, nil
+}
 
-	return nil
+// ExpectedSymbols returns a slice of all unique base symbols from the config object.
+func (c Config) ExpectedSymbols() []string {
+	bases := make(map[string]interface{}, len(c.CurrencyPairs))
+	for _, pair := range c.CurrencyPairs {
+		bases[pair.Base] = struct{}{}
+	}
+	expectedSymbols := make([]string, 0, len(bases))
+	for b := range bases {
+		expectedSymbols = append(expectedSymbols, b)
+	}
+	return expectedSymbols
 }

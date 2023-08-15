@@ -1,0 +1,360 @@
+[[currency_pairs]]
+base = "UMEE"
+providers = [
+  "okx",
+  "gate",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "UMEE"
+providers = [
+  "osmosis",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "USDT"
+providers = [
+  "kraken",
+  "coinbase",
+  "crypto",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "ATOM"
+providers = [
+  "okx",
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "ATOM"
+providers = [
+  "kraken",
+  "crypto",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "okx",
+  "bitget",
+  "kraken",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "DAI"
+providers = [
+  "okx",
+  "bitget",
+  "huobi",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "DAI"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "ETH"
+providers = [
+  "okx",
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "ETH"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "WBTC"
+providers = [
+  "okx",
+  "bitget",
+  "crypto",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "CRO"
+providers = [
+  "crypto",
+  "bitget",
+  "okx",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "BNB"
+providers = [
+  "mexc",
+  "bitget",
+  "okx",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "osmosis",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "bitget",
+  "gate",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "crypto",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "WETH"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "USDC"
+[[currency_pairs.pair_address_providers]]
+address = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "WBTC"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "CBETH"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0x840deeef2f115cf50da625f7368c24af6fe74410"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "LINK"
+providers = [
+  "eth-uniswap"
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8"
+provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "stATOM"
+providers = [
+  "osmosis",
+  "crescent",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "stOSMO"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "IST"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "IST"
+providers = [
+  "crescent",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "AKT"
+quote = "USDT"
+providers = [ "huobi", "gate",]
+
+[[currency_pairs]]
+base = "AKT"
+quote = "USD"
+providers = [ "kraken", "crypto",]
+
+[[currency_pairs]]
+base = "JUNO"
+quote = "USDT"
+providers = [ "bitget", "mexc",]
+
+[[currency_pairs]]
+base = "JUNO"
+quote = "USD"
+providers = [ "kraken",]
+
+[[currency_pairs]]
+base = "JUNO"
+quote = "ATOM"
+providers = [ "osmosis",]
+
+[[currency_pairs]]
+base = "LUNA"
+quote = "USDT"
+providers = [ "okx", "gate", "huobi", "bitget",]
+
+[[currency_pairs]]
+base = "WAXL"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "WAXL"
+providers = [
+  "huobi",
+  "bitget",
+  "gate",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "DOT"
+providers = [
+  "kraken",
+  "coinbase",
+  "crypto",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "DOT"
+providers = [
+  "gate",
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "MATIC"
+providers = [
+  "coinbase",
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "MATIC"
+providers = [
+  "gate",
+  "mexc",
+  "bitget",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "stkATOM"
+providers = [
+  "crescent",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "qATOM"
+providers = [
+  "osmosis",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "CBETH"
+quote = "USD"
+providers = [ "coinbase",]
+
+[[currency_pairs]]
+base = "CMST"
+providers = [
+  "crescent",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "MARS"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "stJUNO"
+providers = [
+  "osmosis",
+]
+quote = "JUNO"
+
+[[currency_pairs]]
+base = "USK"
+providers = [
+  "kujira",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "stUMEE"
+providers = [
+  "osmosis",
+]
+quote = "UMEE"
+
+[[currency_pairs]]
+base = "RETH"
+providers = [
+  "eth-uniswap",
+]
+
+quote = "WETH"
+[[currency_pairs.pair_address_providers]]
+address = "0xa4e0faA58465A2D369aa21B3e42d43374c6F9613"
+provider = "eth-uniswap"
