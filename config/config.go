@@ -224,10 +224,22 @@ func (c Config) ProviderPairs() map[types.ProviderName][]types.CurrencyPair {
 
 	for _, pair := range c.CurrencyPairs {
 		for _, provider := range pair.Providers {
-			providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
-				Base:  pair.Base,
-				Quote: pair.Quote,
-			})
+			if len(pair.PairAddress) > 0 {
+				for _, uniPair := range pair.PairAddress {
+					if (uniPair.Provider == provider) && (uniPair.Address != "") {
+						providerPairs[uniPair.Provider] = append(providerPairs[uniPair.Provider], types.CurrencyPair{
+							Base:    pair.Base,
+							Quote:   pair.Quote,
+							Address: uniPair.Address,
+						})
+					}
+				}
+			} else {
+				providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
+					Base:  pair.Base,
+					Quote: pair.Quote,
+				})
+			}
 		}
 	}
 	return providerPairs
