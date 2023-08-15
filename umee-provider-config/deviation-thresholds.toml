@@ -109,3 +109,15 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "RETH"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "LINK"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "WETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "WBTC"
+threshold = "2"
