@@ -186,11 +186,7 @@ require (
 	github.com/kisielk/errcheck v1.6.3 // indirect
 	github.com/kisielk/gotool v1.0.0 // indirect
 	github.com/kkHAIKE/contextcheck v1.1.4 // indirect
-<<<<<<< HEAD
-	github.com/klauspost/compress v1.16.0 // indirect
-=======
 	github.com/klauspost/compress v1.16.7 // indirect
->>>>>>> 2a3d826 (build(deps): bump github.com/hasura/go-graphql-client (#233))
 	github.com/kulti/thelper v0.6.3 // indirect
 	github.com/kunwardeep/paralleltest v1.0.7 // indirect
 	github.com/kyoh86/exportloopref v0.1.11 // indirect
