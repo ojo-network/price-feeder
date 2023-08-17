@@ -6,8 +6,9 @@ import "encoding/json"
 // We primarily utilize the base for broadcasting exchange rates and use the
 // pair for querying for the ticker prices.
 type CurrencyPair struct {
-	Base  string
-	Quote string
+	Base    string
+	Quote   string
+	Address string
 }
 
 // String implements the Stringer interface and defines a ticker symbol for

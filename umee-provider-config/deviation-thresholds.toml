@@ -1,0 +1,123 @@
+[[deviation_thresholds]]
+base = "MARS"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "CMST"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "USDT"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "UMEE"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "ATOM"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "USDC"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "CRO"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "DAI"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "ETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "BTC"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "BNB"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "JUNO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "OSMO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stATOM"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stOSMO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "IST"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "AKT"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "LUNA"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "WAXL"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "MATIC"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "DOT"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "stkATOM"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "qATOM"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "CBETH"
+threshold = "1.5"
+
+[[deviation_thresholds]]
+base = "stJUNO"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "USK"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stUMEE"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "RETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "LINK"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "WETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "WBTC"
+threshold = "2"

@@ -17,7 +17,11 @@ builds:
       - -tags=badgerdb ledger netgo
       - -trimpath
     ldflags:
-      - -s -w -X umee.commit={{.Commit}} -X umee.date={{ .CommitDate }} -X github.com/cosmos/cosmos-sdk/version.AppName=price-feeder -X github.com/cosmos/cosmos-sdk/version.Version={{ replace .Version "umee/" "umee-" }} -X github.com/cosmos/cosmos-sdk/version.Commit={{ .Commit }}
+      - -s -w
+      - -X main.commit={{.Commit}}
+      - -X main.date={{ .CommitDate }} 
+      - -X github.com/ojo-network/price-feeder/cmd.Version={{ .Version }}
+      - -X github.com/ojo-network/price-feeder/cmd.Commit={{ .Commit }}
     goos:
       - linux
     goarch:
