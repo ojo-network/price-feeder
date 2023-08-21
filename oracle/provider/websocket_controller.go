@@ -68,12 +68,10 @@ func NewWebsocketController(
 
 	for _, subMsg := range subscriptionMsgs {
 		wsURL := websocketURL
+
+		// Use a different URL for okx candle subscriptions
 		if providerName == ProviderOkx && strings.Contains(fmt.Sprintf("%v", subMsg), "candle") {
-			wsURL = url.URL{
-				Scheme: "wss",
-				Host:   okxWSHost,
-				Path:   okxWSPathBusiness,
-			}
+			wsURL = url.URL{Scheme: "wss", Host: okxWSHost, Path: okxWSPathBusiness}
 		}
 
 		connection := &WebsocketConnection{
