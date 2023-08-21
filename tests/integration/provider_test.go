@@ -2,11 +2,20 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+<<<<<<< HEAD
+=======
+	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
+>>>>>>> adbec7a (fix: okx breaking URL change (#244))
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/provider"
@@ -37,7 +46,10 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 		s.T().Skip("skipping integration test in short mode")
 	}
 
-	cfg, err := config.ParseConfig("../../price-feeder.example.toml")
+	cfg, err := config.LoadConfigFromFlags(
+		fmt.Sprintf("../../%s", config.SampleNodeConfigPath),
+		"../../",
+	)
 	require.NoError(s.T(), err)
 
 	endpoints := cfg.ProviderEndpointsMap()
@@ -63,29 +75,6 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 	waitGroup.Wait()
 }
 
-func (s *IntegrationTestSuite) TestSubscribeCurrencyPairs() {
-	if testing.Short() {
-		s.T().Skip("skipping integration test in short mode")
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	currencyPairs := []types.CurrencyPair{{Base: "USDT", Quote: "USD"}}
-	pvd, _ := provider.NewKrakenProvider(ctx, getLogger(), provider.Endpoint{}, currencyPairs...)
-	pvd.StartConnections()
-
-	time.Sleep(5 * time.Second)
-
-	newPairs := []types.CurrencyPair{{Base: "ATOM", Quote: "USD"}}
-	pvd.SubscribeCurrencyPairs(newPairs...)
-	currencyPairs = append(currencyPairs, newPairs...)
-
-	time.Sleep(25 * time.Second)
-
-	checkForPrices(s.T(), pvd, currencyPairs, "Kraken")
-
-	cancel()
-}
-
 func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.CurrencyPair, providerName string) {
 	tickerPrices, err := pvd.GetTickerPrices(currencyPairs...)
 	require.NoError(t, err)
@@ -96,32 +85,36 @@ func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.C
 	for _, cp := range currencyPairs {
 		currencyPairKey := cp.String()
 
-		require.False(t,
-			tickerPrices[cp].Price.IsNil(),
-			"no ticker price for %s pair %s",
-			providerName,
-			currencyPairKey,
-		)
+		if tickerPrices[cp].Price.IsNil() {
+			assert.Failf(t,
+				"no ticker price",
+				"provider %s pair %s",
+				providerName,
+				currencyPairKey,
+			)
+		} else {
+			assert.True(t,
+				tickerPrices[cp].Price.GT(sdk.NewDec(0)),
+				"ticker price is zero for %s pair %s",
+				providerName,
+				currencyPairKey,
+			)
+		}
 
-		require.True(t,
-			tickerPrices[cp].Price.GT(sdk.NewDec(0)),
-			"ticker price is zero for %s pair %s",
-			providerName,
-			currencyPairKey,
-		)
-
-		require.NotEmpty(t,
-			candlePrices[cp],
-			"no candle prices for %s pair %s",
-			providerName,
-			currencyPairKey,
-		)
-
-		require.True(t,
-			candlePrices[cp][0].Price.GT(sdk.NewDec(0)),
-			"candle price is zero for %s pair %s",
-			providerName,
-			currencyPairKey,
-		)
+		if len(candlePrices[cp]) == 0 {
+			assert.Failf(t,
+				"no candle prices",
+				"provider %s pair %s",
+				providerName,
+				currencyPairKey,
+			)
+		} else {
+			assert.True(t,
+				candlePrices[cp][0].Price.GT(sdk.NewDec(0)),
+				"candle price is zero for %s pair %s",
+				providerName,
+				currencyPairKey,
+			)
+		}
 	}
 }
