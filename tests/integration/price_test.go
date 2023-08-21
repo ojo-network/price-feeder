@@ -23,6 +23,8 @@ var (
 	KnownIncorrectAPIPrices = map[string]struct{}{
 		"stATOM":  {},
 		"stkATOM": {},
+		"STARS":   {},
+		"MNTA":    {},
 	}
 )
 

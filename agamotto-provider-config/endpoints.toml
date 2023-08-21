@@ -1,0 +1,14 @@
+[[provider_endpoints]]
+name = "binance"
+rest = "https://api1.binance.com"
+websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "osmosis"
+rest = "https://api.osmo-api.prod.ojo.network"
+websocket = "api.osmo-api.prod.ojo.network"
+
+[[provider_endpoints]]
+name = "eth-uniswap"
+rest = "http://104.197.233.185:8000/subgraphs/name/ojo-network/unidexer"
+websocket = "not supported"
