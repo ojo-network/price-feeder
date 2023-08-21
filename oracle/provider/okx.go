@@ -16,10 +16,11 @@ import (
 )
 
 const (
-	okxWSHost   = "ws.okx.com:8443"
-	okxWSPath   = "/ws/v5/public"
-	okxRestHost = "https://www.okx.com"
-	okxRestPath = "/api/v5/market/tickers?instType=SPOT"
+	okxWSHost         = "ws.okx.com:8443"
+	okxWSPath         = "/ws/v5/public"
+	okxWSPathBusiness = "/ws/v5/business"
+	okxRestHost       = "https://www.okx.com"
+	okxRestPath       = "/api/v5/market/tickers?instType=SPOT"
 )
 
 var _ Provider = (*OkxProvider)(nil)
