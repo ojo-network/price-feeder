@@ -50,9 +50,6 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 
 	var waitGroup sync.WaitGroup
 	for key, pairs := range cfg.ProviderPairs() {
-		// if key != "okx" {
-		// 	continue
-		// }
 		waitGroup.Add(1)
 		providerName := key
 		currencyPairs := pairs
