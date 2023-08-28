@@ -619,8 +619,8 @@ github.com/nunnatsa/ginkgolinter v0.13.3/go.mod h1:aTKXo8WddENYxNEFT+4ZxEgWXqlD9
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=
-github.com/ojo-network/ojo v0.1.4-0.20230810140623-cb99a9232f80 h1:oowyQxIKNd+GJ1xdx/1H78LQFyrA1hsH/iKeiliXNGE=
-github.com/ojo-network/ojo v0.1.4-0.20230810140623-cb99a9232f80/go.mod h1:wFdTn6ioOdF08LeHXm9T/qB/khgRbJxDZPTDAX26bss=
+github.com/ojo-network/ojo v0.2.0-rc1 h1:JWtOqXs8/Cp7p6vkpB4Rm+RpR9eBeG8tiHqxe+Pw3Ng=
+github.com/ojo-network/ojo v0.2.0-rc1/go.mod h1:wFdTn6ioOdF08LeHXm9T/qB/khgRbJxDZPTDAX26bss=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
