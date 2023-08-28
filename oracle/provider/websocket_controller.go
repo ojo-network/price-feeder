@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -66,10 +67,17 @@ func NewWebsocketController(
 	connections := make([]*WebsocketConnection, 0)
 
 	for _, subMsg := range subscriptionMsgs {
+		wsURL := websocketURL
+
+		// Use a different URL for okx candle subscriptions
+		if providerName == ProviderOkx && strings.Contains(fmt.Sprintf("%v", subMsg), "candle") {
+			wsURL = url.URL{Scheme: "wss", Host: okxWSHost, Path: okxWSPathBusiness}
+		}
+
 		connection := &WebsocketConnection{
 			parentCtx:       ctx,
 			providerName:    providerName,
-			websocketURL:    websocketURL,
+			websocketURL:    wsURL,
 			subscriptionMsg: subMsg,
 			messageHandler:  messageHandler,
 			pingDuration:    pingDuration,
