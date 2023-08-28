@@ -8,13 +8,13 @@ require (
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cosmos/cosmos-sdk v0.47.3
 	github.com/go-playground/validator/v10 v10.15.0
-	github.com/golangci/golangci-lint v1.54.1
+	github.com/golangci/golangci-lint v1.54.2
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/hasura/go-graphql-client v0.10.0
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ojo-network/ojo v0.2.0-rc1
+	github.com/ojo-network/ojo v0.2.0-rc2
 	github.com/rs/cors v1.9.0
 	github.com/rs/zerolog v1.30.0
 	github.com/spf13/cobra v1.7.0
@@ -31,14 +31,14 @@ require (
 	cosmossdk.io/api v0.3.1 // indirect
 	cosmossdk.io/core v0.5.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
-	cosmossdk.io/math v1.0.1 // indirect
+	cosmossdk.io/math v1.1.2 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/4meepo/tagalign v1.3.2 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/Abirdcfly/dupword v0.0.12 // indirect
-	github.com/Antonboom/errname v0.1.10 // indirect
-	github.com/Antonboom/nilnil v0.1.5 // indirect
+	github.com/Antonboom/errname v0.1.12 // indirect
+	github.com/Antonboom/nilnil v0.1.7 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
 	github.com/Djarvur/go-err113 v0.0.0-20210108212216-aea10b59be24 // indirect
@@ -184,13 +184,13 @@ require (
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
 	github.com/nishanths/exhaustive v0.11.0 // indirect
 	github.com/nishanths/predeclared v0.2.2 // indirect
-	github.com/nunnatsa/ginkgolinter v0.13.3 // indirect
+	github.com/nunnatsa/ginkgolinter v0.13.5 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/petermattis/goid v0.0.0-20230317030725-371a4b8eda08 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/polyfloyd/go-errorlint v1.4.3 // indirect
+	github.com/polyfloyd/go-errorlint v1.4.4 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
@@ -207,8 +207,8 @@ require (
 	github.com/sanposhiho/wastedassign/v2 v2.0.7 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/sashamelentyev/interfacebloat v1.1.0 // indirect
-	github.com/sashamelentyev/usestdlibvars v1.23.0 // indirect
-	github.com/securego/gosec/v2 v2.16.0 // indirect
+	github.com/sashamelentyev/usestdlibvars v1.24.0 // indirect
+	github.com/securego/gosec/v2 v2.17.0 // indirect
 	github.com/shazow/go-diff v0.0.0-20160112020656-b6b7b6733b8c // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
@@ -228,7 +228,7 @@ require (
 	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
-	github.com/tetafro/godot v1.4.11 // indirect
+	github.com/tetafro/godot v1.4.14 // indirect
 	github.com/tidwall/btree v1.6.0 // indirect
 	github.com/timakin/bodyclose v0.0.0-20230421092635-574207250966 // indirect
 	github.com/timonwong/loggercheck v0.9.4 // indirect
@@ -246,7 +246,7 @@ require (
 	github.com/zondax/ledger-go v0.14.1 // indirect
 	gitlab.com/bosi/decorder v0.4.0 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
-	go.tmz.dev/musttag v0.7.1 // indirect
+	go.tmz.dev/musttag v0.7.2 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
@@ -265,7 +265,7 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	honnef.co/go/tools v0.4.3 // indirect
+	honnef.co/go/tools v0.4.5 // indirect
 	mvdan.cc/gofumpt v0.5.0 // indirect
 	mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed // indirect
 	mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b // indirect
