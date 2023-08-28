@@ -89,6 +89,8 @@ func NewOracleClient(
 		GRPCEndpoint:        grpcEndpoint,
 	}
 
+	authtypes.RegisterInterfaces(oracleClient.Encoding.InterfaceRegistry)
+
 	clientCtx, err := oracleClient.CreateClientContext()
 	if err != nil {
 		return OracleClient{}, err
