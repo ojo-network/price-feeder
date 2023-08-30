@@ -12,6 +12,7 @@ import (
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -96,32 +97,36 @@ func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.C
 	for _, cp := range currencyPairs {
 		currencyPairKey := cp.String()
 
-		require.False(t,
-			tickerPrices[cp].Price.IsNil(),
-			"no ticker price for %s pair %s",
-			providerName,
-			currencyPairKey,
-		)
+		if tickerPrices[cp].Price.IsNil() {
+			assert.Failf(t,
+				"no ticker price",
+				"provider %s pair %s",
+				providerName,
+				currencyPairKey,
+			)
+		} else {
+			assert.True(t,
+				tickerPrices[cp].Price.GT(sdk.NewDec(0)),
+				"ticker price is zero for %s pair %s",
+				providerName,
+				currencyPairKey,
+			)
+		}
 
-		require.True(t,
-			tickerPrices[cp].Price.GT(sdk.NewDec(0)),
-			"ticker price is zero for %s pair %s",
-			providerName,
-			currencyPairKey,
-		)
-
-		require.NotEmpty(t,
-			candlePrices[cp],
-			"no candle prices for %s pair %s",
-			providerName,
-			currencyPairKey,
-		)
-
-		require.True(t,
-			candlePrices[cp][0].Price.GT(sdk.NewDec(0)),
-			"candle price is zero for %s pair %s",
-			providerName,
-			currencyPairKey,
-		)
+		if len(candlePrices[cp]) == 0 {
+			assert.Failf(t,
+				"no candle prices",
+				"provider %s pair %s",
+				providerName,
+				currencyPairKey,
+			)
+		} else {
+			assert.True(t,
+				candlePrices[cp][0].Price.GT(sdk.NewDec(0)),
+				"candle price is zero for %s pair %s",
+				providerName,
+				currencyPairKey,
+			)
+		}
 	}
 }
