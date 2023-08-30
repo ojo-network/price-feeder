@@ -2,25 +2,17 @@ package integration
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD
-=======
-	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-
->>>>>>> adbec7a (fix: okx breaking URL change (#244))
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -46,10 +38,7 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 		s.T().Skip("skipping integration test in short mode")
 	}
 
-	cfg, err := config.LoadConfigFromFlags(
-		fmt.Sprintf("../../%s", config.SampleNodeConfigPath),
-		"../../",
-	)
+	cfg, err := config.ParseConfig("../../price-feeder.example.toml")
 	require.NoError(s.T(), err)
 
 	endpoints := cfg.ProviderEndpointsMap()
@@ -73,6 +62,29 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 		}()
 	}
 	waitGroup.Wait()
+}
+
+func (s *IntegrationTestSuite) TestSubscribeCurrencyPairs() {
+	if testing.Short() {
+		s.T().Skip("skipping integration test in short mode")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	currencyPairs := []types.CurrencyPair{{Base: "USDT", Quote: "USD"}}
+	pvd, _ := provider.NewKrakenProvider(ctx, getLogger(), provider.Endpoint{}, currencyPairs...)
+	pvd.StartConnections()
+
+	time.Sleep(5 * time.Second)
+
+	newPairs := []types.CurrencyPair{{Base: "ATOM", Quote: "USD"}}
+	pvd.SubscribeCurrencyPairs(newPairs...)
+	currencyPairs = append(currencyPairs, newPairs...)
+
+	time.Sleep(25 * time.Second)
+
+	checkForPrices(s.T(), pvd, currencyPairs, "Kraken")
+
+	cancel()
 }
 
 func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.CurrencyPair, providerName string) {
