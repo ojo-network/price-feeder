@@ -182,7 +182,6 @@ provider = "eth-uniswap"
 base = "stATOM"
 providers = [
   "osmosis",
-  "crescent",
 ]
 quote = "ATOM"
 
