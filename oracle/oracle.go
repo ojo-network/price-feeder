@@ -97,6 +97,58 @@ func New(
 	}
 }
 
+// LoadProviderPairsAndDeviations loads the on chain pair providers and
+// deviations from the oracle params.
+func (o *Oracle) LoadProviderPairsAndDeviations(ctx context.Context) error {
+	blockHeight, err := o.oracleClient.ChainHeight.GetChainHeight()
+	if err != nil {
+		return err
+	}
+	if blockHeight < 1 {
+		return fmt.Errorf("expected positive block height")
+	}
+
+	oracleParams, err := o.GetParamCache(ctx, blockHeight)
+
+	currencyPairs := oracleParams.PriceFeederCurrencyPairProviders
+	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
+	for _, pair := range currencyPairs {
+		for _, provider := range pair.Providers {
+			if len(pair.PairAddress) > 0 {
+				for _, uniPair := range pair.PairAddress {
+					if (uniPair.AddressProvider == provider) && (uniPair.Address != "") {
+						providerPairs[types.ProviderName(uniPair.AddressProvider)] = append(providerPairs[types.ProviderName(uniPair.AddressProvider)], types.CurrencyPair{
+							Base:    pair.BaseDenom,
+							Quote:   pair.QuoteDenom,
+							Address: uniPair.Address,
+						})
+					}
+				}
+			} else {
+				providerPairs[types.ProviderName(provider)] = append(providerPairs[types.ProviderName(provider)], types.CurrencyPair{
+					Base:  pair.BaseDenom,
+					Quote: pair.QuoteDenom,
+				})
+			}
+		}
+	}
+
+	deviationList := oracleParams.PriceFeederCurrencyDeviationThresholds
+	deviations := make(map[string]sdk.Dec, len(deviationList))
+	for _, deviation := range deviationList {
+		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		if err != nil {
+			return err
+		}
+		deviations[deviation.BaseDenom] = threshold
+	}
+
+	o.providerPairs = providerPairs
+	o.deviations = deviations
+
+	return nil
+}
+
 // Start starts the oracle process in a blocking fashion.
 func (o *Oracle) Start(ctx context.Context) error {
 	for {
