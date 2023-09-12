@@ -637,6 +637,8 @@ github.com/ojo-network/ojo v0.2.0-rc1 h1:JWtOqXs8/Cp7p6vkpB4Rm+RpR9eBeG8tiHqxe+P
 github.com/ojo-network/ojo v0.2.0-rc1/go.mod h1:wFdTn6ioOdF08LeHXm9T/qB/khgRbJxDZPTDAX26bss=
 github.com/ojo-network/ojo v0.2.0-rc2 h1:SmYyr3zeo4ujXeYKQ55PrcSb/pYNOqEffefiak98GQQ=
 github.com/ojo-network/ojo v0.2.0-rc2/go.mod h1:kqpNu+hxoK4HcWSPo4G7P5LhV18xqxcIM2RxumVGkAE=
+github.com/ojo-network/ojo v0.2.0 h1:A1D+ISGEiSebndbQQwUxZZaCz9xsL2NoX71URrr39lA=
+github.com/ojo-network/ojo v0.2.0/go.mod h1:kqpNu+hxoK4HcWSPo4G7P5LhV18xqxcIM2RxumVGkAE=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
