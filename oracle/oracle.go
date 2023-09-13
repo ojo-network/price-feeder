@@ -110,7 +110,7 @@ func (o *Oracle) LoadProviderPairsAndDeviations(ctx context.Context) error {
 
 	oracleParams, err := o.GetParamCache(ctx, blockHeight)
 
-	currencyPairs := oracleParams.PriceFeederCurrencyPairProviders
+	currencyPairs := oracleParams.CurrencyPairProviders
 	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
 	for _, pair := range currencyPairs {
 		for _, provider := range pair.Providers {
@@ -133,7 +133,7 @@ func (o *Oracle) LoadProviderPairsAndDeviations(ctx context.Context) error {
 		}
 	}
 
-	deviationList := oracleParams.PriceFeederCurrencyDeviationThresholds
+	deviationList := oracleParams.CurrencyDeviationThresholds
 	deviations := make(map[string]sdk.Dec, len(deviationList))
 	for _, deviation := range deviationList {
 		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
