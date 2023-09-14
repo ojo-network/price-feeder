@@ -112,6 +112,9 @@ func (o *Oracle) LoadProviderPairsAndDeviations(ctx context.Context) error {
 	}
 
 	oracleParams, err := o.GetParamCache(ctx, blockHeight)
+	if err != nil {
+		return err
+	}
 
 	o.providerPairs = createPairProvidersFromCurrencyPairProvidersList(oracleParams.CurrencyPairProviders)
 	o.deviations, err = createDeviationsFromCurrencyDeviationThresholdList(oracleParams.CurrencyDeviationThresholds)
