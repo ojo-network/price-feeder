@@ -184,6 +184,7 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		providerTimeout,
 		deviations,
 		cfg.ProviderEndpointsMap(),
+		chainConfig,
 	)
 
 	if chainConfig {

@@ -133,6 +133,7 @@ func (ots *OracleTestSuite) SetupSuite() {
 		time.Millisecond*100,
 		make(map[string]sdk.Dec),
 		make(map[types.ProviderName]provider.Endpoint),
+		false,
 	)
 }
 

@@ -66,6 +66,7 @@ type Oracle struct {
 	deviations         map[string]sdk.Dec
 	endpoints          map[types.ProviderName]provider.Endpoint
 	paramCache         ParamCache
+	chainConfig        bool
 
 	pricesMutex     sync.RWMutex
 	lastPriceSyncTS time.Time
@@ -82,6 +83,7 @@ func New(
 	providerTimeout time.Duration,
 	deviations map[string]sdk.Dec,
 	endpoints map[types.ProviderName]provider.Endpoint,
+	chainConfig bool,
 ) *Oracle {
 	return &Oracle{
 		logger:          logger.With().Str("module", "oracle").Logger(),
@@ -93,6 +95,7 @@ func New(
 		providerTimeout: providerTimeout,
 		deviations:      deviations,
 		paramCache:      ParamCache{},
+		chainConfig:     chainConfig,
 		endpoints:       endpoints,
 	}
 }
@@ -110,41 +113,11 @@ func (o *Oracle) LoadProviderPairsAndDeviations(ctx context.Context) error {
 
 	oracleParams, err := o.GetParamCache(ctx, blockHeight)
 
-	currencyPairs := oracleParams.CurrencyPairProviders
-	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
-	for _, pair := range currencyPairs {
-		for _, provider := range pair.Providers {
-			if len(pair.PairAddress) > 0 {
-				for _, uniPair := range pair.PairAddress {
-					if (uniPair.AddressProvider == provider) && (uniPair.Address != "") {
-						providerPairs[types.ProviderName(uniPair.AddressProvider)] = append(providerPairs[types.ProviderName(uniPair.AddressProvider)], types.CurrencyPair{
-							Base:    pair.BaseDenom,
-							Quote:   pair.QuoteDenom,
-							Address: uniPair.Address,
-						})
-					}
-				}
-			} else {
-				providerPairs[types.ProviderName(provider)] = append(providerPairs[types.ProviderName(provider)], types.CurrencyPair{
-					Base:  pair.BaseDenom,
-					Quote: pair.QuoteDenom,
-				})
-			}
-		}
+	o.providerPairs = createPairProvidersFromCurrencyPairProvidersList(oracleParams.CurrencyPairProviders)
+	o.deviations, err = createDeviationsFromCurrencyDeviationThresholdList(oracleParams.CurrencyDeviationThresholds)
+	if err != nil {
+		return err
 	}
-
-	deviationList := oracleParams.CurrencyDeviationThresholds
-	deviations := make(map[string]sdk.Dec, len(deviationList))
-	for _, deviation := range deviationList {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
-		if err != nil {
-			return err
-		}
-		deviations[deviation.BaseDenom] = threshold
-	}
-
-	o.providerPairs = providerPairs
-	o.deviations = deviations
 
 	return nil
 }
@@ -405,19 +378,28 @@ func SetProviderTickerPricesAndCandles(
 
 // GetParamCache returns the last updated parameters of the x/oracle module
 // if the current ParamCache is outdated, we will query it again.
-func (o *Oracle) GetParamCache(ctx context.Context, currentBlockHeigh int64) (oracletypes.Params, error) {
-	if !o.paramCache.IsOutdated(currentBlockHeigh) {
+func (o *Oracle) GetParamCache(ctx context.Context, currentBlockHeight int64) (oracletypes.Params, error) {
+	if !o.paramCache.IsOutdated(currentBlockHeight) {
 		return *o.paramCache.params, nil
 	}
 
-	params, err := o.GetParams(ctx)
+	currentParams := o.paramCache.params
+	newParams, err := o.GetParams(ctx)
 	if err != nil {
 		return oracletypes.Params{}, err
 	}
 
-	o.checkAcceptList(params)
-	o.paramCache.Update(currentBlockHeigh, params)
-	return params, nil
+	o.checkAcceptList(newParams)
+	o.paramCache.Update(currentBlockHeight, newParams)
+
+	if o.chainConfig && currentParams != nil {
+		err = o.checkCurrencyPairAndDeviations(*currentParams, newParams)
+		if err != nil {
+			return oracletypes.Params{}, err
+		}
+	}
+
+	return newParams, nil
 }
 
 // GetParams returns the current on-chain parameters of the x/oracle module.
@@ -540,6 +522,22 @@ func (o *Oracle) checkAcceptList(params oracletypes.Params) {
 			o.logger.Warn().Str("denom", symbol).Msg("price missing for required denom")
 		}
 	}
+}
+
+func (o *Oracle) checkCurrencyPairAndDeviations(currentParams, newParams oracletypes.Params) (err error) {
+	if currentParams.CurrencyPairProviders.String() != newParams.CurrencyPairProviders.String() {
+		o.logger.Debug().Msg("Updating Currency Pair Providers Map")
+		o.providerPairs = createPairProvidersFromCurrencyPairProvidersList(newParams.CurrencyPairProviders)
+	}
+	if currentParams.CurrencyDeviationThresholds.String() != newParams.CurrencyDeviationThresholds.String() {
+		o.logger.Debug().Msg("Updating Currency Deviation Thresholds Map")
+		o.deviations, err = createDeviationsFromCurrencyDeviationThresholdList(newParams.CurrencyDeviationThresholds)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (o *Oracle) tick(ctx context.Context) error {
