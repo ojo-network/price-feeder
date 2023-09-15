@@ -234,8 +234,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 			for _, pair := range currencyPairs {
 				success := SetProviderTickerPricesAndCandles(providerName, providerPrices, providerCandles, prices, candles, pair)
 				if !success {
-					mtx.Unlock()
-					return fmt.Errorf("failed to find any exchange rates in provider responses")
+					o.logger.Err(fmt.Errorf("failed to find any ticker or candle data for %s from %s", pair, providerName)).Send()
 				}
 			}
 
