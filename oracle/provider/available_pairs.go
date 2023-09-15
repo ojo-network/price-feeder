@@ -29,7 +29,7 @@ func ConfirmPairAvailability(
 	confirmedPairs := []types.CurrencyPair{}
 	for _, cp := range cps {
 		if _, ok := availablePairs[strings.ToUpper(cp.String())]; !ok {
-			logger.Warn().Msg(fmt.Sprintf(
+			logger.Error().Msg(fmt.Sprintf(
 				"%s not an available pair to be subscribed to in %v, %v ignoring pair",
 				cp.String(),
 				providerName,
