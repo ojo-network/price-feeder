@@ -240,7 +240,7 @@ func (p *PolygonProvider) messageReceived(messageType int, _ *WebsocketConnectio
 
 	statusErr = json.Unmarshal(bz, &statusResp)
 	if statusResp[0].EV == polygonStatusEvent {
-		p.logger.Info().Str("status msg received: ", statusResp[0].Message)
+		p.logger.Debug().Str("status msg received: ", statusResp[0].Message)
 		return
 	}
 

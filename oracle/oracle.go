@@ -272,7 +272,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 	}
 
 	if err := g.Wait(); err != nil {
-		o.logger.Info().Err(err).Msg("failed to get prices from provider")
+		o.logger.Error().Err(err).Msg("failed to get prices from provider")
 	}
 
 	computedPrices, err := o.GetComputedPrices(
@@ -285,7 +285,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 
 	for cp := range requiredRates {
 		if _, ok := computedPrices[cp]; !ok {
-			o.logger.Warn().Str("asset", cp.String()).Msg("unable to report price for expected asset")
+			o.logger.Error().Str("asset", cp.String()).Msg("unable to report price for expected asset")
 		}
 	}
 
