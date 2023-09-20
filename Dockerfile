@@ -31,6 +31,7 @@ WORKDIR /app
 
 COPY --from=builder /app/build/price-feeder /bin/price-feeder
 COPY --from=builder /app/price-feeder.example.toml /app/price-feeder.toml
+COPY --from=builder /app/umee-provider-config/ /app/umee-provider-config/
 
 EXPOSE 7171
 

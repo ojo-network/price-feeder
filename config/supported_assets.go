@@ -15,7 +15,7 @@ var (
 		provider.ProviderBinance:    false,
 		provider.ProviderBinanceUS:  false,
 		provider.ProviderCrescent:   false,
-		provider.ProviderOsmosisV2:  false,
+		provider.ProviderOsmosis:    false,
 		provider.ProviderOkx:        false,
 		provider.ProviderHuobi:      false,
 		provider.ProviderGate:       false,
@@ -44,6 +44,15 @@ var (
 		{Base: "OSMO", Quote: "USDT"}: {},
 		{Base: "JUNO", Quote: "USDT"}: {},
 		{Base: "UMEE", Quote: "USDT"}: {},
+		{Base: "WETH", Quote: "USDC"}: {},
+		{Base: "WBTC", Quote: "WETH"}: {},
+	}
+
+	SupportedUniswapCurrencies = map[string]struct{}{
+		"WETH":  {},
+		"CBETH": {},
+		"RETH":  {},
+		"WBTC":  {},
 	}
 
 	// SupportedForexCurrencies defines a lookup table for all the supported

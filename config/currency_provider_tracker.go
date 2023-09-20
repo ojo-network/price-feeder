@@ -8,19 +8,21 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ojo-network/price-feeder/oracle/provider"
+	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 )
 
 const (
-	coinGeckoRestURL            = "https://api.coingecko.com/api/v3/coins"
-	coinGeckoListEndpoint       = "list"
-	coinGeckoTickersEndpoint    = "tickers"
-	osmosisV2RestURL            = "https://api.osmo-api.prod.ojo.network"
-	osmosisV2AssetPairsEndpoint = "assetpairs"
-	crescentRestURL             = "https://api.cresc-api.prod.ojo.network"
-	crescentAssetPairsEndpoint  = "assetpairs"
-	requestTimeout              = time.Second * 2
-	trackingPeriod              = time.Hour * 24
+	coinGeckoRestURL           = "https://api.coingecko.com/api/v3/coins"
+	coinGeckoListEndpoint      = "list"
+	coinGeckoTickersEndpoint   = "tickers"
+	osmosisRestURL             = "https://api.osmo-api.prod.ojo.network"
+	osmosisAssetPairsEndpoint  = "assetpairs"
+	crescentRestURL            = "https://api.cresc-api.prod.ojo.network"
+	crescentAssetPairsEndpoint = "assetpairs"
+	requestTimeout             = time.Second * 2
+	trackingPeriod             = time.Hour * 24
 )
 
 type (
@@ -140,7 +142,7 @@ func (t *CurrencyProviderTracker) getOsmosisAPIPairs() (map[string]string, error
 	}
 	osmosisAPIPairs := make(map[string]string)
 
-	osmosisResp, err := client.Get(fmt.Sprintf("%s/%s", osmosisV2RestURL, osmosisV2AssetPairsEndpoint))
+	osmosisResp, err := client.Get(fmt.Sprintf("%s/%s", osmosisRestURL, osmosisAssetPairsEndpoint))
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +196,7 @@ func (t *CurrencyProviderTracker) setCurrencyProviders(
 	for _, pair := range t.pairs {
 		// check if its a pair supported by the osmosis api
 		if osmosisAPIPairs[strings.ToUpper(pair.Base)] == strings.ToUpper(pair.Quote) {
-			t.CurrencyProviders[pair.Base] = append(t.CurrencyProviders[pair.Base], "osmosisv2")
+			t.CurrencyProviders[pair.Base] = append(t.CurrencyProviders[pair.Base], "osmosis")
 		}
 
 		// check if its a pair supported by the crescent api
@@ -268,4 +270,52 @@ func (t *CurrencyProviderTracker) trackCurrencyProviders(ctx context.Context) {
 			t.logCurrencyProviders()
 		}
 	}
+}
+
+// CheckProviderMins starts the currency provider tracker to check the amount of
+// providers available for a currency by querying CoinGecko's API. It will enforce
+// a provider minimum for a given currency based on its available providers.
+func CheckProviderMins(ctx context.Context, logger zerolog.Logger, cfg Config) error {
+	currencyProviderTracker, err := NewCurrencyProviderTracker(ctx, logger, cfg.CurrencyPairs...)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to start currency provider tracker")
+		// If currency tracker errors out and override flag is set, the price-feeder
+		// will run without enforcing provider minimums.
+		if cfg.ProviderMinOverride {
+			return nil
+		}
+	}
+
+	pairs := make(map[string]map[types.ProviderName]struct{})
+	for _, cp := range cfg.CurrencyPairs {
+		if _, ok := pairs[cp.Base]; !ok {
+			pairs[cp.Base] = make(map[types.ProviderName]struct{})
+		}
+		for _, provider := range cp.Providers {
+			pairs[cp.Base][provider] = struct{}{}
+		}
+	}
+
+	for base, providers := range pairs {
+		var minProviders int
+		_, isForexBase := SupportedForexCurrencies[base]
+		_, isUniBase := SupportedUniswapCurrencies[base]
+
+		// If currency provider tracker errored, default to three providers as
+		// the minimum.
+		switch {
+		case currencyProviderTracker != nil:
+			minProviders = currencyProviderTracker.CurrencyProviderMin[base]
+		case isForexBase || isUniBase:
+			minProviders = 1
+		default:
+			minProviders = 3
+		}
+
+		if _, ok := pairs[base][provider.ProviderMock]; !ok && len(providers) < minProviders {
+			return fmt.Errorf("must have at least %d providers for %s", minProviders, base)
+		}
+	}
+
+	return nil
 }

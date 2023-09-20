@@ -6,12 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -33,7 +34,10 @@ func TestPriceAccuracy(t *testing.T) {
 	}
 
 	logger := getLogger()
-	cfg, err := config.ParseConfig("../../price-feeder.example.toml")
+	cfg, err := config.LoadConfigFromFlags(
+		fmt.Sprintf("../../%s", config.SampleNodeConfigPath),
+		"../../",
+	)
 	require.NoError(t, err)
 
 	providerTimeout, err := time.ParseDuration(cfg.ProviderTimeout)

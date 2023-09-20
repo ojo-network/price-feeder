@@ -11,21 +11,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/telemetry"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/rs/zerolog"
+	oracletypes "github.com/umee-network/umee/v6/x/oracle/types"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	pfsync "github.com/ojo-network/price-feeder/pkg/sync"
-	oracletypes "github.com/umee-network/umee/v5/x/oracle/types"
-
-	"github.com/cosmos/cosmos-sdk/telemetry"
 )
 
 // We define tickerSleep as the minimum timeout between each oracle loop. We
@@ -236,8 +234,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 			for _, pair := range currencyPairs {
 				success := SetProviderTickerPricesAndCandles(providerName, providerPrices, providerCandles, prices, candles, pair)
 				if !success {
-					mtx.Unlock()
-					return fmt.Errorf("failed to find any exchange rates in provider responses")
+					o.logger.Err(fmt.Errorf("failed to find any ticker or candle data for %s from %s", pair, providerName)).Send()
 				}
 			}
 
@@ -247,7 +244,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 	}
 
 	if err := g.Wait(); err != nil {
-		o.logger.Info().Err(err).Msg("failed to get prices from provider")
+		o.logger.Error().Err(err).Msg("failed to get prices from provider")
 	}
 
 	computedPrices, err := o.GetComputedPrices(
@@ -260,7 +257,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 
 	for cp := range requiredRates {
 		if _, ok := computedPrices[cp]; !ok {
-			o.logger.Warn().Str("asset", cp.String()).Msg("unable to report price for expected asset")
+			o.logger.Error().Str("asset", cp.String()).Msg("unable to report price for expected asset")
 		}
 	}
 
@@ -439,8 +436,8 @@ func NewProvider(
 	case provider.ProviderKraken:
 		return provider.NewKrakenProvider(ctx, logger, endpoint, providerPairs...)
 
-	case provider.ProviderOsmosisV2:
-		return provider.NewOsmosisV2Provider(ctx, logger, endpoint, providerPairs...)
+	case provider.ProviderOsmosis:
+		return provider.NewOsmosisProvider(ctx, logger, endpoint, providerPairs...)
 
 	case provider.ProviderHuobi:
 		return provider.NewHuobiProvider(ctx, logger, endpoint, providerPairs...)
@@ -474,6 +471,9 @@ func NewProvider(
 
 	case provider.ProviderMock:
 		return provider.NewMockProvider(), nil
+
+	case provider.ProviderEthUniswap:
+		return provider.NewUniswapProvider(ctx, logger, providerName.String(), endpoint, providerPairs...), nil
 	}
 
 	return nil, fmt.Errorf("provider %s not found", providerName)

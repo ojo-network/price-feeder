@@ -12,7 +12,7 @@ import (
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	tmjsonclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	"github.com/rs/zerolog"
-	umeeapp "github.com/umee-network/umee/v5/app"
+	umeeapp "github.com/umee-network/umee/v6/app"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
