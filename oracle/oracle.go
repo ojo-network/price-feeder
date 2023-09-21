@@ -65,7 +65,7 @@ type Oracle struct {
 	oracleClient       client.OracleClient
 	deviations         map[string]sdk.Dec
 	endpoints          map[types.ProviderName]provider.Endpoint
-	paramCache         ParamCache
+	paramCache         *ParamCache
 	chainConfig        bool
 
 	pricesMutex     sync.RWMutex
@@ -77,6 +77,7 @@ type Oracle struct {
 }
 
 func New(
+	ctx context.Context,
 	logger zerolog.Logger,
 	oc client.OracleClient,
 	providerPairs map[types.ProviderName][]types.CurrencyPair,
@@ -84,7 +85,21 @@ func New(
 	deviations map[string]sdk.Dec,
 	endpoints map[types.ProviderName]provider.Endpoint,
 	chainConfig bool,
-) *Oracle {
+) (*Oracle, error) {
+	clientCtx, err := oc.CreateClientContext()
+	if err != nil {
+		return &Oracle{}, err
+	}
+
+	paramsCache, err := NewOracleParamCache(
+		ctx,
+		clientCtx.Client,
+		logger,
+	)
+	if err != nil {
+		return &Oracle{}, err
+	}
+
 	return &Oracle{
 		logger:          logger.With().Str("module", "oracle").Logger(),
 		closer:          pfsync.NewCloser(),
@@ -94,10 +109,10 @@ func New(
 		previousPrevote: nil,
 		providerTimeout: providerTimeout,
 		deviations:      deviations,
-		paramCache:      ParamCache{},
+		paramCache:      paramsCache,
 		chainConfig:     chainConfig,
 		endpoints:       endpoints,
-	}
+	}, nil
 }
 
 // LoadProviderPairsAndDeviations loads the on chain pair providers and
@@ -379,58 +394,6 @@ func SetProviderTickerPricesAndCandles(
 	return pricesOk || candlesOk
 }
 
-// GetParamCache returns the last updated parameters of the x/oracle module
-// if the current ParamCache is outdated, we will query it again.
-func (o *Oracle) GetParamCache(ctx context.Context, currentBlockHeight int64) (oracletypes.Params, error) {
-	if !o.paramCache.IsOutdated(currentBlockHeight) {
-		return *o.paramCache.params, nil
-	}
-
-	currentParams := o.paramCache.params
-	newParams, err := o.GetParams(ctx)
-	if err != nil {
-		return oracletypes.Params{}, err
-	}
-
-	o.checkAcceptList(newParams)
-	o.paramCache.Update(currentBlockHeight, newParams)
-
-	if o.chainConfig && currentParams != nil {
-		err = o.checkCurrencyPairAndDeviations(*currentParams, newParams)
-		if err != nil {
-			return oracletypes.Params{}, err
-		}
-	}
-
-	return newParams, nil
-}
-
-// GetParams returns the current on-chain parameters of the x/oracle module.
-func (o *Oracle) GetParams(ctx context.Context) (oracletypes.Params, error) {
-	grpcConn, err := grpc.Dial(
-		o.oracleClient.GRPCEndpoint,
-		// the Cosmos SDK doesn't support any transport security mechanism
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialerFunc),
-	)
-	if err != nil {
-		return oracletypes.Params{}, fmt.Errorf("failed to dial Cosmos gRPC service: %w", err)
-	}
-
-	defer grpcConn.Close()
-	queryClient := oracletypes.NewQueryClient(grpcConn)
-
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-
-	queryResponse, err := queryClient.Params(ctx, &oracletypes.QueryParams{})
-	if err != nil {
-		return oracletypes.Params{}, fmt.Errorf("failed to get x/oracle params: %w", err)
-	}
-
-	return queryResponse.Params, nil
-}
-
 func (o *Oracle) getOrSetProvider(ctx context.Context, providerName types.ProviderName) (provider.Provider, error) {
 	var (
 		priceProvider provider.Provider
@@ -517,6 +480,58 @@ func NewProvider(
 	return nil, fmt.Errorf("provider %s not found", providerName)
 }
 
+// GetParamCache returns the last updated parameters of the x/oracle module
+// if the current ParamCache is outdated, we will query it again.
+func (o *Oracle) GetParamCache(ctx context.Context, currentBlockHeight int64) (oracletypes.Params, error) {
+	if !o.paramCache.IsOutdated(currentBlockHeight) {
+		return *o.paramCache.params, nil
+	}
+
+	currentParams := o.paramCache.params
+	newParams, err := o.GetParams(ctx)
+	if err != nil {
+		return oracletypes.Params{}, err
+	}
+
+	o.checkAcceptList(newParams)
+	o.paramCache.UpdateParamCache(currentBlockHeight, newParams, nil)
+
+	if o.chainConfig && currentParams != nil {
+		err = o.checkCurrencyPairAndDeviations(*currentParams, newParams)
+		if err != nil {
+			return oracletypes.Params{}, err
+		}
+	}
+
+	return newParams, nil
+}
+
+// GetParams returns the current on-chain parameters of the x/oracle module.
+func (o *Oracle) GetParams(ctx context.Context) (oracletypes.Params, error) {
+	grpcConn, err := grpc.Dial(
+		o.oracleClient.GRPCEndpoint,
+		// the Cosmos SDK doesn't support any transport security mechanism
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(dialerFunc),
+	)
+	if err != nil {
+		return oracletypes.Params{}, fmt.Errorf("failed to dial Cosmos gRPC service: %w", err)
+	}
+
+	defer grpcConn.Close()
+	queryClient := oracletypes.NewQueryClient(grpcConn)
+
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	queryResponse, err := queryClient.Params(ctx, &oracletypes.QueryParams{})
+	if err != nil {
+		return oracletypes.Params{}, fmt.Errorf("failed to get x/oracle params: %w", err)
+	}
+
+	return queryResponse.Params, nil
+}
+
 func (o *Oracle) checkAcceptList(params oracletypes.Params) {
 	for _, denom := range params.AcceptList {
 		symbol := strings.ToUpper(denom.SymbolDenom)
@@ -541,6 +556,63 @@ func (o *Oracle) checkCurrencyPairAndDeviations(currentParams, newParams oraclet
 	}
 
 	return nil
+}
+
+// createPairProvidersFromCurrencyPairProvidersList will create the pair providers
+// map used by the price feeder Oracle from a CurrencyPairProvidersList defined by
+// Ojo's oracle module.
+func createPairProvidersFromCurrencyPairProvidersList(
+	currencyPairs oracletypes.CurrencyPairProvidersList,
+) map[types.ProviderName][]types.CurrencyPair {
+	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
+
+	for _, pair := range currencyPairs {
+		for _, provider := range pair.Providers {
+			if len(pair.PairAddress) > 0 {
+				for _, uniPair := range pair.PairAddress {
+					if (uniPair.AddressProvider == provider) && (uniPair.Address != "") {
+						providerPairs[types.ProviderName(uniPair.AddressProvider)] = append(
+							providerPairs[types.ProviderName(uniPair.AddressProvider)],
+							types.CurrencyPair{
+								Base:    pair.BaseDenom,
+								Quote:   pair.QuoteDenom,
+								Address: uniPair.Address,
+							},
+						)
+					}
+				}
+			} else {
+				providerPairs[types.ProviderName(provider)] = append(
+					providerPairs[types.ProviderName(provider)],
+					types.CurrencyPair{
+						Base:  pair.BaseDenom,
+						Quote: pair.QuoteDenom,
+					},
+				)
+			}
+		}
+	}
+
+	return providerPairs
+}
+
+// createDeviationsFromCurrencyDeviationThresholdList will create the deviations
+// map used by the price feeder Oracle from a CurrencyDeviationThresholdList defined by
+// Ojo's oracle module.
+func createDeviationsFromCurrencyDeviationThresholdList(
+	deviationList oracletypes.CurrencyDeviationThresholdList,
+) (map[string]sdk.Dec, error) {
+	deviations := make(map[string]sdk.Dec, len(deviationList))
+
+	for _, deviation := range deviationList {
+		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		if err != nil {
+			return nil, err
+		}
+		deviations[deviation.BaseDenom] = threshold
+	}
+
+	return deviations, nil
 }
 
 func (o *Oracle) tick(ctx context.Context) error {

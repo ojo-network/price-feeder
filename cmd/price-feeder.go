@@ -177,7 +177,8 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	oracle := oracle.New(
+	oracle, err := oracle.New(
+		ctx,
 		logger,
 		oracleClient,
 		cfg.ProviderPairs(),
@@ -186,6 +187,9 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		cfg.ProviderEndpointsMap(),
 		chainConfig,
 	)
+	if err != nil {
+		return err
+	}
 
 	if chainConfig {
 		err := oracle.LoadProviderPairsAndDeviations(ctx)

@@ -1,10 +1,18 @@
 package oracle
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
+	"context"
+	"errors"
+	"sync"
 
-	"github.com/ojo-network/price-feeder/oracle/types"
+	proto "github.com/cosmos/gogoproto/proto"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
+	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmtypes "github.com/cometbft/cometbft/types"
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -13,28 +21,78 @@ const (
 	paramsCacheInterval = int64(200)
 )
 
+var (
+	evtType = proto.MessageName(&oracletypes.EventParamUpdate{})
+
+	errParseEventParamUpdate = errors.New("error parsing EventParamUpdate")
+	queryEventParamUpdate    = tmtypes.QueryForEvent(evtType)
+)
+
 // ParamCache is used to cache oracle param data for
 // an amount of blocks, defined by paramsCacheInterval.
 type ParamCache struct {
+	Logger zerolog.Logger
+
+	mtx          	 sync.RWMutex
+	errGetParams 	 error
 	params           *oracletypes.Params
 	lastUpdatedBlock int64
 }
 
+// NewOracleParamCache returns a new ParamCache struct that
+// starts a new goroutine subscribed to EventParamUpdate.
+// It is also updated every paramsCacheInterval incase
+// ParamUpdate events are missed.
+func NewOracleParamCache(
+	ctx context.Context,
+	client client.TendermintRPC,
+	logger zerolog.Logger,
+) (*ParamCache, error) {
+	rpcClient := client.(*rpchttp.HTTP)
+
+	if !rpcClient.IsRunning() {
+		if err := rpcClient.Start(); err != nil {
+			return nil, err
+		}
+	}
+
+	newOracleParamsSubscription, err := rpcClient.Subscribe(
+		ctx, evtType, queryEventParamUpdate.String(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	paramCache := &ParamCache{
+		Logger:           logger.With().Str("oracle_client", "oracle_params").Logger(),
+		errGetParams:     nil,
+		params:           nil,
+	}
+
+	go paramCache.subscribe(ctx, rpcClient, newOracleParamsSubscription)
+
+	return paramCache, nil
+}
+
 // Update retrieves the most recent oracle params and
 // updates the instance.
-func (paramCache *ParamCache) Update(currentBlockHeigh int64, params oracletypes.Params) {
-	paramCache.lastUpdatedBlock = currentBlockHeigh
+func (paramCache *ParamCache) UpdateParamCache(currentBlockHeight int64, params oracletypes.Params, err error) {
+	paramCache.mtx.Lock()
+	defer paramCache.mtx.Unlock()
+
+	paramCache.lastUpdatedBlock = currentBlockHeight
 	paramCache.params = &params
+	paramCache.errGetParams = err
 }
 
 // IsOutdated checks whether or not the current
 // param data was fetched in the last 200 blocks.
-func (paramCache *ParamCache) IsOutdated(currentBlockHeigh int64) bool {
+func (paramCache *ParamCache) IsOutdated(currentBlockHeight int64) bool {
 	if paramCache.params == nil {
 		return true
 	}
 
-	if currentBlockHeigh < paramsCacheInterval {
+	if currentBlockHeight < paramsCacheInterval {
 		return false
 	}
 
@@ -42,66 +100,39 @@ func (paramCache *ParamCache) IsOutdated(currentBlockHeigh int64) bool {
 	// The current blockchain height is lower
 	// than the last updated block, to fix we should
 	// just update the cached params again.
-	if currentBlockHeigh < paramCache.lastUpdatedBlock {
+	if currentBlockHeight < paramCache.lastUpdatedBlock {
 		return true
 	}
 
-	return (currentBlockHeigh - paramCache.lastUpdatedBlock) > paramsCacheInterval
+	return (currentBlockHeight - paramCache.lastUpdatedBlock) > paramsCacheInterval
 }
 
-// createPairProvidersFromCurrencyPairProvidersList will create the pair providers
-// map used by the price feeder Oracle from a CurrencyPairProvidersList defined by
-// Ojo's oracle module.
-func createPairProvidersFromCurrencyPairProvidersList(
-	currencyPairs oracletypes.CurrencyPairProvidersList,
-) map[types.ProviderName][]types.CurrencyPair {
-	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
-
-	for _, pair := range currencyPairs {
-		for _, provider := range pair.Providers {
-			if len(pair.PairAddress) > 0 {
-				for _, uniPair := range pair.PairAddress {
-					if (uniPair.AddressProvider == provider) && (uniPair.Address != "") {
-						providerPairs[types.ProviderName(uniPair.AddressProvider)] = append(
-							providerPairs[types.ProviderName(uniPair.AddressProvider)],
-							types.CurrencyPair{
-								Base:    pair.BaseDenom,
-								Quote:   pair.QuoteDenom,
-								Address: uniPair.Address,
-							},
-						)
-					}
-				}
-			} else {
-				providerPairs[types.ProviderName(provider)] = append(
-					providerPairs[types.ProviderName(provider)],
-					types.CurrencyPair{
-						Base:  pair.BaseDenom,
-						Quote: pair.QuoteDenom,
-					},
-				)
+// subscribe listens to param update events.
+func (paramCache *ParamCache) subscribe(
+	ctx context.Context,
+	eventsClient tmrpcclient.EventsClient,
+	newOracleParamsSubscription <-chan tmctypes.ResultEvent,
+) {
+	for {
+		select {
+		case <-ctx.Done():
+			err := eventsClient.Unsubscribe(ctx, evtType, queryEventParamUpdate.String())
+			if err != nil {
+				paramCache.Logger.Err(err)
+				paramCache.UpdateParamCache(paramCache.lastUpdatedBlock, *paramCache.params, err)
 			}
+			paramCache.Logger.Info().Msg("closing the ParamCache subscription")
+			return
+
+		case resultEvent := <-newOracleParamsSubscription:
+			eventDataParamUpdate, ok := resultEvent.Data.(oracletypes.EventParamUpdate)
+			if !ok {
+				paramCache.Logger.Err(errParseEventParamUpdate)
+				paramCache.UpdateParamCache(paramCache.lastUpdatedBlock, *paramCache.params, errParseEventParamUpdate)
+				continue
+			}
+			paramCache.Logger.Info().Msg("Updating param cache from event")
+			paramCache.UpdateParamCache(eventDataParamUpdate.Block, eventDataParamUpdate.Params, nil)
 		}
 	}
-
-	return providerPairs
-}
-
-// createDeviationsFromCurrencyDeviationThresholdList will create the deviations
-// map used by the price feeder Oracle from a CurrencyDeviationThresholdList defined by
-// Ojo's oracle module.
-func createDeviationsFromCurrencyDeviationThresholdList(
-	deviationList oracletypes.CurrencyDeviationThresholdList,
-) (map[string]sdk.Dec, error) {
-	deviations := make(map[string]sdk.Dec, len(deviationList))
-
-	for _, deviation := range deviationList {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
-		if err != nil {
-			return nil, err
-		}
-		deviations[deviation.BaseDenom] = threshold
-	}
-
-	return deviations, nil
 }
