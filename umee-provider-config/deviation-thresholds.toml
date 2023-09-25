@@ -121,3 +121,7 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "WBTC"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "NCT"
+threshold = "2"
