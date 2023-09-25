@@ -20,7 +20,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
-	github.com/umee-network/umee/v6 v6.0.0-00010101000000-000000000000
+	github.com/umee-network/umee/v6 v6.0.3-0.20230925092301-15a5e5f8aca2
 	golang.org/x/sync v0.3.0
 	google.golang.org/grpc v1.58.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -342,5 +342,5 @@ replace (
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	// github.com/osmosis-labs/bech32-ibc => github.com/umee-network/bech32-ibc v0.3.3
+// github.com/osmosis-labs/bech32-ibc => github.com/umee-network/bech32-ibc v0.3.3
 )
