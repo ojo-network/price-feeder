@@ -364,3 +364,17 @@ providers = [
   "osmosis",
 ]
 quote = "OSMO"
+
+[[currency_pairs]]
+base = "SOMM"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "SOMM"
+providers = [
+  "gate",
+]
+quote = "USDT"

@@ -125,3 +125,7 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "NCT"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "SOMM"
+threshold = "2"
