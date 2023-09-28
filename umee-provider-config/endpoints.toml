@@ -1,6 +1,5 @@
 [[provider_endpoints]]
 name = "osmosis"
-# After test needs to change prod
 rest = "https://api.osmo-api.prod.ojo.network"
 websocket = "api.osmo-api.prod.ojo.network"
 
