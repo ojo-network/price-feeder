@@ -114,6 +114,14 @@ threshold = "2"
 base = "stUMEE"
 threshold = "2"
 
+[[deviation_thresholds]]
+base = "NCT"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "SOMM"
+threshold = "2"
+
 [[currency_pairs]]
 base = "UMEE"
 providers = [
@@ -247,7 +255,6 @@ quote = "USD"
 base = "stATOM"
 providers = [
   "osmosisv2",
-  "crescent",
 ]
 quote = "ATOM"
 
@@ -412,6 +419,28 @@ providers = [
   "osmosisv2",
 ]
 quote = "UMEE"
+
+[[currency_pairs]]
+base = "NCT"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+
+[[currency_pairs]]
+base = "SOMM"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "SOMM"
+providers = [
+  "gate",
+]
+quote = "USDT"
 
 [account]
 address = "umee1zypqa76je7pxsdwkfah6mu9a583sju6xjavygg"
