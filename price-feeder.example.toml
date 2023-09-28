@@ -423,7 +423,7 @@ quote = "UMEE"
 [[currency_pairs]]
 base = "NCT"
 providers = [
-  "osmosis",
+  "osmosisv2",
 ]
 quote = "OSMO"
 
@@ -431,7 +431,7 @@ quote = "OSMO"
 [[currency_pairs]]
 base = "SOMM"
 providers = [
-  "osmosis",
+  "osmosisv2",
 ]
 quote = "OSMO"
 
