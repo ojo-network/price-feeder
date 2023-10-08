@@ -296,7 +296,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "stkATOM"
 providers = [
-  "crescent",
+  "osmosis",
 ]
 quote = "ATOM"
 
