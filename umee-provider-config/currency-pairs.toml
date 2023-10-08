@@ -296,7 +296,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "stkATOM"
 providers = [
-  "crescent",
+  "osmosis",
 ]
 quote = "ATOM"
 
@@ -315,9 +315,9 @@ providers = [ "coinbase",]
 [[currency_pairs]]
 base = "CMST"
 providers = [
-  "crescent",
+  "osmosis",
 ]
-quote = "USDC"
+quote = "OSMO"
 
 [[currency_pairs]]
 base = "MARS"
