@@ -77,7 +77,6 @@ type Oracle struct {
 }
 
 func New(
-	ctx context.Context,
 	logger zerolog.Logger,
 	oc client.OracleClient,
 	providerPairs map[types.ProviderName][]types.CurrencyPair,

@@ -47,7 +47,6 @@ func TestPriceAccuracy(t *testing.T) {
 	require.NoError(t, err)
 
 	oracle, err := oracle.New(
-		context.Background(),
 		logger,
 		client.OracleClient{},
 		cfg.ProviderPairs(),
