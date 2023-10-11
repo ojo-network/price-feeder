@@ -13,8 +13,13 @@ require (
 	github.com/hasura/go-graphql-client v0.10.0
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
+<<<<<<< HEAD
 	github.com/ojo-network/ojo v0.1.2
 	github.com/rs/cors v1.10.0
+=======
+	github.com/ojo-network/ojo v0.2.1
+	github.com/rs/cors v1.10.1
+>>>>>>> 5fd9fc1 (build(deps): Bump github.com/rs/cors from 1.10.0 to 1.10.1 (#280))
 	github.com/rs/zerolog v1.30.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
