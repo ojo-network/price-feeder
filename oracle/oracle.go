@@ -86,20 +86,6 @@ func New(
 	endpoints map[types.ProviderName]provider.Endpoint,
 	chainConfig bool,
 ) (*Oracle, error) {
-	clientCtx, err := oc.CreateClientContext()
-	if err != nil {
-		return &Oracle{}, err
-	}
-
-	paramsCache, err := NewOracleParamCache(
-		ctx,
-		clientCtx.Client,
-		logger,
-	)
-	if err != nil {
-		return &Oracle{}, err
-	}
-
 	return &Oracle{
 		logger:          logger.With().Str("module", "oracle").Logger(),
 		closer:          pfsync.NewCloser(),
@@ -109,7 +95,7 @@ func New(
 		previousPrevote: nil,
 		providerTimeout: providerTimeout,
 		deviations:      deviations,
-		paramCache:      paramsCache,
+		paramCache:      &ParamCache{params: nil},
 		chainConfig:     chainConfig,
 		endpoints:       endpoints,
 	}, nil
@@ -142,6 +128,20 @@ func (o *Oracle) LoadProviderPairsAndDeviations(ctx context.Context) error {
 
 // Start starts the oracle process in a blocking fashion.
 func (o *Oracle) Start(ctx context.Context) error {
+	// initialize param cache
+	clientCtx, err := o.oracleClient.CreateClientContext()
+	if err != nil {
+		return err
+	}
+	err = o.paramCache.Initialize(
+		ctx,
+		clientCtx.Client,
+		o.logger,
+	)
+	if err != nil {
+		return err
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -481,9 +481,9 @@ func NewProvider(
 }
 
 // GetParamCache returns the last updated parameters of the x/oracle module
-// if the current ParamCache is outdated, we will query it again.
+// if the current ParamCache is outdated or a param update event was found, the cache is updated.
 func (o *Oracle) GetParamCache(ctx context.Context, currentBlockHeight int64) (oracletypes.Params, error) {
-	if !o.paramCache.IsOutdated(currentBlockHeight) {
+	if !o.paramCache.IsOutdated(currentBlockHeight) && !o.paramCache.paramUpdateEvent {
 		return *o.paramCache.params, nil
 	}
 

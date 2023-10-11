@@ -2,16 +2,13 @@ package oracle
 
 import (
 	"context"
-	"errors"
 	"sync"
 
-	proto "github.com/cosmos/gogoproto/proto"
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
-	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/rs/zerolog"
 )
 
@@ -22,10 +19,7 @@ const (
 )
 
 var (
-	evtType = proto.MessageName(&oracletypes.EventParamUpdate{})
-
-	errParseEventParamUpdate = errors.New("error parsing EventParamUpdate")
-	queryEventParamUpdate    = tmtypes.QueryForEvent(evtType)
+	queryEventParamUpdate = "tm.event='NewBlock' AND param_update.notify_price_feeder=1"
 )
 
 // ParamCache is used to cache oracle param data for
@@ -33,45 +27,40 @@ var (
 type ParamCache struct {
 	Logger zerolog.Logger
 
-	mtx          	 sync.RWMutex
-	errGetParams 	 error
+	mtx              sync.RWMutex
+	errGetParams     error
 	params           *oracletypes.Params
 	lastUpdatedBlock int64
+	paramUpdateEvent bool
 }
 
-// NewOracleParamCache returns a new ParamCache struct that
-// starts a new goroutine subscribed to EventParamUpdate.
+// Initialize initializes a ParamCache struct that
+// starts a new goroutine subscribed to param update events.
 // It is also updated every paramsCacheInterval incase
-// ParamUpdate events are missed.
-func NewOracleParamCache(
+// param update events events are missed.
+func (paramCache *ParamCache) Initialize(
 	ctx context.Context,
 	client client.TendermintRPC,
 	logger zerolog.Logger,
-) (*ParamCache, error) {
+) error {
 	rpcClient := client.(*rpchttp.HTTP)
 
 	if !rpcClient.IsRunning() {
 		if err := rpcClient.Start(); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	newOracleParamsSubscription, err := rpcClient.Subscribe(
-		ctx, evtType, queryEventParamUpdate.String(),
-	)
+	newOracleParamsSubscription, err := rpcClient.Subscribe(ctx, "", queryEventParamUpdate)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	paramCache := &ParamCache{
-		Logger:           logger.With().Str("oracle_client", "oracle_params").Logger(),
-		errGetParams:     nil,
-		params:           nil,
-	}
+	paramCache.Logger = logger.With().Str("oracle_client", "oracle_params").Logger()
 
 	go paramCache.subscribe(ctx, rpcClient, newOracleParamsSubscription)
 
-	return paramCache, nil
+	return nil
 }
 
 // Update retrieves the most recent oracle params and
@@ -83,6 +72,7 @@ func (paramCache *ParamCache) UpdateParamCache(currentBlockHeight int64, params 
 	paramCache.lastUpdatedBlock = currentBlockHeight
 	paramCache.params = &params
 	paramCache.errGetParams = err
+	paramCache.paramUpdateEvent = false
 }
 
 // IsOutdated checks whether or not the current
@@ -116,23 +106,16 @@ func (paramCache *ParamCache) subscribe(
 	for {
 		select {
 		case <-ctx.Done():
-			err := eventsClient.Unsubscribe(ctx, evtType, queryEventParamUpdate.String())
+			err := eventsClient.Unsubscribe(ctx, "", queryEventParamUpdate)
 			if err != nil {
 				paramCache.Logger.Err(err)
-				paramCache.UpdateParamCache(paramCache.lastUpdatedBlock, *paramCache.params, err)
 			}
-			paramCache.Logger.Info().Msg("closing the ParamCache subscription")
+			paramCache.Logger.Info().Msg("closing the param update event subscription")
 			return
 
-		case resultEvent := <-newOracleParamsSubscription:
-			eventDataParamUpdate, ok := resultEvent.Data.(oracletypes.EventParamUpdate)
-			if !ok {
-				paramCache.Logger.Err(errParseEventParamUpdate)
-				paramCache.UpdateParamCache(paramCache.lastUpdatedBlock, *paramCache.params, errParseEventParamUpdate)
-				continue
-			}
-			paramCache.Logger.Info().Msg("Updating param cache from event")
-			paramCache.UpdateParamCache(eventDataParamUpdate.Block, eventDataParamUpdate.Params, nil)
+		case <-newOracleParamsSubscription:
+			paramCache.Logger.Debug().Msg("Got param update event")
+			paramCache.paramUpdateEvent = true
 		}
 	}
 }
