@@ -15,7 +15,7 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ojo-network/ojo v0.2.1
-	github.com/rs/cors v1.10.0
+	github.com/rs/cors v1.10.1
 	github.com/rs/zerolog v1.30.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
