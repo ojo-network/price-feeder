@@ -7,7 +7,6 @@ require (
 	github.com/armon/go-metrics v0.4.1
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cosmos/cosmos-sdk v0.47.3
-	github.com/cosmos/gogoproto v1.4.10
 	github.com/go-playground/validator/v10 v10.15.0
 	github.com/golangci/golangci-lint v1.54.2
 	github.com/gorilla/mux v1.8.0
@@ -74,6 +73,7 @@ require (
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
+	github.com/cosmos/gogoproto v1.4.10 // indirect
 	github.com/cosmos/iavl v0.20.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.2 // indirect
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
