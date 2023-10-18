@@ -62,6 +62,7 @@ func init() {
 	rootCmd.PersistentFlags().Bool(flagSkipProviderCheck, false, "skip the coingecko API provider check")
 
 	rootCmd.AddCommand(getVersionCmd())
+	rootCmd.AddCommand(getDowntimeCmd())
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

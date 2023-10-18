@@ -289,7 +289,6 @@ func (o *Oracle) GetComputedPrices(
 	providerCandles types.AggregatedProviderCandles,
 	providerPrices types.AggregatedProviderPrices,
 ) (types.CurrencyPairDec, error) {
-
 	conversionRates, err := CalcCurrencyPairRates(
 		providerCandles,
 		providerPrices,
@@ -392,6 +391,32 @@ func (o *Oracle) GetParams(ctx context.Context) (oracletypes.Params, error) {
 	}
 
 	return queryResponse.Params, nil
+}
+
+// GetParams returns the current on-chain exchange rates.
+func (o *Oracle) GetExchangeRates(ctx context.Context) (sdk.DecCoins, error) {
+	grpcConn, err := grpc.Dial(
+		o.oracleClient.GRPCEndpoint,
+		// the Cosmos SDK doesn't support any transport security mechanism
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(dialerFunc),
+	)
+	if err != nil {
+		return sdk.DecCoins{}, fmt.Errorf("failed to dial Cosmos gRPC service: %w", err)
+	}
+
+	defer grpcConn.Close()
+	queryClient := oracletypes.NewQueryClient(grpcConn)
+
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	queryResponse, err := queryClient.ExchangeRates(ctx, &oracletypes.QueryExchangeRates{})
+	if err != nil {
+		return sdk.DecCoins{}, fmt.Errorf("failed to get x/oracle exchange rates: %w", err)
+	}
+
+	return queryResponse.ExchangeRates, nil
 }
 
 func (o *Oracle) getOrSetProvider(ctx context.Context, providerName types.ProviderName) (provider.Provider, error) {
