@@ -128,10 +128,13 @@ func getDowntimeCmd() *cobra.Command {
 					missingRates = append(missingRates, asset.SymbolDenom)
 				}
 			}
+
+			if len(missingRates) < 1 {
+				fmt.Println("No downtime detected")
+				return nil
+			}
 			fmt.Println("Missing rates for assets: ", missingRates)
 			return nil
-
-			return err
 		},
 	}
 
