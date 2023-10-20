@@ -1,7 +1,7 @@
 [[currency_pairs]]
 base = "UMEE"
 providers = [
-  "okx",
+  "mexc",
   "gate",
 ]
 quote = "USDT"
@@ -165,17 +165,6 @@ providers = [
 quote = "WETH"
 [[currency_pairs.pair_address_providers]]
 address = "0x840deeef2f115cf50da625f7368c24af6fe74410"
-provider = "eth-uniswap"
-
-[[currency_pairs]]
-base = "LINK"
-providers = [
-  "eth-uniswap"
-]
-
-quote = "WETH"
-[[currency_pairs.pair_address_providers]]
-address = "0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8"
 provider = "eth-uniswap"
 
 [[currency_pairs]]
