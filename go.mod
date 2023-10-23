@@ -15,14 +15,14 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ojo-network/ojo v0.1.2
-	github.com/rs/cors v1.10.0
-	github.com/rs/zerolog v1.30.0
+	github.com/rs/cors v1.10.1
+	github.com/rs/zerolog v1.31.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/umee-network/umee/v6 v6.0.3-0.20230925092301-15a5e5f8aca2
-	golang.org/x/sync v0.3.0
-	google.golang.org/grpc v1.58.1
+	golang.org/x/sync v0.4.0
+	google.golang.org/grpc v1.58.3
 	gopkg.in/yaml.v3 v3.0.1
 )
 
