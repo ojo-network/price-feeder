@@ -367,3 +367,17 @@ providers = [
   "gate",
 ]
 quote = "USDT"
+
+[[currency_pairs]]
+base = "STARS"
+providers = [
+  "osmosis",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "STARS"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
