@@ -129,3 +129,7 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "SOMM"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "STARS"
+threshold = "2"
