@@ -33,9 +33,10 @@ const (
 	logLevelJSON = "json"
 	logLevelText = "text"
 
-	flagLogLevel          = "log-level"
-	flagLogFormat         = "log-format"
-	flagSkipProviderCheck = "skip-provider-check"
+	flagLogLevel                = "log-level"
+	flagLogFormat               = "log-format"
+	flagSkipProviderCheck       = "skip-provider-check"
+	flagConfigCurrencyProviders = "config-currency-providers"
 
 	envVariablePass = "PRICE_FEEDER_PASS"
 )
@@ -61,6 +62,11 @@ func init() {
 	rootCmd.PersistentFlags().String(flagLogLevel, zerolog.InfoLevel.String(), "logging level")
 	rootCmd.PersistentFlags().String(flagLogFormat, logLevelText, "logging format; must be either json or text")
 	rootCmd.PersistentFlags().Bool(flagSkipProviderCheck, false, "skip the coingecko API provider check")
+	rootCmd.PersistentFlags().Bool(
+		flagConfigCurrencyProviders,
+		false,
+		"use config file for currency pair providers and deviations instead of on chain values",
+	)
 
 	rootCmd.AddCommand(getVersionCmd())
 }
@@ -91,6 +97,11 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 	}
 
 	skipProviderCheck, err := cmd.Flags().GetBool(flagSkipProviderCheck)
+	if err != nil {
+		return err
+	}
+
+	configCurrencyProviders, err := cmd.Flags().GetBool(flagConfigCurrencyProviders)
 	if err != nil {
 		return err
 	}
@@ -173,7 +184,15 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		providerTimeout,
 		deviations,
 		cfg.ProviderEndpointsMap(),
+		!configCurrencyProviders,
 	)
+
+	if !configCurrencyProviders {
+		err := oracle.LoadProviderPairsAndDeviations(ctx)
+		if err != nil {
+			return err
+		}
+	}
 
 	telemetryCfg := telemetry.Config{}
 	err = mapstructure.Decode(cfg.Telemetry, &telemetryCfg)

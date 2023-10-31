@@ -165,6 +165,13 @@ providers = [
 quote = "OSMO"
 
 [[currency_pairs]]
+base = "CMST"
+providers = [
+  "crescent",
+]
+quote = "USDC"
+
+[[currency_pairs]]
 base = "DAI"
 providers = [
   "okx",

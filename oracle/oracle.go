@@ -65,7 +65,8 @@ type Oracle struct {
 	oracleClient       client.OracleClient
 	deviations         map[string]sdk.Dec
 	endpoints          map[types.ProviderName]provider.Endpoint
-	paramCache         ParamCache
+	paramCache         *ParamCache
+	chainConfig        bool
 
 	pricesMutex     sync.RWMutex
 	lastPriceSyncTS time.Time
@@ -82,6 +83,7 @@ func New(
 	providerTimeout time.Duration,
 	deviations map[string]sdk.Dec,
 	endpoints map[types.ProviderName]provider.Endpoint,
+	chainConfig bool,
 ) *Oracle {
 	return &Oracle{
 		logger:          logger.With().Str("module", "oracle").Logger(),
@@ -92,13 +94,53 @@ func New(
 		previousPrevote: nil,
 		providerTimeout: providerTimeout,
 		deviations:      deviations,
-		paramCache:      ParamCache{},
+		paramCache:      &ParamCache{params: nil},
+		chainConfig:     chainConfig,
 		endpoints:       endpoints,
 	}
 }
 
+// LoadProviderPairsAndDeviations loads the on chain pair providers and
+// deviations from the oracle params.
+func (o *Oracle) LoadProviderPairsAndDeviations(ctx context.Context) error {
+	blockHeight, err := o.oracleClient.ChainHeight.GetChainHeight()
+	if err != nil {
+		return err
+	}
+	if blockHeight < 1 {
+		return fmt.Errorf("expected positive block height")
+	}
+
+	oracleParams, err := o.GetParamCache(ctx, blockHeight)
+	if err != nil {
+		return err
+	}
+
+	o.providerPairs = createPairProvidersFromCurrencyPairProvidersList(oracleParams.CurrencyPairProviders)
+	o.deviations, err = createDeviationsFromCurrencyDeviationThresholdList(oracleParams.CurrencyDeviationThresholds)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Start starts the oracle process in a blocking fashion.
 func (o *Oracle) Start(ctx context.Context) error {
+	// initialize param cache
+	clientCtx, err := o.oracleClient.CreateClientContext()
+	if err != nil {
+		return err
+	}
+	err = o.paramCache.Initialize(
+		ctx,
+		clientCtx.Client,
+		o.logger,
+	)
+	if err != nil {
+		return err
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -351,49 +393,6 @@ func SetProviderTickerPricesAndCandles(
 	return pricesOk || candlesOk
 }
 
-// GetParamCache returns the last updated parameters of the x/oracle module
-// if the current ParamCache is outdated, we will query it again.
-func (o *Oracle) GetParamCache(ctx context.Context, currentBlockHeigh int64) (oracletypes.Params, error) {
-	if !o.paramCache.IsOutdated(currentBlockHeigh) {
-		return *o.paramCache.params, nil
-	}
-
-	params, err := o.GetParams(ctx)
-	if err != nil {
-		return oracletypes.Params{}, err
-	}
-
-	o.checkAcceptList(params)
-	o.paramCache.Update(currentBlockHeigh, params)
-	return params, nil
-}
-
-// GetParams returns the current on-chain parameters of the x/oracle module.
-func (o *Oracle) GetParams(ctx context.Context) (oracletypes.Params, error) {
-	grpcConn, err := grpc.Dial(
-		o.oracleClient.GRPCEndpoint,
-		// the Cosmos SDK doesn't support any transport security mechanism
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialerFunc),
-	)
-	if err != nil {
-		return oracletypes.Params{}, fmt.Errorf("failed to dial Cosmos gRPC service: %w", err)
-	}
-
-	defer grpcConn.Close()
-	queryClient := oracletypes.NewQueryClient(grpcConn)
-
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-
-	queryResponse, err := queryClient.Params(ctx, &oracletypes.QueryParams{})
-	if err != nil {
-		return oracletypes.Params{}, fmt.Errorf("failed to get x/oracle params: %w", err)
-	}
-
-	return queryResponse.Params, nil
-}
-
 func (o *Oracle) getOrSetProvider(ctx context.Context, providerName types.ProviderName) (provider.Provider, error) {
 	var (
 		priceProvider provider.Provider
@@ -480,6 +479,58 @@ func NewProvider(
 	return nil, fmt.Errorf("provider %s not found", providerName)
 }
 
+// GetParamCache returns the last updated parameters of the x/oracle module
+// if the current ParamCache is outdated or a param update event was found, the cache is updated.
+func (o *Oracle) GetParamCache(ctx context.Context, currentBlockHeight int64) (oracletypes.Params, error) {
+	if !o.paramCache.IsOutdated(currentBlockHeight) && !o.paramCache.paramUpdateEvent {
+		return *o.paramCache.params, nil
+	}
+
+	currentParams := o.paramCache.params
+	newParams, err := o.GetParams(ctx)
+	if err != nil {
+		return oracletypes.Params{}, err
+	}
+
+	o.checkAcceptList(newParams)
+	o.paramCache.UpdateParamCache(currentBlockHeight, newParams, nil)
+
+	if o.chainConfig && currentParams != nil {
+		err = o.checkCurrencyPairAndDeviations(*currentParams, newParams)
+		if err != nil {
+			return oracletypes.Params{}, err
+		}
+	}
+
+	return newParams, nil
+}
+
+// GetParams returns the current on-chain parameters of the x/oracle module.
+func (o *Oracle) GetParams(ctx context.Context) (oracletypes.Params, error) {
+	grpcConn, err := grpc.Dial(
+		o.oracleClient.GRPCEndpoint,
+		// the Cosmos SDK doesn't support any transport security mechanism
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(dialerFunc),
+	)
+	if err != nil {
+		return oracletypes.Params{}, fmt.Errorf("failed to dial Cosmos gRPC service: %w", err)
+	}
+
+	defer grpcConn.Close()
+	queryClient := oracletypes.NewQueryClient(grpcConn)
+
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	queryResponse, err := queryClient.Params(ctx, &oracletypes.QueryParams{})
+	if err != nil {
+		return oracletypes.Params{}, fmt.Errorf("failed to get x/oracle params: %w", err)
+	}
+
+	return queryResponse.Params, nil
+}
+
 func (o *Oracle) checkAcceptList(params oracletypes.Params) {
 	for _, denom := range params.AcceptList {
 		symbol := strings.ToUpper(denom.SymbolDenom)
@@ -488,6 +539,22 @@ func (o *Oracle) checkAcceptList(params oracletypes.Params) {
 			o.logger.Warn().Str("denom", symbol).Msg("price missing for required denom")
 		}
 	}
+}
+
+func (o *Oracle) checkCurrencyPairAndDeviations(currentParams, newParams oracletypes.Params) (err error) {
+	if currentParams.CurrencyPairProviders.String() != newParams.CurrencyPairProviders.String() {
+		o.logger.Debug().Msg("Updating Currency Pair Providers Map")
+		o.providerPairs = createPairProvidersFromCurrencyPairProvidersList(newParams.CurrencyPairProviders)
+	}
+	if currentParams.CurrencyDeviationThresholds.String() != newParams.CurrencyDeviationThresholds.String() {
+		o.logger.Debug().Msg("Updating Currency Deviation Thresholds Map")
+		o.deviations, err = createDeviationsFromCurrencyDeviationThresholdList(newParams.CurrencyDeviationThresholds)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (o *Oracle) tick(ctx context.Context) error {
