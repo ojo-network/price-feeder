@@ -133,3 +133,7 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "STARS"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "INJ"
+threshold = "2"
