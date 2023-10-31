@@ -6,7 +6,7 @@ provider_timeout = "1000000s"
 [server]
 listen_addr = "0.0.0.0:7171"
 read_timeout = "20s"
-verbose_cors = false
+verbose_cors = true
 write_timeout = "20s"
 
 [account]
