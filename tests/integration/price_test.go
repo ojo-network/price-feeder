@@ -46,7 +46,7 @@ func TestPriceAccuracy(t *testing.T) {
 	deviations, err := cfg.DeviationsMap()
 	require.NoError(t, err)
 
-	oracle, err := oracle.New(
+	oracle := oracle.New(
 		logger,
 		client.OracleClient{},
 		cfg.ProviderPairs(),
@@ -55,7 +55,6 @@ func TestPriceAccuracy(t *testing.T) {
 		cfg.ProviderEndpointsMap(),
 		false,
 	)
-	require.NoError(t, err)
 
 	symbols := cfg.ExpectedSymbols()
 

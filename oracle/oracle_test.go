@@ -95,7 +95,7 @@ type OracleTestSuite struct {
 
 // SetupSuite executes once before the suite's tests are executed.
 func (ots *OracleTestSuite) SetupSuite() {
-	ots.oracle, _ = New(
+	ots.oracle = New(
 		zerolog.Nop(),
 		client.OracleClient{},
 		map[types.ProviderName][]types.CurrencyPair{

@@ -33,10 +33,10 @@ const (
 	logLevelJSON = "json"
 	logLevelText = "text"
 
-	flagLogLevel          = "log-level"
-	flagLogFormat         = "log-format"
-	flagSkipProviderCheck = "skip-provider-check"
-	flagChainConfig       = "chain-config"
+	flagLogLevel                = "log-level"
+	flagLogFormat               = "log-format"
+	flagSkipProviderCheck       = "skip-provider-check"
+	flagConfigCurrencyProviders = "config-currency-providers"
 
 	envVariablePass = "PRICE_FEEDER_PASS"
 )
@@ -63,9 +63,9 @@ func init() {
 	rootCmd.PersistentFlags().String(flagLogFormat, logLevelText, "logging format; must be either json or text")
 	rootCmd.PersistentFlags().Bool(flagSkipProviderCheck, false, "skip the coingecko API provider check")
 	rootCmd.PersistentFlags().Bool(
-		flagChainConfig,
+		flagConfigCurrencyProviders,
 		false,
-		"use on chain values for currency pair providers and deviations instead of config values",
+		"use config file for currency pair providers and deviations instead of on chain values",
 	)
 
 	rootCmd.AddCommand(getVersionCmd())
@@ -101,7 +101,7 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	chainConfig, err := cmd.Flags().GetBool(flagChainConfig)
+	configCurrencyProviders, err := cmd.Flags().GetBool(flagConfigCurrencyProviders)
 	if err != nil {
 		return err
 	}
@@ -177,20 +177,17 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	oracle, err := oracle.New(
+	oracle := oracle.New(
 		logger,
 		oracleClient,
 		cfg.ProviderPairs(),
 		providerTimeout,
 		deviations,
 		cfg.ProviderEndpointsMap(),
-		chainConfig,
+		!configCurrencyProviders,
 	)
-	if err != nil {
-		return err
-	}
 
-	if chainConfig {
+	if !configCurrencyProviders {
 		err := oracle.LoadProviderPairsAndDeviations(ctx)
 		if err != nil {
 			return err
