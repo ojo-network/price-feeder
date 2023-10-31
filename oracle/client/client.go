@@ -9,6 +9,11 @@ import (
 	"os"
 	"time"
 
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	tmjsonclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	"github.com/rs/zerolog"
+	umeeapp "github.com/umee-network/umee/v6/app"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -16,13 +21,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/rs/zerolog"
-	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
-	tmjsonclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
-	umeeapp "github.com/umee-network/umee/v4/app"
-	umeeparams "github.com/umee-network/umee/v4/app/params"
 )
 
 type (
@@ -39,7 +40,7 @@ type (
 		OracleAddrString    string
 		ValidatorAddr       sdk.ValAddress
 		ValidatorAddrString string
-		Encoding            umeeparams.EncodingConfig
+		Encoding            testutil.TestEncodingConfig
 		GasPrices           string
 		GasAdjustment       float64
 		GRPCEndpoint        string
