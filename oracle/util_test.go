@@ -331,7 +331,7 @@ func TestStandardDeviation(t *testing.T) {
 				},
 				OJOUSD: {
 					mean:      sdk.MustNewDecFromStr("1.1335"),
-					deviation: sdk.MustNewDecFromStr("0.004600724580614015"),
+					deviation: sdk.MustNewDecFromStr("0.004600724580614014"),
 				},
 			},
 		},
@@ -361,11 +361,11 @@ func TestStandardDeviation(t *testing.T) {
 				},
 				OJOUSD: {
 					mean:      sdk.MustNewDecFromStr("1.1335"),
-					deviation: sdk.MustNewDecFromStr("0.004600724580614015"),
+					deviation: sdk.MustNewDecFromStr("0.004600724580614014"),
 				},
 				LUNAUSD: {
 					mean:      sdk.MustNewDecFromStr("64.606666666666666666"),
-					deviation: sdk.MustNewDecFromStr("0.358360464089193609"),
+					deviation: sdk.MustNewDecFromStr("0.358360464089193608"),
 				},
 			},
 		},

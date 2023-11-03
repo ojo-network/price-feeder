@@ -17,7 +17,7 @@ import (
 	"github.com/hasura/go-graphql-client"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/libs/rand"
+	"github.com/cometbft/cometbft/libs/rand"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
 )

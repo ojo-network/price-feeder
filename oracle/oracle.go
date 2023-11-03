@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/rs/zerolog"
-	oracletypes "github.com/umee-network/umee/v4/x/oracle/types"
+	oracletypes "github.com/umee-network/umee/v6/x/oracle/types"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
