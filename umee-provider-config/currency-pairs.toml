@@ -381,3 +381,14 @@ providers = [
   "osmosis",
 ]
 quote = "OSMO"
+
+[[currency_pairs]]
+base = "INJ"
+providers = [
+  "binance",
+  "gate",
+  "bitget",
+  "mexc",
+]
+quote = "USDT"
+
