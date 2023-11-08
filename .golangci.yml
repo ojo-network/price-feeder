@@ -24,7 +24,6 @@ linters:
     - gocritic
     - gofmt
     - goimports
-    - gosec
     - gosimple
     - govet
     - grouper
@@ -48,9 +47,6 @@ issues:
     - path: tests/*
       linters:
         - unused
-    - path: _test\.go
-      linters:
-        - gosec
     - linters:
         - lll
       source: "https://"

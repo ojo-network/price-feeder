@@ -50,16 +50,17 @@ func (s *IntegrationTestSuite) TestWebsocketProviders() {
 
 	var waitGroup sync.WaitGroup
 	for key, pairs := range cfg.ProviderPairs() {
-		waitGroup.Add(1)
 		providerName := key
 		currencyPairs := pairs
 
+		waitGroup.Add(1)
 		go func() {
 			defer waitGroup.Done()
 			endpoint := endpoints[providerName]
 			ctx, cancel := context.WithCancel(context.Background())
 			s.T().Logf("Checking %s provider with currency pairs %+v", providerName, currencyPairs)
-			pvd, _ := oracle.NewProvider(ctx, providerName, getLogger(), endpoint, currencyPairs...)
+			pvd, err := oracle.NewProvider(ctx, providerName, getLogger(), endpoint, currencyPairs...)
+			require.NoError(s.T(), err)
 			pvd.StartConnections()
 			time.Sleep(60 * time.Second) // wait for provider to connect and receive some prices
 			checkForPrices(s.T(), pvd, currencyPairs, providerName.String())
