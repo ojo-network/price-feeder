@@ -474,7 +474,7 @@ func NewProvider(
 		return provider.NewMockProvider(), nil
 
 	case provider.ProviderEthUniswap:
-		return provider.NewUniswapProvider(ctx, logger, providerName.String(), endpoint, providerPairs...), nil
+		return provider.NewUniswapProvider(ctx, logger, endpoint, providerPairs...)
 	}
 
 	return nil, fmt.Errorf("provider %s not found", providerName)

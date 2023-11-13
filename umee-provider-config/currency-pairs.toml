@@ -139,39 +139,28 @@ base = "WETH"
 providers = [
   "eth-uniswap"
 ]
-
 quote = "USDC"
-[[currency_pairs.pair_address_providers]]
-address = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
-provider = "eth-uniswap"
 
 [[currency_pairs]]
 base = "WBTC"
 providers = [
   "eth-uniswap"
 ]
-
 quote = "WETH"
-[[currency_pairs.pair_address_providers]]
-address = "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed"
-provider = "eth-uniswap"
 
 [[currency_pairs]]
 base = "CBETH"
 providers = [
   "eth-uniswap"
 ]
-
 quote = "WETH"
-[[currency_pairs.pair_address_providers]]
-address = "0x840deeef2f115cf50da625f7368c24af6fe74410"
-provider = "eth-uniswap"
 
 [[currency_pairs]]
 base = "stATOM"
 providers = [
   "osmosis",
 ]
+<<<<<<< HEAD:umee-provider-config/currency-pairs.toml
 quote = "ATOM"
 
 [[currency_pairs]]
@@ -335,17 +324,30 @@ providers = [
   "osmosis",
 ]
 quote = "UMEE"
+=======
+quote = "WETH"
+>>>>>>> 9ca4545 (feat: Update uniswap provider to use new websocket api (#308)):ojo-provider-config/currency-pairs.toml
 
 [[currency_pairs]]
 base = "RETH"
 providers = [
   "eth-uniswap",
 ]
-
 quote = "WETH"
-[[currency_pairs.pair_address_providers]]
-address = "0xa4e0faA58465A2D369aa21B3e42d43374c6F9613"
-provider = "eth-uniswap"
+
+[[currency_pairs]]
+base = "SFRXETH"
+providers = [
+  "eth-uniswap",
+]
+quote = "WETH"
+
+[[currency_pairs]]
+base = "WSTETH"
+providers = [
+  "eth-uniswap",
+]
+quote = "WETH"
 
 [[currency_pairs]]
 base = "NCT"
@@ -355,6 +357,7 @@ providers = [
 quote = "OSMO"
 
 [[currency_pairs]]
+<<<<<<< HEAD:umee-provider-config/currency-pairs.toml
 base = "SOMM"
 providers = [
   "osmosis",
@@ -363,6 +366,9 @@ quote = "OSMO"
 
 [[currency_pairs]]
 base = "SOMM"
+=======
+base = "DAI"
+>>>>>>> 9ca4545 (feat: Update uniswap provider to use new websocket api (#308)):ojo-provider-config/currency-pairs.toml
 providers = [
   "gate",
 ]
