@@ -5,14 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD
-	"github.com/hasura/go-graphql-client"
-	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/suite"
-	"github.com/cometbft/cometbft/libs/rand"
 
-=======
->>>>>>> 9ca4545 (feat: Update uniswap provider to use new websocket api (#308))
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"

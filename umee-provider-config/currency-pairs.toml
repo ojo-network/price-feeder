@@ -160,7 +160,6 @@ base = "stATOM"
 providers = [
   "osmosis",
 ]
-<<<<<<< HEAD:umee-provider-config/currency-pairs.toml
 quote = "ATOM"
 
 [[currency_pairs]]
@@ -324,26 +323,9 @@ providers = [
   "osmosis",
 ]
 quote = "UMEE"
-=======
-quote = "WETH"
->>>>>>> 9ca4545 (feat: Update uniswap provider to use new websocket api (#308)):ojo-provider-config/currency-pairs.toml
 
 [[currency_pairs]]
 base = "RETH"
-providers = [
-  "eth-uniswap",
-]
-quote = "WETH"
-
-[[currency_pairs]]
-base = "SFRXETH"
-providers = [
-  "eth-uniswap",
-]
-quote = "WETH"
-
-[[currency_pairs]]
-base = "WSTETH"
 providers = [
   "eth-uniswap",
 ]
@@ -357,7 +339,6 @@ providers = [
 quote = "OSMO"
 
 [[currency_pairs]]
-<<<<<<< HEAD:umee-provider-config/currency-pairs.toml
 base = "SOMM"
 providers = [
   "osmosis",
@@ -366,9 +347,6 @@ quote = "OSMO"
 
 [[currency_pairs]]
 base = "SOMM"
-=======
-base = "DAI"
->>>>>>> 9ca4545 (feat: Update uniswap provider to use new websocket api (#308)):ojo-provider-config/currency-pairs.toml
 providers = [
   "gate",
 ]
@@ -397,4 +375,3 @@ providers = [
   "mexc",
 ]
 quote = "USDT"
-
