@@ -57,6 +57,12 @@ docker-push:
 
 .PHONY: docker-build docker-push
 
+docker-build-monitor:
+	@DOCKER_BUILDKIT=1 docker build -t us-west4-docker.pkg.dev/ojo-network/oracle-monitor monitor/Dockerfile
+
+docker-push-monitor:
+	@docker push us-west4-docker.pkg.dev/ojo-network/oracle-monitor
+
 ###############################################################################
 ##                              Tests & Linting                              ##
 ###############################################################################

@@ -3,16 +3,20 @@ package integration
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ojo-network/price-feeder/config"
+	"github.com/ojo-network/price-feeder/monitor"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/types"
+	"github.com/ojo-network/price-feeder/util"
 )
 
 const (
@@ -65,7 +69,7 @@ func TestPriceAccuracy(t *testing.T) {
 	oracle.SetPrices(context.Background())
 	oraclePrices := oracle.GetPrices()
 
-	apiPrices, err := getCoinMarketCapPrices(symbols)
+	apiPrices, err := monitor.GetCoinMarketCapPrices(symbols)
 	require.NoError(t, err)
 
 	checkPrices(t, symbols, oraclePrices, apiPrices)
@@ -92,7 +96,7 @@ func checkPrices(
 		}
 
 		apiPrice := apiPrices[denom]
-		cv := calcCoeficientOfVariation([]float64{oraclePrice, apiPrice})
+		cv := util.CalcCoeficientOfVariation([]float64{oraclePrice, apiPrice})
 
 		if _, ok := KnownIncorrectAPIPrices[denom]; ok {
 			t.Logf("SKIP %s Oracle price: %f, API price(inaccurate): %f, CV: %f", denom, oraclePrice, apiPrice, cv)
@@ -110,4 +114,11 @@ func checkPrices(
 				denom, oraclePrice, apiPrice, cv, maxCoeficientOfVariation)
 		}
 	}
+}
+
+func getLogger() zerolog.Logger {
+	logWriter := zerolog.ConsoleWriter{Out: os.Stderr}
+	logLvl := zerolog.DebugLevel
+	zerolog.SetGlobalLevel(logLvl)
+	return zerolog.New(logWriter).Level(logLvl).With().Timestamp().Logger()
 }

@@ -1,4 +1,4 @@
-package integration
+package monitor
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 )
 
 //lint:ignore U1000 helper function for integration tests
-func getCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
+func GetCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(http.MethodGet, "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", nil)
 	if err != nil {
@@ -54,7 +54,6 @@ func getCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
 	for _, symbol := range symbols {
 		tokenData, ok := data[strings.ToUpper(symbol)].(map[string]interface{})
 		if !ok {
-			fmt.Printf("coinmarketcap.com token data not found for %s\n", symbol)
 			continue
 		}
 		tokenQuote := tokenData["quote"].(map[string]interface{})

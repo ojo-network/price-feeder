@@ -50,6 +50,7 @@ type (
 		ProviderTimeout     string              `mapstructure:"provider_timeout"`
 		ProviderMinOverride bool                `mapstructure:"provider_min_override"`
 		ProviderEndpoints   []provider.Endpoint `mapstructure:"provider_endpoints" validate:"dive"`
+		SlackConfig         SlackConfig         `mapstructure:"slack"`
 	}
 
 	// Server defines the API server configuration.
@@ -101,6 +102,11 @@ type (
 		TMRPCEndpoint string `mapstructure:"tmrpc_endpoint" validate:"required"`
 		GRPCEndpoint  string `mapstructure:"grpc_endpoint" validate:"required"`
 		RPCTimeout    string `mapstructure:"rpc_timeout" validate:"required"`
+	}
+
+	SlackConfig struct {
+		SlackToken   string `mapstructure:"slackToken"`
+		SlackChannel string `mapstructure:"slackChannel"`
 	}
 )
 

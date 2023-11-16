@@ -130,13 +130,6 @@ providers = [
 quote = "WETH"
 
 [[currency_pairs]]
-base = "SFRXETH"
-providers = [
-  "eth-uniswap",
-]
-quote = "WETH"
-
-[[currency_pairs]]
 base = "WSTETH"
 providers = [
   "eth-uniswap",
@@ -147,7 +140,6 @@ quote = "WETH"
 base = "stATOM"
 providers = [
   "osmosis",
-  "crescent",
 ]
 quote = "ATOM"
 
