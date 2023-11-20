@@ -69,7 +69,12 @@ func TestPriceAccuracy(t *testing.T) {
 	oracle.SetPrices(context.Background())
 	oraclePrices := oracle.GetPrices()
 
-	apiPrices, err := monitor.GetCoinMarketCapPrices(symbols)
+	apiKey := os.Getenv("COINMARKETCAP_API_KEY")
+	if apiKey == "" {
+		t.Skip("COINMARKETCAP_API_KEY env var not set")
+	}
+
+	apiPrices, err := monitor.GetCoinMarketCapPrices(symbols, apiKey)
 	require.NoError(t, err)
 
 	checkPrices(t, symbols, oraclePrices, apiPrices)

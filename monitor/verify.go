@@ -2,30 +2,13 @@ package monitor
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ojo-network/price-feeder/config"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/ojo-network/price-feeder/util"
 )
-
-type ErrorType int
-
-const (
-	PRICE_MATCH             = iota
-	ORACLE_MISSING_PRICE    = iota
-	ORACLE_DEVIATED_PRICE   = iota
-	PROVIDER_MISSING_PRICE  = iota
-	PROVIDER_DEVIATED_PRICE = iota
-	API_MISSING_PRICE       = iota
-	API_BAD_PRICE           = iota
-	API_DOWN                = iota
-)
-
-type PriceError struct {
-	ErrorType ErrorType
-	Message   string
-}
 
 const (
 	maxCoeficientOfVariation = 0.75
@@ -45,7 +28,7 @@ func VerifyPrices(
 	var priceErrors []PriceError
 	expectedSymbols := cfg.ExpectedSymbols()
 
-	apiPrices, err := GetCoinMarketCapPrices(expectedSymbols)
+	apiPrices, err := GetCoinMarketCapPrices(expectedSymbols, cfg.MonitorConfig.CoinmarketcapApiKey)
 	if err != nil {
 		apiPrices = make(map[string]float64)
 		priceErrors = append(priceErrors, PriceError{
@@ -61,8 +44,10 @@ func VerifyPrices(
 
 		if _, ok := oraclePrices[cp]; !ok {
 			priceErrors = append(priceErrors, PriceError{
-				ErrorType: ORACLE_MISSING_PRICE,
-				Message:   fmt.Sprintf("FAIL %s oracle price not found", cp),
+				ErrorType:    ORACLE_MISSING_PRICE,
+				CurrencyPair: cp.String(),
+				occurredAt:   time.Now(),
+				Message:      fmt.Sprintf("FAIL %s oracle price not found", cp),
 			})
 			continue
 		}
@@ -70,8 +55,10 @@ func VerifyPrices(
 
 		if _, ok := apiPrices[denom]; !ok {
 			priceErrors = append(priceErrors, PriceError{
-				ErrorType: API_MISSING_PRICE,
-				Message:   fmt.Sprintf("SKIP %s oracle price: %f, API price: not available at coinmarketcap", denom, oraclePrice),
+				ErrorType:    API_MISSING_PRICE,
+				CurrencyPair: cp.String(),
+				occurredAt:   time.Now(),
+				Message:      fmt.Sprintf("SKIP %s oracle price: %f, API price: not available at coinmarketcap", denom, oraclePrice),
 			})
 			continue
 		}
@@ -81,15 +68,19 @@ func VerifyPrices(
 
 		if _, ok := KnownIncorrectAPIPrices[denom]; ok {
 			priceErrors = append(priceErrors, PriceError{
-				ErrorType: API_BAD_PRICE,
-				Message:   fmt.Sprintf("SKIP %s oracle price: %f, API price: %f (incorrect)", denom, oraclePrice, apiPrice),
+				ErrorType:    API_BAD_PRICE,
+				CurrencyPair: cp.String(),
+				occurredAt:   time.Now(),
+				Message:      fmt.Sprintf("SKIP %s oracle price: %f, API price: %f (incorrect)", denom, oraclePrice, apiPrice),
 			})
 			continue
 		}
 
 		if cv > maxCoeficientOfVariation {
 			priceErrors = append(priceErrors, PriceError{
-				ErrorType: ORACLE_DEVIATED_PRICE,
+				ErrorType:    ORACLE_DEVIATED_PRICE,
+				CurrencyPair: cp.String(),
+				occurredAt:   time.Now(),
 				Message: fmt.Sprintf(
 					"FAIL %s deviated oracle price: %f, API price: %f, Variation: %f > %f",
 					cp, oraclePrice, apiPrice, cv, maxCoeficientOfVariation,
@@ -98,7 +89,9 @@ func VerifyPrices(
 			continue
 		}
 		priceErrors = append(priceErrors, PriceError{
-			ErrorType: PRICE_MATCH,
+			ErrorType:    PRICE_MATCH,
+			CurrencyPair: cp.String(),
+			occurredAt:   time.Now(),
 			Message: fmt.Sprintf(
 				"PASS %s matched oracle price: %f, API price: %f, Variation: %f < %f",
 				cp, oraclePrice, apiPrice, cv, maxCoeficientOfVariation,

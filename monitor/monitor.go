@@ -13,6 +13,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const (
+	firstInterval  = 1 * time.Minute
+	secondInterval = 15 * time.Minute
+)
+
 func Start() {
 	logger := zerolog.New(os.Stderr).Level(zerolog.ErrorLevel).With().Timestamp().Logger()
 
@@ -55,14 +60,16 @@ func Start() {
 
 	slackClient := NewSlackClient(&cfg)
 
+	interval := firstInterval
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(1 * time.Minute):
+		case <-time.After(interval):
 			oracle.SetPrices(ctx)
 			priceErrors := VerifyPrices(&cfg, oracle)
 			slackClient.Notify(priceErrors)
+			interval = secondInterval
 		}
 	}
 }

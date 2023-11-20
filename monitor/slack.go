@@ -14,37 +14,62 @@ const fullLogInterval = 24 * time.Hour
 type SlackClient struct {
 	lastFullLog time.Time
 	client      *slack.Client
-	config      *config.SlackConfig
+	config      *config.MonitorConfig
+
+	ongoingIncidents map[string]PriceError
 }
 
 func NewSlackClient(cfg *config.Config) *SlackClient {
-	api := slack.New(cfg.SlackConfig.SlackToken, slack.OptionDebug(true))
+	api := slack.New(cfg.MonitorConfig.SlackToken, slack.OptionDebug(true))
 	return &SlackClient{
-		client: api,
-		config: &cfg.SlackConfig,
+		client:           api,
+		config:           &cfg.MonitorConfig,
+		ongoingIncidents: make(map[string]PriceError),
 	}
 }
 
 func (sc *SlackClient) Notify(priceErrors []PriceError) {
-	fullLog := false
 	messages := []string{}
+
 	if sc.lastFullLog.Add(fullLogInterval).Before(time.Now()) {
 		sc.lastFullLog = time.Now()
-		fullLog = true
+		messages = append(messages, "Daily Full Log:")
+		for _, priceError := range priceErrors {
+			messages = append(messages, priceError.Message)
+		}
+		message := strings.Join(messages, "\n")
+		fmt.Println(message)
+		return
 	}
 
+	// create a map of only the critical errors
+	currentErrors := make(map[string]PriceError)
 	for _, priceError := range priceErrors {
-		if fullLog || priceError.ErrorType == ORACLE_MISSING_PRICE {
-			messages = append(messages, priceError.Message)
+		if _, ok := criticalErrorTypes[priceError.ErrorType]; ok {
+			currentErrors[priceError.Key()] = priceError
+		}
+	}
+
+	// remove and resolve incidents in the ongoing list that are not in the current list
+	for key, priceError := range sc.ongoingIncidents {
+		if _, ok := currentErrors[key]; !ok {
+			delete(sc.ongoingIncidents, key)
+			messages = append(messages, fmt.Sprintf("RESOLVED: %s", priceError.Message))
+		}
+	}
+
+	for key, priceError := range currentErrors {
+		if _, ok := sc.ongoingIncidents[key]; !ok {
+			messages = append(messages, fmt.Sprintf("ONGOING: %s", priceError.Message))
+			sc.ongoingIncidents[key] = priceError
 		}
 	}
 
 	if len(messages) == 0 {
+		fmt.Println("no new errors to report")
 		return
 	}
-
 	message := strings.Join(messages, "\n")
-
 	fmt.Println(message)
 
 	// sc.client.PostMessage(sc.config.SlackChannel, slack.MsgOptionText("test", false))

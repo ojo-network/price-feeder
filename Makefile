@@ -55,13 +55,13 @@ docker-build:
 docker-push:
 	@docker push ghcr.io/ojo-network/price-feeder-ojo
 
-.PHONY: docker-build docker-push
-
 docker-build-monitor:
-	@DOCKER_BUILDKIT=1 docker build -t us-west4-docker.pkg.dev/ojo-network/oracle-monitor monitor/Dockerfile
+	@DOCKER_BUILDKIT=1 docker build -t us-west4-docker.pkg.dev/ojo-network/oracle-monitor -f monitor.Dockerfile .
 
 docker-push-monitor:
 	@docker push us-west4-docker.pkg.dev/ojo-network/oracle-monitor
+
+.PHONY: docker-build docker-push docker-build-monitor docker-push-monitor
 
 ###############################################################################
 ##                              Tests & Linting                              ##

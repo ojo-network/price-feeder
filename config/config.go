@@ -50,7 +50,7 @@ type (
 		ProviderTimeout     string              `mapstructure:"provider_timeout"`
 		ProviderMinOverride bool                `mapstructure:"provider_min_override"`
 		ProviderEndpoints   []provider.Endpoint `mapstructure:"provider_endpoints" validate:"dive"`
-		SlackConfig         SlackConfig         `mapstructure:"slack"`
+		MonitorConfig       MonitorConfig       `mapstructure:"monitor"`
 	}
 
 	// Server defines the API server configuration.
@@ -104,9 +104,10 @@ type (
 		RPCTimeout    string `mapstructure:"rpc_timeout" validate:"required"`
 	}
 
-	SlackConfig struct {
-		SlackToken   string `mapstructure:"slackToken"`
-		SlackChannel string `mapstructure:"slackChannel"`
+	MonitorConfig struct {
+		SlackToken          string `mapstructure:"slackToken"`
+		SlackChannel        string `mapstructure:"slackChannel"`
+		CoinmarketcapApiKey string `mapstructure:"coinmarketcapApiKey"`
 	}
 )
 

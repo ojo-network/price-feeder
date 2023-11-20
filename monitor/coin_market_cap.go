@@ -6,12 +6,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 )
 
 //lint:ignore U1000 helper function for integration tests
-func GetCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
+func GetCoinMarketCapPrices(symbols []string, apiKey string) (map[string]float64, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(http.MethodGet, "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", nil)
 	if err != nil {
@@ -26,9 +25,8 @@ func GetCoinMarketCapPrices(symbols []string) (map[string]float64, error) {
 	q := url.Values{}
 	q.Add("symbol", strings.Join(symbolsUpper, ","))
 
-	apiKey := os.Getenv("COINMARKETCAP_API_KEY")
 	if apiKey == "" {
-		return nil, fmt.Errorf("COINMARKETCAP_API_KEY env var not set - see readme")
+		return nil, fmt.Errorf("coinmarketcapApiKey config var not set")
 	}
 
 	req.Header.Set("Accepts", "application/json")

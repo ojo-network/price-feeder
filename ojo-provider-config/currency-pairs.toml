@@ -1,4 +1,40 @@
 [[currency_pairs]]
+base = "UMEE"
+providers = [
+  "mexc",
+  "gate",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "UMEE"
+providers = [
+  "osmosis",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "USK"
+providers = [
+  "kujira",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "IST"
+providers = [
+  "crescent",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "CBETH"
+providers = [
+  "coinbase",
+]
+quote = "USD"
+
+[[currency_pairs]]
 base = "USDT"
 providers = [
   "kraken",
@@ -16,13 +52,6 @@ providers = [
 ]
 quote = "USDT"
 
-
-[[currency_pairs]]
-base = "USDC"
-providers = [
-  "kraken",
-]
-quote = "USD"
 
 [[currency_pairs]]
 base = "USDC"
@@ -131,6 +160,13 @@ quote = "WETH"
 
 [[currency_pairs]]
 base = "WSTETH"
+providers = [
+  "eth-uniswap",
+]
+quote = "WETH"
+
+[[currency_pairs]]
+base = "SFRXETH"
 providers = [
   "eth-uniswap",
 ]
