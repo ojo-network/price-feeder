@@ -37,8 +37,7 @@ func (sc *SlackClient) Notify(priceErrors []PriceError) {
 		for _, priceError := range priceErrors {
 			messages = append(messages, priceError.Message)
 		}
-		message := strings.Join(messages, "\n")
-		fmt.Println(message)
+		sc.SendMessages(messages)
 		return
 	}
 
@@ -69,8 +68,12 @@ func (sc *SlackClient) Notify(priceErrors []PriceError) {
 		fmt.Println("no new errors to report")
 		return
 	}
+
+	sc.SendMessages(messages)
+}
+
+func (sc *SlackClient) SendMessages(messages []string) {
 	message := strings.Join(messages, "\n")
 	fmt.Println(message)
-
-	// sc.client.PostMessage(sc.config.SlackChannel, slack.MsgOptionText("test", false))
+	sc.client.PostMessage(sc.config.SlackChannel, slack.MsgOptionText(message, false))
 }

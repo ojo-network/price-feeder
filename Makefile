@@ -56,10 +56,10 @@ docker-push:
 	@docker push ghcr.io/ojo-network/price-feeder-ojo
 
 docker-build-monitor:
-	@DOCKER_BUILDKIT=1 docker build -t us-west4-docker.pkg.dev/ojo-network/oracle-monitor -f monitor.Dockerfile .
+	@DOCKER_BUILDKIT=1 docker build -t us-west4-docker.pkg.dev/ojo-network/oracle-monitor/oracle-monitor -f monitor.Dockerfile .
 
 docker-push-monitor:
-	@docker push us-west4-docker.pkg.dev/ojo-network/oracle-monitor
+	@docker push us-west4-docker.pkg.dev/ojo-network/oracle-monitor/oracle-monitor
 
 .PHONY: docker-build docker-push docker-build-monitor docker-push-monitor
 
