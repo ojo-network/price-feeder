@@ -1,6 +1,6 @@
 config_dir = "umee-provider-config"
 
-gas_adjustment = 1.03
+gas_adjustment = 1.1
 provider_timeout = "1000000s"
 
 [server]
