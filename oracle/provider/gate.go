@@ -290,7 +290,7 @@ func (candle *GateCandle) UnmarshalParams(params [][]interface{}) error {
 
 	// use the most recent candle
 	tmp = params[len(params)-1]
-	if len(tmp) != 8 {
+	if len(tmp) != 9 {
 		return fmt.Errorf("wrong number of fields in candle")
 	}
 
