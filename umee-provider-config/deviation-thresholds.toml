@@ -137,3 +137,15 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "INJ"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "SFRXETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "WSTETH"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "TIA"
+threshold = "2"

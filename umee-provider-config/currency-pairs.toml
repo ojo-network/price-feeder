@@ -375,3 +375,27 @@ providers = [
   "mexc",
 ]
 quote = "USDT"
+
+[[currency_pairs]]
+base = "SFRXETH"
+providers = [
+  "eth-uniswap"
+]
+quote = "WETH"
+
+[[currency_pairs]]
+base = "WSTETH"
+providers = [
+  "eth-uniswap"
+]
+quote = "WETH"
+
+[[currency_pairs]]
+base = "TIA"
+providers = [
+  "binance",
+  "okx",
+  "bitget",
+  "gate",
+]
+quote = "USDT"
