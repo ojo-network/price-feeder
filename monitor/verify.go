@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	maxCoeficientOfVariation = 0.75
+	maxCoeficientOfVariation = 2.0
 )
 
 var (
