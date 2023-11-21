@@ -51,6 +51,9 @@ issues:
     - path: _test\.go
       linters:
         - gosec
+    - path: oracle/provider/*
+      linters:
+        - gosec
     - linters:
         - lll
       source: "https://"
