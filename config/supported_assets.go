@@ -26,6 +26,7 @@ var (
 		provider.ProviderPolygon:    true,
 		provider.ProviderEthUniswap: false,
 		provider.ProviderKujira:     false,
+		provider.ProviderAstroport:  false,
 		provider.ProviderMock:       false,
 	}
 
@@ -45,6 +46,7 @@ var (
 		{Base: "JUNO", Quote: "USDT"}: {},
 		{Base: "WETH", Quote: "USDC"}: {},
 		{Base: "WBTC", Quote: "WETH"}: {},
+		{Base: "INJ", Quote: "USD"}:   {},
 	}
 
 	SupportedUniswapCurrencies = map[string]struct{}{
