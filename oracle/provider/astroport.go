@@ -97,7 +97,7 @@ func NewAstroportProvider(
 
 	go func() {
 		logger.Debug().Msg("starting ftx polling...")
-		err := provider.pollCache(ctx, pairs...)
+		err := provider.poll(ctx)
 		if err != nil {
 			logger.Err(err).Msg("astroport provider unable to poll new data")
 		}
@@ -109,7 +109,7 @@ func NewAstroportProvider(
 }
 
 // GetAvailablePairs return all available pair symbols.
-func (p AstroportProvider) GetAvailablePairs() (map[string]struct{}, error) {
+func (p *AstroportProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	availablePairs, _, err := p.getTickerMaps()
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (p *AstroportProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 
 // StartConnections starts the websocket connections.
 // This function is a no-op for the astroport provider.
-func (p AstroportProvider) StartConnections() {}
+func (p *AstroportProvider) StartConnections() {}
 
 // AstroportTickerPairs is a struct to hold the AstroportTickersResponse and the
 // corresponding pair. It satisfies the TickerPrice interface.
@@ -179,7 +179,7 @@ func (atr AstroportTickersResponse) toTickerPrice() (types.TickerPrice, error) {
 
 // setTickers queries the Astroport API for the latest tickers and updates the
 // priceStore.
-func (p AstroportProvider) setTickers() error {
+func (p *AstroportProvider) setTickers() error {
 	tickers, err := p.queryTickers()
 	if err != nil {
 		return err
@@ -192,7 +192,7 @@ func (p AstroportProvider) setTickers() error {
 
 // findTickersForPairs returns a map of ticker IDs -> pairs, but filters out
 // pairs that we are not subscribed to.
-func (p AstroportProvider) findTickersForPairs() (map[string]types.CurrencyPair, error) {
+func (p *AstroportProvider) findTickersForPairs() (map[string]types.CurrencyPair, error) {
 	queryingPairs := p.subscribedPairs
 	_, pairToTickerIDMap, err := p.getTickerMaps()
 	if err != nil {
@@ -211,7 +211,7 @@ func (p AstroportProvider) findTickersForPairs() (map[string]types.CurrencyPair,
 
 // getTickerMaps returns all available assets from the api.
 // It returns a map of ticker IDs -> pairs and a map of pairs -> ticker IDs.
-func (p AstroportProvider) getTickerMaps() (map[string]types.CurrencyPair, map[string]string, error) {
+func (p *AstroportProvider) getTickerMaps() (map[string]types.CurrencyPair, map[string]string, error) {
 	res, err := p.client.Get(p.endpoints.Rest + assetsURL)
 	if err != nil {
 		return nil, nil, err
@@ -247,7 +247,7 @@ func (p AstroportProvider) getTickerMaps() (map[string]types.CurrencyPair, map[s
 }
 
 // queryTickers returns the AstroportTickerPairs available from the API.
-func (p AstroportProvider) queryTickers() ([]AstroportTickerPairs, error) {
+func (p *AstroportProvider) queryTickers() ([]AstroportTickerPairs, error) {
 	res, err := p.client.Get(p.endpoints.Rest + tickersURL)
 	if err != nil {
 		return nil, err
@@ -285,7 +285,7 @@ func (p AstroportProvider) queryTickers() ([]AstroportTickerPairs, error) {
 }
 
 // This function periodically calls setTickers to update the priceStore.
-func (p AstroportProvider) pollCache(ctx context.Context, pairs ...types.CurrencyPair) error {
+func (p *AstroportProvider) poll(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
