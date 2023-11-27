@@ -33,6 +33,7 @@ type (
 
 		client *http.Client
 		priceStore
+		ctx context.Context
 	}
 
 	// AstroportAssetResponse is the response from the Astroport assets endpoint.
@@ -83,6 +84,7 @@ func NewAstroportProvider(
 		endpoints:  endpoints,
 		priceStore: newPriceStore(astroLogger),
 		client:     &http.Client{},
+		ctx:        ctx,
 	}
 
 	confirmedPairs, err := ConfirmPairAvailability(
@@ -94,14 +96,6 @@ func NewAstroportProvider(
 	if err != nil {
 		return nil, err
 	}
-
-	go func() {
-		logger.Debug().Msg("starting astroport polling...")
-		err := provider.poll(ctx)
-		if err != nil {
-			logger.Err(err).Msg("astroport provider unable to poll new data")
-		}
-	}()
 
 	provider.setSubscribedPairs(confirmedPairs...)
 
@@ -149,9 +143,17 @@ func (p *AstroportProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-// StartConnections starts the websocket connections.
-// This function is a no-op for the astroport provider.
-func (p *AstroportProvider) StartConnections() {}
+// StartConnections begins the polling process for
+// the astroport provider.
+func (p *AstroportProvider) StartConnections() {
+	go func() {
+		p.logger.Debug().Msg("starting astroport polling...")
+		err := p.poll()
+		if err != nil {
+			p.logger.Err(err).Msg("astroport provider unable to poll new data")
+		}
+	}()
+}
 
 // AstroportTickerPairs is a struct to hold the AstroportTickersResponse and the
 // corresponding pair. It satisfies the TickerPrice interface.
@@ -261,10 +263,10 @@ func (p *AstroportProvider) queryTickers() ([]AstroportTickerPairs, error) {
 }
 
 // This function periodically calls setTickers to update the priceStore.
-func (p *AstroportProvider) poll(ctx context.Context) error {
+func (p *AstroportProvider) poll() error {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-p.ctx.Done():
 			return nil
 
 		default:
