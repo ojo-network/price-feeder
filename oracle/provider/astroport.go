@@ -96,7 +96,7 @@ func NewAstroportProvider(
 	}
 
 	go func() {
-		logger.Debug().Msg("starting ftx polling...")
+		logger.Debug().Msg("starting astroport polling...")
 		err := provider.poll(ctx)
 		if err != nil {
 			logger.Err(err).Msg("astroport provider unable to poll new data")
@@ -110,7 +110,7 @@ func NewAstroportProvider(
 
 // GetAvailablePairs return all available pair symbols.
 func (p *AstroportProvider) GetAvailablePairs() (map[string]struct{}, error) {
-	availablePairs, _, err := p.getTickerMaps()
+	availablePairs, err := p.getAvailableAssets()
 	if err != nil {
 		return nil, err
 	}
@@ -190,44 +190,26 @@ func (p *AstroportProvider) setTickers() error {
 	return nil
 }
 
-// findTickersForPairs returns a map of ticker IDs -> pairs, but filters out
-// pairs that we are not subscribed to.
-func (p *AstroportProvider) findTickersForPairs() (map[string]types.CurrencyPair, error) {
-	queryingPairs := p.subscribedPairs
-	_, pairToTickerIDMap, err := p.getTickerMaps()
-	if err != nil {
-		return nil, err
-	}
-
-	// map of ticker IDs -> pairs
-	tickerIDs := make(map[string]types.CurrencyPair, len(queryingPairs))
-	for _, pair := range queryingPairs {
-		if tickerID, ok := pairToTickerIDMap[pair.String()]; ok {
-			tickerIDs[tickerID] = pair
-		}
-	}
-	return tickerIDs, nil
-}
-
-// getTickerMaps returns all available assets from the api.
-// It returns a map of ticker IDs -> pairs and a map of pairs -> ticker IDs.
-func (p *AstroportProvider) getTickerMaps() (map[string]types.CurrencyPair, map[string]string, error) {
+// getAvailableAssets returns all available assets from the api.
+// It returns a map of ticker IDs -> pairs.
+func (p *AstroportProvider) getAvailableAssets() (map[string]types.CurrencyPair, error) {
 	res, err := p.client.Get(p.endpoints.Rest + assetsURL)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	bz, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to read response: %w", err)
+		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
 	astroportAssets := []map[string]AstroportAssetResponse{}
 	if err := json.Unmarshal(bz, &astroportAssets); err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal response body: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal response body: %w", err)
 	}
 
+	// convert the astroport assets to a map of ticker IDs -> pairs
 	availablePairs := map[string]types.CurrencyPair{}
 	for _, assetMap := range astroportAssets {
 		for tickerID, asset := range assetMap {
@@ -237,13 +219,7 @@ func (p *AstroportProvider) getTickerMaps() (map[string]types.CurrencyPair, map[
 			}
 		}
 	}
-
-	pairToTickerID := map[string]string{}
-	for tickerID, pair := range availablePairs {
-		pairToTickerID[pair.String()] = tickerID
-	}
-
-	return availablePairs, pairToTickerID, nil
+	return availablePairs, nil
 }
 
 // queryTickers returns the AstroportTickerPairs available from the API.
@@ -264,13 +240,14 @@ func (p *AstroportProvider) queryTickers() ([]AstroportTickerPairs, error) {
 		return nil, fmt.Errorf("failed to unmarshal response body: %w", err)
 	}
 
-	tickerMap, err := p.findTickersForPairs()
+	availableAssets, err := p.getAvailableAssets()
 	if err != nil {
 		return nil, err
 	}
+
 	// filter out tickers that we are not subscribed to
 	tickers := []AstroportTickerPairs{}
-	for tickerID, v := range tickerMap {
+	for tickerID, v := range availableAssets {
 		for _, ticker := range astroportTickers {
 			if ticker.TickerID == tickerID {
 				tickers = append(tickers, AstroportTickerPairs{
@@ -280,7 +257,6 @@ func (p *AstroportProvider) queryTickers() ([]AstroportTickerPairs, error) {
 			}
 		}
 	}
-
 	return tickers, nil
 }
 
