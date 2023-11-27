@@ -217,3 +217,19 @@ providers = [
   "gate"
 ]
 quote = "USDT"
+
+[[currency_pairs]]
+base = "INJ"
+providers = [
+  "gate",
+  "binance",
+  "mexc",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "STINJ"
+providers = [
+  "astroport",
+]
+quote = "INJ"
