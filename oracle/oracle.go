@@ -331,7 +331,6 @@ func (o *Oracle) GetComputedPrices(
 	providerCandles types.AggregatedProviderCandles,
 	providerPrices types.AggregatedProviderPrices,
 ) (types.CurrencyPairDec, error) {
-
 	conversionRates, err := CalcCurrencyPairRates(
 		providerCandles,
 		providerPrices,
@@ -474,6 +473,9 @@ func NewProvider(
 
 	case provider.ProviderEthUniswap:
 		return provider.NewUniswapProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderAstroport:
+		return provider.NewAstroportProvider(ctx, logger, endpoint, providerPairs...)
 	}
 
 	return nil, fmt.Errorf("provider %s not found", providerName)
