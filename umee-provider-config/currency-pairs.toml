@@ -399,3 +399,20 @@ providers = [
   "gate",
 ]
 quote = "USDT"
+
+[[currency_pairs]]
+base = "KAVA"
+quote = "USDT"
+providers = [ "binance", "gate", "bitget", "binanceus", "crypto"]
+
+[[currency_pairs]]
+base = "KAVA"
+quote = "USD"
+providers = [ "kraken", "coinbase", "crypto"]
+
+[[currency_pairs]]
+base = "STUMEE"
+providers = [
+  "osmosis",
+]
+quote = "UMEE"
