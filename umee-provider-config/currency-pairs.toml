@@ -416,3 +416,73 @@ providers = [
   "osmosis",
 ]
 quote = "UMEE"
+
+# [[currency_pairs]]
+# base = "STSTARS"
+# providers = [
+#   "osmosis",
+# ]
+# quote = "STARS"
+
+[[currency_pairs]]
+base = "DYDX"
+providers = [
+  "osmosis",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "DYDX"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "HUAHUA"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "HUAHUA"
+providers = [
+  "osmosis",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "HUAHUA"
+providers = [
+  "osmosis",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "STRD"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "STRD"
+providers = [
+  "osmosis",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "NBTC"
+providers = [
+  "osmosis",
+]
+quote = "WBTC"
+
+[[currency_pairs]]
+base = "NBTC"
+providers = [
+  "osmosis",
+]
+quote = "USDC"
