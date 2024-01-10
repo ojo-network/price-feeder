@@ -417,12 +417,12 @@ providers = [
 ]
 quote = "UMEE"
 
-# [[currency_pairs]]
-# base = "STSTARS"
-# providers = [
-#   "osmosis",
-# ]
-# quote = "STARS"
+[[currency_pairs]]
+base = "stSTARS"
+providers = [
+  "osmosis",
+]
+quote = "STARS"
 
 [[currency_pairs]]
 base = "DYDX"
@@ -474,14 +474,14 @@ providers = [
 quote = "USDC"
 
 [[currency_pairs]]
-base = "NBTC"
+base = "nBTC"
 providers = [
   "osmosis",
 ]
 quote = "WBTC"
 
 [[currency_pairs]]
-base = "NBTC"
+base = "nBTC"
 providers = [
   "osmosis",
 ]
