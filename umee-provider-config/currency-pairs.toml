@@ -203,7 +203,7 @@ providers = [ "kraken", "crypto",]
 [[currency_pairs]]
 base = "JUNO"
 quote = "USDT"
-providers = [ "bitget", "mexc",]
+providers = [ "mexc"]
 
 [[currency_pairs]]
 base = "JUNO"
@@ -409,13 +409,6 @@ providers = [ "binance", "gate", "bitget", "binanceus", "crypto"]
 base = "KAVA"
 quote = "USD"
 providers = [ "kraken", "coinbase", "crypto"]
-
-[[currency_pairs]]
-base = "STUMEE"
-providers = [
-  "osmosis",
-]
-quote = "UMEE"
 
 [[currency_pairs]]
 base = "stSTARS"
