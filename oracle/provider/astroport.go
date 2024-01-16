@@ -38,16 +38,16 @@ type (
 
 	// AstroportAssetResponse is the response from the Astroport assets endpoint.
 	AstroportAssetResponse struct {
-		BaseID      string  `json:"base_id"`
-		BaseName    string  `json:"base_name"`
-		BaseSymbol  string  `json:"base_symbol"`
-		QuoteID     string  `json:"quote_id"`
-		QuoteName   string  `json:"quote_name"`
-		QuoteSymbol string  `json:"quote_symbol"`
-		LastPrice   float64 `json:"last_price"`
-		BaseVolume  float64 `json:"base_volume"`
-		QuoteVolume float64 `json:"quote_volume"`
-		USDVolume   float64 `json:"USD_volume"`
+		BaseID      string      `json:"base_id"`
+		BaseName    string      `json:"base_name"`
+		BaseSymbol  string      `json:"base_symbol"`
+		QuoteID     string      `json:"quote_id"`
+		QuoteName   string      `json:"quote_name"`
+		QuoteSymbol interface{} `json:"quote_symbol"`
+		LastPrice   float64     `json:"last_price"`
+		BaseVolume  float64     `json:"base_volume"`
+		QuoteVolume float64     `json:"quote_volume"`
+		USDVolume   float64     `json:"USD_volume"`
 	}
 	// AstroportTickersResponse is the response from the Astroport tickers endpoint.
 	AstroportTickersResponse struct {
@@ -215,9 +215,18 @@ func (p *AstroportProvider) getAvailableAssets() (map[string]types.CurrencyPair,
 	availablePairs := map[string]types.CurrencyPair{}
 	for _, assetMap := range astroportAssets {
 		for tickerID, asset := range assetMap {
+			// Some responses can return a 0 number value for Quote Symbol which
+			// needs to be handled here.
+			quoteSymbol := ""
+			switch asset.QuoteSymbol.(type) {
+			case string:
+				quoteSymbol = strings.ToUpper(asset.QuoteSymbol.(string))
+			default:
+				// leave quote symbol to be empty string
+			}
 			availablePairs[tickerID] = types.CurrencyPair{
 				Base:  strings.ToUpper(asset.BaseSymbol),
-				Quote: strings.ToUpper(asset.QuoteSymbol),
+				Quote: quoteSymbol,
 			}
 		}
 	}
