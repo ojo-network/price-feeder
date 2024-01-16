@@ -46,7 +46,8 @@ type (
 		Keyring             Keyring             `mapstructure:"keyring" validate:"required,gt=0,dive,required"`
 		RPC                 RPC                 `mapstructure:"rpc" validate:"required,gt=0,dive,required"`
 		Telemetry           telemetry.Config    `mapstructure:"telemetry"`
-		GasAdjustment       float64             `mapstructure:"gas_adjustment" validate:"required"`
+		GasAdjustment       float64             `mapstructure:"gas_adjustment"`
+		Gas                 uint64              `mapstructure:"gas"`
 		ProviderTimeout     string              `mapstructure:"provider_timeout"`
 		ProviderMinOverride bool                `mapstructure:"provider_min_override"`
 		ProviderEndpoints   []provider.Endpoint `mapstructure:"provider_endpoints" validate:"dive"`
@@ -141,8 +142,10 @@ func (c Config) Validate() (err error) {
 	if err = c.validateCurrencyPairs(); err != nil {
 		return err
 	}
-
 	if err = c.validateDeviations(); err != nil {
+		return err
+	}
+	if err = c.validateGas(); err != nil {
 		return err
 	}
 
@@ -161,6 +164,16 @@ func (c Config) validateDeviations() error {
 		if threshold.GT(maxDeviationThreshold) {
 			return fmt.Errorf("deviation thresholds must not exceed 3.0")
 		}
+	}
+	return nil
+}
+
+func (c Config) validateGas() error {
+	if c.Gas == 0 && c.GasAdjustment == 0 {
+		return fmt.Errorf("gas or gas adjustment must be set")
+	}
+	if c.GasAdjustment > 0 && c.Gas > 0 {
+		return fmt.Errorf("gas and gas adjustment may not both be set")
 	}
 	return nil
 }
