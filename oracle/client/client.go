@@ -271,7 +271,7 @@ func (oc OracleClient) CreateTxFactory() (tx.Factory, error) {
 		return tx.Factory{}, err
 	}
 
-	if oc.GasAdjustment == -1 {
+	if oc.GasAdjustment > 0 {
 		return tx.Factory{}.
 			WithAccountRetriever(clientCtx.AccountRetriever).
 			WithChainID(oc.ChainID).
