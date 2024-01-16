@@ -169,7 +169,7 @@ func (c Config) validateDeviations() error {
 }
 
 func (c Config) validateGas() error {
-	if c.Gas == 0 && c.GasAdjustment == 0 {
+	if c.Gas <= 0 && c.GasAdjustment <= 0 {
 		return fmt.Errorf("gas or gas adjustment must be set")
 	}
 	if c.GasAdjustment > 0 && c.Gas > 0 {
