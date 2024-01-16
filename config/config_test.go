@@ -1066,7 +1066,7 @@ func TestMultipleConfigs(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	content := []byte(`
-gas = 10000
+gas_adjustment = 1.5
 
 [server]
 listen_addr = "0.0.0.0:99999"
