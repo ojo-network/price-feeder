@@ -217,10 +217,12 @@ func (p *AstroportProvider) getAvailableAssets() (map[string]types.CurrencyPair,
 		for tickerID, asset := range assetMap {
 			// Some responses can return a 0 number value for Quote Symbol which
 			// needs to be handled here.
-			quoteSymbol := ""
+			var quoteSymbol string
 			switch asset.QuoteSymbol.(type) {
 			case string:
 				quoteSymbol = strings.ToUpper(asset.QuoteSymbol.(string))
+			default:
+				quoteSymbol = ""
 			}
 
 			availablePairs[tickerID] = types.CurrencyPair{
