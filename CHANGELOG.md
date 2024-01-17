@@ -45,6 +45,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## v2.4.0
+
+- [337](https://github.com/ojo-network/price-feeder/pull/337) feat: support fixed gas for vote and prevote transactions.
+
+## Old
+
 ### Improvements
 - [48](https://github.com/ojo-network/price-feeder/pull/48) Update goreleaser to have release process for umee price-feeder
 - [55](https://github.com/ojo-network/price-feeder/pull/55) Update DockerFile to work in umee's e2e test
