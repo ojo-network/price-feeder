@@ -59,8 +59,6 @@ The files in the provider-config folder define what exchange rates to fetch and 
 $ price-feeder /path/to/price_feeder_config.toml
 ```
 
-<<<<<<< HEAD
-=======
 Chain rules for checking the free oracle transactions are:
 
 - must be only prevote or vote
@@ -70,8 +68,6 @@ So, if you don't want to pay for gas, TX must be below `MaxMsgGasUsage`. If you 
 The easiest is to just set constant gas. We recommend 10k below the `MaxMsgGasUsage`.
 
 Note that either `gas_adjustment` or `gas` can be used. Both can not be set.
-
->>>>>>> c8537cc (feat: static gas (#331))
 ## Configuration
 
 ### `telemetry`
