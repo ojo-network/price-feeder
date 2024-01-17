@@ -33,7 +33,7 @@ func TestAstroportProvider_GetTickers(t *testing.T) {
 	require.NotEmpty(t, availPairs)
 
 	p.StartConnections()
-	time.Sleep(5 * time.Second)
+	time.Sleep(6 * time.Second)
 
 	res, err := p.GetTickerPrices(pairs...)
 	require.NoError(t, err)
