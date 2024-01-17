@@ -19,12 +19,14 @@ func BroadcastTx(clientCtx client.Context, txf tx.Factory, msgs ...sdk.Msg) (*sd
 		return nil, err
 	}
 
-	_, adjusted, err := tx.CalculateGas(clientCtx, txf, msgs...)
-	if err != nil {
-		return nil, err
-	}
+	if txf.GasAdjustment() > 0 {
+		_, adjusted, err := tx.CalculateGas(clientCtx, txf, msgs...)
+		if err != nil {
+			return nil, err
+		}
 
-	txf = txf.WithGas(adjusted)
+		txf = txf.WithGas(adjusted)
+	}
 
 	unsignedTx, err := txf.BuildUnsignedTx(msgs...)
 	if err != nil {

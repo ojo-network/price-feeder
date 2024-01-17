@@ -42,6 +42,7 @@ type (
 		Encoding            testutil.TestEncodingConfig
 		GasPrices           string
 		GasAdjustment       float64
+		Gas                 uint64
 		GRPCEndpoint        string
 		KeyringPassphrase   string
 		ChainHeight         *ChainHeight
@@ -66,6 +67,7 @@ func NewOracleClient(
 	validatorAddrString string,
 	grpcEndpoint string,
 	gasAdjustment float64,
+	gas uint64,
 ) (OracleClient, error) {
 	oracleAddr, err := sdk.AccAddressFromBech32(oracleAddrString)
 	if err != nil {
@@ -86,6 +88,7 @@ func NewOracleClient(
 		ValidatorAddrString: validatorAddrString,
 		Encoding:            ojoparams.MakeEncodingConfig(),
 		GasAdjustment:       gasAdjustment,
+		Gas:                 gas,
 		GRPCEndpoint:        grpcEndpoint,
 	}
 
@@ -268,15 +271,24 @@ func (oc OracleClient) CreateTxFactory() (tx.Factory, error) {
 		return tx.Factory{}, err
 	}
 
-	txFactory := tx.Factory{}.
+	if oc.GasAdjustment > 0 {
+		return tx.Factory{}.
+			WithAccountRetriever(clientCtx.AccountRetriever).
+			WithChainID(oc.ChainID).
+			WithTxConfig(clientCtx.TxConfig).
+			WithGasAdjustment(oc.GasAdjustment).
+			WithGasPrices(oc.GasPrices).
+			WithKeybase(clientCtx.Keyring).
+			WithSignMode(signing.SignMode_SIGN_MODE_DIRECT).
+			WithSimulateAndExecute(true), nil
+	}
+	return tx.Factory{}.
 		WithAccountRetriever(clientCtx.AccountRetriever).
 		WithChainID(oc.ChainID).
 		WithTxConfig(clientCtx.TxConfig).
-		WithGasAdjustment(oc.GasAdjustment).
+		WithGas(oc.Gas).
 		WithGasPrices(oc.GasPrices).
 		WithKeybase(clientCtx.Keyring).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT).
-		WithSimulateAndExecute(true)
-
-	return txFactory, nil
+		WithSimulateAndExecute(true), nil
 }
