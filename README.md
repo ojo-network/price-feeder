@@ -11,8 +11,6 @@ core differences are as follows:
 - The `price-feeder` combines both `feeder` and `price-server` into a single
   Golang-based application for better UX, testability, and integration.
 
-This instance of the price feeder is intended to be used as a library for [Umee's Price Feeder](https://github.com/umee-network/umee/tree/main/price-feeder), in order to prevent double work.
-
 ## Background
 
 The `price-feeder` tool is responsible for performing the following:
@@ -53,12 +51,21 @@ The keyring's password is defined via environment variables or user input.
 More information on the keyring can be found [here](#keyring)
 Please see the [example configuration](price-feeder.example.toml) for more details. The path to the node-config is required as the first argument. You can optionally add all configuration options to the node-config file or use the config-dir flag to point to a directory containing the other configuration files.
 
-The files in the provider-config folder define what exchange rates to fetch and what providers to get them from. They also contain deviation thresholds and API endpoints. Please see the [example configuration](ojo-provider-config) for more details.
+The files in the provider-config folder define what exchange rates to fetch and what providers to get them from. They also contain deviation thresholds and API endpoints. Please see the [example configuration](umee-provider-config) for more details.
 
 ```shell
 $ price-feeder /path/to/price_feeder_config.toml
 ```
 
+Chain rules for checking the free oracle transactions are:
+
+- must be only prevote or vote
+- gas is limited to [`MaxMsgGasUsage`](https://github.com/ojo-network/ojo/blob/main/ante/fee.go#L13) constant.
+
+So, if you don't want to pay for gas, TX must be below `MaxMsgGasUsage`. If you set too much gas (which is what is happening when when you set `gas_adjustment` to 2), then the tx will allocate 2x gas, and hence will go above the free quota, so you would need to attach fee to pay for that gas.
+The easiest is to just set constant gas. We recommend 10k below the `MaxMsgGasUsage`.
+
+Note that either `gas_adjustment` or `gas` can be used. Both can not be set.
 ## Configuration
 
 ### `telemetry`
