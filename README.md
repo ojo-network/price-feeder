@@ -59,6 +59,19 @@ The files in the provider-config folder define what exchange rates to fetch and 
 $ price-feeder /path/to/price_feeder_config.toml
 ```
 
+<<<<<<< HEAD
+=======
+Chain rules for checking the free oracle transactions are:
+
+- must be only prevote or vote
+- gas is limited to [`MaxMsgGasUsage`](https://github.com/ojo-network/ojo/blob/main/ante/fee.go#L13) constant.
+
+So, if you don't want to pay for gas, TX must be below `MaxMsgGasUsage`. If you set too much gas (which is what is happening when when you set `gas_adjustment` to 2), then the tx will allocate 2x gas, and hence will go above the free quota, so you would need to attach fee to pay for that gas.
+The easiest is to just set constant gas. We recommend 10k below the `MaxMsgGasUsage`.
+
+Note that either `gas_adjustment` or `gas` can be used. Both can not be set.
+
+>>>>>>> c8537cc (feat: static gas (#331))
 ## Configuration
 
 ### `telemetry`
