@@ -11,8 +11,6 @@ core differences are as follows:
 - The `price-feeder` combines both `feeder` and `price-server` into a single
   Golang-based application for better UX, testability, and integration.
 
-This instance of the price feeder is intended to be used as a library for [Umee's Price Feeder](https://github.com/umee-network/umee/tree/main/price-feeder), in order to prevent double work.
-
 ## Background
 
 The `price-feeder` tool is responsible for performing the following:
@@ -53,7 +51,7 @@ The keyring's password is defined via environment variables or user input.
 More information on the keyring can be found [here](#keyring)
 Please see the [example configuration](price-feeder.example.toml) for more details. The path to the node-config is required as the first argument. You can optionally add all configuration options to the node-config file or use the config-dir flag to point to a directory containing the other configuration files.
 
-The files in the provider-config folder define what exchange rates to fetch and what providers to get them from. They also contain deviation thresholds and API endpoints. Please see the [example configuration](ojo-provider-config) for more details.
+The files in the provider-config folder define what exchange rates to fetch and what providers to get them from. They also contain deviation thresholds and API endpoints. Please see the [example configuration](umee-provider-config) for more details.
 
 ```shell
 $ price-feeder /path/to/price_feeder_config.toml
