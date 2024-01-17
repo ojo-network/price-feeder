@@ -221,9 +221,8 @@ func (p *AstroportProvider) getAvailableAssets() (map[string]types.CurrencyPair,
 			switch asset.QuoteSymbol.(type) {
 			case string:
 				quoteSymbol = strings.ToUpper(asset.QuoteSymbol.(string))
-			default:
-				// leave quote symbol to be empty string
 			}
+
 			availablePairs[tickerID] = types.CurrencyPair{
 				Base:  strings.ToUpper(asset.BaseSymbol),
 				Quote: quoteSymbol,
