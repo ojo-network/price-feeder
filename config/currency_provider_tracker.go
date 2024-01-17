@@ -120,7 +120,7 @@ func (t *CurrencyProviderTracker) setCoinIDSymbolMap() error {
 	}
 	defer resp.Body.Close()
 
-	var listResponse []coinList
+	listResponse := []coinList{}
 	if err := json.NewDecoder(resp.Body).Decode(&listResponse); err != nil {
 		return err
 	}
