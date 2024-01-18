@@ -1,7 +1,10 @@
 config_dir = "umee-provider-config"
-
-gas_adjustment = 1.9
 provider_timeout = "1000000s"
+
+gas_prevote = 55000
+gas_vote = 160000
+# instead of fixed gas settings, gas adjustment can be used:
+# gas_adjustment = 1.9
 
 [server]
 listen_addr = "0.0.0.0:7171"
