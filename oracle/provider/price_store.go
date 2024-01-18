@@ -114,7 +114,7 @@ func (ps *priceStore) GetTickerPrices(pairs ...types.CurrencyPair) (types.Curren
 		key := ps.currencyPairToTickerPair(cp)
 		ticker, ok := ps.tickers[key]
 		if !ok {
-			ps.logger.Warn().Msgf("failed to get ticker price for %s", key)
+			ps.logger.Debug().Msgf("failed to get ticker price for %s", key)
 			continue
 		}
 		tickerPrices[cp] = ticker
@@ -133,7 +133,7 @@ func (ps *priceStore) GetCandlePrices(pairs ...types.CurrencyPair) (types.Curren
 		key := ps.curencyPairToCandlePair(cp)
 		candles, ok := ps.candles[key]
 		if !ok {
-			ps.logger.Warn().Msgf("failed to get candle prices for %s", key)
+			ps.logger.Debug().Msgf("failed to get candle prices for %s", key)
 			continue
 		}
 		candlesCopy := make([]types.CandlePrice, 0, len(candles))
