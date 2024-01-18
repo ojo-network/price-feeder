@@ -173,7 +173,10 @@ func (c Config) validateDeviations() error {
 func (c Config) validateGas() error {
 	var errs []string
 	if (c.GasPrevote > 0) != (c.GasVote > 0) {
-		errs = append(errs, "if gas_prevote is set, then gas_vote must be set as well; similarly, if gas_vote is set, then gas_prevote must be set as well")
+		errs = append(errs,
+			fmt.Sprintf("%s%s", "if gas_prevote is set, then gas_vote must be set as well;",
+				"similarly, if gas_vote is set, then gas_prevote must be set as well"),
+		)
 	}
 	if c.GasVote <= 0 && c.GasAdjustment <= 0 {
 		errs = append(errs, "either gas_vote and gas_prevote must be set or gas_adjustment must be set")
