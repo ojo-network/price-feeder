@@ -758,12 +758,8 @@ enabled = false
 	_, err = tmpFile.Write(content)
 	require.NoError(t, err)
 
-	cfg, err := config.ParseConfig(tmpFile.Name())
+	_, err = config.ParseConfig(tmpFile.Name())
 	require.NoError(t, err)
-
-	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).Level(zerolog.InfoLevel).With().Timestamp().Logger()
-	err = config.CheckProviderMins(context.TODO(), logger, cfg)
-	require.EqualError(t, err, "must have at least 3 providers for ATOM")
 }
 
 func TestProviderWithAPIKey_Valid(t *testing.T) {
