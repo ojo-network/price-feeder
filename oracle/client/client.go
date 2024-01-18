@@ -288,7 +288,7 @@ func (oc OracleClient) CreateTxFactory(isPrevote bool) (tx.Factory, error) {
 	}
 	gas := oc.GasVote
 	if isPrevote {
-		gas = oc.GasVote
+		gas = oc.GasPrevote
 	}
 	return tx.Factory{}.
 		WithAccountRetriever(clientCtx.AccountRetriever).
