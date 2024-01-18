@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -47,7 +48,8 @@ type (
 		RPC                 RPC                 `mapstructure:"rpc" validate:"required,gt=0,dive,required"`
 		Telemetry           telemetry.Config    `mapstructure:"telemetry"`
 		GasAdjustment       float64             `mapstructure:"gas_adjustment"`
-		Gas                 uint64              `mapstructure:"gas"`
+		GasVote             uint64              `mapstructure:"gas_vote"`
+		GasPrevote          uint64              `mapstructure:"gas_prevote"`
 		ProviderTimeout     string              `mapstructure:"provider_timeout"`
 		ProviderMinOverride bool                `mapstructure:"provider_min_override"`
 		ProviderEndpoints   []provider.Endpoint `mapstructure:"provider_endpoints" validate:"dive"`
@@ -169,11 +171,21 @@ func (c Config) validateDeviations() error {
 }
 
 func (c Config) validateGas() error {
-	if c.Gas <= 0 && c.GasAdjustment <= 0 {
-		return fmt.Errorf("gas or gas adjustment must be set")
+	var errs []string
+	if (c.GasPrevote > 0) != (c.GasVote > 0) {
+		errs = append(errs,
+			fmt.Sprintf("%s%s", "if gas_prevote is set, then gas_vote must be set as well;",
+				"similarly, if gas_vote is set, then gas_prevote must be set as well"),
+		)
 	}
-	if c.GasAdjustment > 0 && c.Gas > 0 {
-		return fmt.Errorf("gas and gas adjustment may not both be set")
+	if c.GasVote <= 0 && c.GasAdjustment <= 0 {
+		errs = append(errs, "either gas_vote and gas_prevote must be set or gas_adjustment must be set")
+	}
+	if c.GasAdjustment > 0 && c.GasVote > 0 {
+		errs = append(errs, "gas and gas adjustment may not both be set")
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, ". "))
 	}
 	return nil
 }

@@ -62,10 +62,14 @@ Chain rules for checking the free oracle transactions are:
 - must be only prevote or vote
 - gas is limited to [`MaxMsgGasUsage`](https://github.com/ojo-network/ojo/blob/main/ante/fee.go#L13) constant.
 
-So, if you don't want to pay for gas, TX must be below `MaxMsgGasUsage`. If you set too much gas (which is what is happening when when you set `gas_adjustment` to 2), then the tx will allocate 2x gas, and hence will go above the free quota, so you would need to attach fee to pay for that gas.
+So, if you don't want to pay for gas, TX must be below `MaxMsgGasUsage`. If you set too much gas (which is what is happening when you use high `gas_adjustment`, eg more than 2), then the tx will allocate 2x gas, and hence will go above the free quota, so you would need to attach fee to pay for that gas.
 The easiest is to just set constant gas. We recommend 10k below the `MaxMsgGasUsage`.
 
-Note that either `gas_adjustment` or `gas` can be used. Both can not be set.
+In the PF config file you can set either:
+
+* `gas_adjustment`
+* or `gas_prevote` and `gas_vote` - fixed amount of gas used for `MsgAggregateExchangeRatePrevote` and `MsgAggregateExchangeRateVote` transactions respectively.
+
 ## Configuration
 
 ### `telemetry`
