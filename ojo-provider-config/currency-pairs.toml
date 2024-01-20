@@ -147,7 +147,6 @@ quote = "WETH"
 base = "stATOM"
 providers = [
   "osmosis",
-  "crescent",
 ]
 quote = "ATOM"
 
@@ -177,7 +176,6 @@ quote = "USD"
 [[currency_pairs]]
 base = "JUNO"
 providers = [
-  "bitget",
   "mexc",
 ]
 quote = "USDT"
@@ -222,10 +220,16 @@ quote = "USDT"
 base = "INJ"
 providers = [
   "gate",
-  "binance",
   "mexc",
 ]
 quote = "USDT"
+
+[[currency_pairs]]
+base = "INJ"
+providers = [
+  "kraken",
+]
+quote = "USD"
 
 [[currency_pairs]]
 base = "STINJ"
