@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -46,7 +47,9 @@ type (
 		Keyring             Keyring             `mapstructure:"keyring" validate:"required,gt=0,dive,required"`
 		RPC                 RPC                 `mapstructure:"rpc" validate:"required,gt=0,dive,required"`
 		Telemetry           telemetry.Config    `mapstructure:"telemetry"`
-		GasAdjustment       float64             `mapstructure:"gas_adjustment" validate:"required"`
+		GasAdjustment       float64             `mapstructure:"gas_adjustment"`
+		GasVote             uint64              `mapstructure:"gas_vote"`
+		GasPrevote          uint64              `mapstructure:"gas_prevote"`
 		ProviderTimeout     string              `mapstructure:"provider_timeout"`
 		ProviderMinOverride bool                `mapstructure:"provider_min_override"`
 		ProviderEndpoints   []provider.Endpoint `mapstructure:"provider_endpoints" validate:"dive"`
@@ -141,8 +144,10 @@ func (c Config) Validate() (err error) {
 	if err = c.validateCurrencyPairs(); err != nil {
 		return err
 	}
-
 	if err = c.validateDeviations(); err != nil {
+		return err
+	}
+	if err = c.validateGas(); err != nil {
 		return err
 	}
 
@@ -161,6 +166,26 @@ func (c Config) validateDeviations() error {
 		if threshold.GT(maxDeviationThreshold) {
 			return fmt.Errorf("deviation thresholds must not exceed 3.0")
 		}
+	}
+	return nil
+}
+
+func (c Config) validateGas() error {
+	var errs []string
+	if (c.GasPrevote > 0) != (c.GasVote > 0) {
+		errs = append(errs,
+			fmt.Sprintf("%s%s", "if gas_prevote is set, then gas_vote must be set as well;",
+				"similarly, if gas_vote is set, then gas_prevote must be set as well"),
+		)
+	}
+	if c.GasVote <= 0 && c.GasAdjustment <= 0 {
+		errs = append(errs, "either gas_vote and gas_prevote must be set or gas_adjustment must be set")
+	}
+	if c.GasAdjustment > 0 && c.GasVote > 0 {
+		errs = append(errs, "gas and gas adjustment may not both be set")
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, ". "))
 	}
 	return nil
 }

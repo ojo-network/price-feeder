@@ -557,24 +557,24 @@ func (o *Oracle) tick(ctx context.Context) error {
 
 	exchangeRatesStr := GenerateExchangeRatesString(o.prices)
 	hash := oracletypes.GetAggregateVoteHash(salt, exchangeRatesStr, valAddr)
-	preVoteMsg := &oracletypes.MsgAggregateExchangeRatePrevote{
-		Hash:      hash.String(), // hash of prices from the oracle
-		Feeder:    o.oracleClient.OracleAddrString,
-		Validator: valAddr.String(),
-	}
-
 	isPrevoteOnlyTx := o.previousPrevote == nil
+
 	if isPrevoteOnlyTx {
 		// This timeout could be as small as oracleVotePeriod-indexInVotePeriod,
 		// but we give it some extra time just in case.
 		//
 		// Ref : https://github.com/terra-money/oracle-feeder/blob/baef2a4a02f57a2ffeaa207932b2e03d7fb0fb25/feeder/src/vote.ts#L222
+		preVoteMsg := &oracletypes.MsgAggregateExchangeRatePrevote{
+			Hash:      hash.String(), // hash of prices from the oracle
+			Feeder:    o.oracleClient.OracleAddrString,
+			Validator: valAddr.String(),
+		}
 		o.logger.Info().
 			Str("hash", hash.String()).
 			Str("validator", preVoteMsg.Validator).
 			Str("feeder", preVoteMsg.Feeder).
 			Msg("broadcasting pre-vote")
-		if err := o.oracleClient.BroadcastTx(nextBlockHeight, oracleVotePeriod*2, preVoteMsg); err != nil {
+		if err := o.oracleClient.BroadcastTx(nextBlockHeight, oracleVotePeriod*2, isPrevoteOnlyTx, preVoteMsg); err != nil {
 			return err
 		}
 
@@ -606,6 +606,7 @@ func (o *Oracle) tick(ctx context.Context) error {
 		if err := o.oracleClient.BroadcastTx(
 			nextBlockHeight,
 			oracleVotePeriod-indexInVotePeriod,
+			isPrevoteOnlyTx,
 			voteMsg,
 		); err != nil {
 			return err

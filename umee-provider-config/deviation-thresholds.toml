@@ -158,9 +158,9 @@ threshold = "2"
 base = "STUMEE"
 threshold = "2"
 
-# [[deviation_thresholds]]
-# base = "STSTARS"
-# threshold = "2"
+[[deviation_thresholds]]
+base = "STSTARS"
+threshold = "2"
 
 [[deviation_thresholds]]
 base = "DYDX"

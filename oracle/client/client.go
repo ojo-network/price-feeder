@@ -43,6 +43,8 @@ type (
 		Encoding            testutil.TestEncodingConfig
 		GasPrices           string
 		GasAdjustment       float64
+		GasPrevote          uint64
+		GasVote             uint64
 		GRPCEndpoint        string
 		KeyringPassphrase   string
 		ChainHeight         *ChainHeight
@@ -67,6 +69,8 @@ func NewOracleClient(
 	validatorAddrString string,
 	grpcEndpoint string,
 	gasAdjustment float64,
+	gasPrevote uint64,
+	gasVote uint64,
 ) (OracleClient, error) {
 	oracleAddr, err := sdk.AccAddressFromBech32(oracleAddrString)
 	if err != nil {
@@ -87,6 +91,8 @@ func NewOracleClient(
 		ValidatorAddrString: validatorAddrString,
 		Encoding:            umeeapp.MakeEncodingConfig(),
 		GasAdjustment:       gasAdjustment,
+		GasPrevote:          gasPrevote,
+		GasVote:             gasVote,
 		GRPCEndpoint:        grpcEndpoint,
 	}
 
@@ -135,7 +141,7 @@ func (r *passReader) Read(p []byte) (n int, err error) {
 // BroadcastTx attempts to broadcast a signed transaction. If it fails, a few re-attempts
 // will be made until the transaction succeeds or ultimately times out or fails.
 // Ref: https://github.com/terra-money/oracle-feeder/blob/baef2a4a02f57a2ffeaa207932b2e03d7fb0fb25/feeder/src/vote.ts#L230
-func (oc OracleClient) BroadcastTx(nextBlockHeight, timeoutHeight int64, msgs ...sdk.Msg) error {
+func (oc OracleClient) BroadcastTx(nextBlockHeight, timeoutHeight int64, isPrevote bool, msgs sdk.Msg) error {
 	maxBlockHeight := nextBlockHeight + timeoutHeight
 	lastCheckHeight := nextBlockHeight - 1
 
@@ -144,7 +150,7 @@ func (oc OracleClient) BroadcastTx(nextBlockHeight, timeoutHeight int64, msgs ..
 		return err
 	}
 
-	factory, err := oc.CreateTxFactory()
+	factory, err := oc.CreateTxFactory(isPrevote)
 	if err != nil {
 		return err
 	}
@@ -163,7 +169,7 @@ func (oc OracleClient) BroadcastTx(nextBlockHeight, timeoutHeight int64, msgs ..
 		// set last check height to latest block height
 		lastCheckHeight = latestBlockHeight
 
-		resp, err := BroadcastTx(clientCtx, factory, msgs...)
+		resp, err := BroadcastTx(clientCtx, factory, msgs)
 		if resp != nil && resp.Code != 0 {
 			telemetry.IncrCounter(1, "failure", "tx", "code")
 			err = fmt.Errorf("invalid response code from tx: %d", resp.Code)
@@ -263,21 +269,34 @@ func (oc OracleClient) CreateClientContext() (client.Context, error) {
 
 // CreateTxFactory creates an SDK Factory instance used for transaction
 // generation, signing and broadcasting.
-func (oc OracleClient) CreateTxFactory() (tx.Factory, error) {
+func (oc OracleClient) CreateTxFactory(isPrevote bool) (tx.Factory, error) {
 	clientCtx, err := oc.CreateClientContext()
 	if err != nil {
 		return tx.Factory{}, err
 	}
 
-	txFactory := tx.Factory{}.
+	if oc.GasAdjustment > 0 {
+		return tx.Factory{}.
+			WithAccountRetriever(clientCtx.AccountRetriever).
+			WithChainID(oc.ChainID).
+			WithTxConfig(clientCtx.TxConfig).
+			WithGasAdjustment(oc.GasAdjustment).
+			WithGasPrices(oc.GasPrices).
+			WithKeybase(clientCtx.Keyring).
+			WithSignMode(signing.SignMode_SIGN_MODE_DIRECT).
+			WithSimulateAndExecute(true), nil
+	}
+	gas := oc.GasVote
+	if isPrevote {
+		gas = oc.GasPrevote
+	}
+	return tx.Factory{}.
 		WithAccountRetriever(clientCtx.AccountRetriever).
 		WithChainID(oc.ChainID).
 		WithTxConfig(clientCtx.TxConfig).
-		WithGasAdjustment(oc.GasAdjustment).
+		WithGas(gas).
 		WithGasPrices(oc.GasPrices).
 		WithKeybase(clientCtx.Keyring).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT).
-		WithSimulateAndExecute(true)
-
-	return txFactory, nil
+		WithSimulateAndExecute(true), nil
 }
