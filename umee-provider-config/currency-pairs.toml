@@ -413,3 +413,4 @@ providers = [
   "osmosis",
 ]
 quote = "USDC"
+
