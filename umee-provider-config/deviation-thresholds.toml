@@ -149,3 +149,7 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "TIA"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "STRD"
+threshold = "2"
