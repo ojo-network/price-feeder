@@ -153,3 +153,31 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "STRD"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "KAVA"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "STUMEE"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "STSTARS"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "DYDX"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "HUAHUA"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "NBTC"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "milkTIA"
+threshold = "2"
