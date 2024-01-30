@@ -203,7 +203,7 @@ providers = [ "kraken", "crypto",]
 [[currency_pairs]]
 base = "JUNO"
 quote = "USDT"
-providers = [ "bitget", "mexc",]
+providers = ["mexc"]
 
 [[currency_pairs]]
 base = "JUNO"
