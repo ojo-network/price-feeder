@@ -414,3 +414,16 @@ providers = [
 ]
 quote = "USDC"
 
+[[currency_pairs]]
+base = "milkTIA"
+providers = [
+  "osmosis",
+]
+quote = "TIA"
+
+[[currency_pairs]]
+base = "milkTIA"
+providers = [
+  "osmosis",
+]
+quote = "USDC"

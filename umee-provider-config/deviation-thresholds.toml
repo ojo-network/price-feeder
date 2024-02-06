@@ -153,3 +153,7 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "STRD"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "milkTIA"
+threshold = "2"
