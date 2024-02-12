@@ -420,3 +420,17 @@ providers = [
   "osmosis",
 ]
 quote = "USDC"
+
+[[currency_pairs]]
+base = "DYDX"
+providers = [
+  "osmosis",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "DYDX"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
