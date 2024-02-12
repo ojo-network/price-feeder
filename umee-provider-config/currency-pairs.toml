@@ -177,6 +177,13 @@ providers = [
 quote = "OSMO"
 
 [[currency_pairs]]
+base = "IST"
+providers = [
+  "osmosis",
+]
+quote = "USDC"
+
+[[currency_pairs]]
 base = "USDC"
 providers = [
   "kraken",
