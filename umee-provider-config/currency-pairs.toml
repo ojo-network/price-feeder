@@ -179,7 +179,7 @@ quote = "OSMO"
 [[currency_pairs]]
 base = "IST"
 providers = [
-  "crescent",
+  "osmosis",
 ]
 quote = "USDC"
 
