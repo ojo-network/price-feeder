@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/go-playground/validator/v10"
 
 	"github.com/ojo-network/price-feeder/oracle/provider"
@@ -32,7 +32,7 @@ var (
 
 	// maxDeviationThreshold is the maxmimum allowed amount of standard
 	// deviations which validators are able to set for a given asset.
-	maxDeviationThreshold = sdk.MustNewDecFromStr("3.0")
+	maxDeviationThreshold = math.LegacyMustNewDecFromStr("3.0")
 )
 
 type (
@@ -156,7 +156,7 @@ func (c Config) Validate() (err error) {
 
 func (c Config) validateDeviations() error {
 	for _, deviation := range c.Deviations {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		threshold, err := math.LegacyNewDecFromStr(deviation.Threshold)
 		if err != nil {
 			return fmt.Errorf("deviation thresholds must be numeric: %w", err)
 		}
@@ -270,11 +270,11 @@ func (c Config) ProviderEndpointsMap() map[types.ProviderName]provider.Endpoint 
 }
 
 // DeviationsMap converts the deviation_thresholds from the config file into
-// a map of sdk.Dec where the key is the base asset.
-func (c Config) DeviationsMap() (map[string]sdk.Dec, error) {
-	deviations := make(map[string]sdk.Dec, len(c.Deviations))
+// a map of math.LegacyDec where the key is the base asset.
+func (c Config) DeviationsMap() (map[string]math.LegacyDec, error) {
+	deviations := make(map[string]math.LegacyDec, len(c.Deviations))
 	for _, deviation := range c.Deviations {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		threshold, err := math.LegacyNewDecFromStr(deviation.Threshold)
 		if err != nil {
 			return nil, err
 		}

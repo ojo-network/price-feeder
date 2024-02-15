@@ -3,7 +3,7 @@ package types
 import (
 	"sync"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 )
 
 type (
@@ -17,8 +17,8 @@ type (
 		mx     sync.RWMutex
 	}
 
-	// CurrencyPairDec is a map of sdk.Dec by CurrencyPair
-	CurrencyPairDec map[CurrencyPair]sdk.Dec
+	// CurrencyPairDec is a map of math.LegacyDec by CurrencyPair
+	CurrencyPairDec map[CurrencyPair]math.LegacyDec
 
 	// CurrencyPairDecByProvider ia a map of CurrencyPairDec by provider name
 	CurrencyPairDecByProvider map[ProviderName]CurrencyPairDec

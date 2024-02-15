@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"
@@ -63,7 +64,7 @@ type Oracle struct {
 	previousVotePeriod float64
 	priceProviders     map[types.ProviderName]provider.Provider
 	oracleClient       client.OracleClient
-	deviations         map[string]sdk.Dec
+	deviations         map[string]sdkmath.LegacyDec
 	endpoints          map[types.ProviderName]provider.Endpoint
 	paramCache         *ParamCache
 	chainConfig        bool
@@ -81,7 +82,7 @@ func New(
 	oc client.OracleClient,
 	providerPairs map[types.ProviderName][]types.CurrencyPair,
 	providerTimeout time.Duration,
-	deviations map[string]sdk.Dec,
+	deviations map[string]sdkmath.LegacyDec,
 	endpoints map[types.ProviderName]provider.Endpoint,
 	chainConfig bool,
 ) *Oracle {

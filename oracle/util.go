@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 
 	"github.com/ojo-network/price-feeder/oracle/provider"
@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	minimumTimeWeight   = sdk.MustNewDecFromStr("0.2000")
-	minimumCandleVolume = sdk.MustNewDecFromStr("0.0001")
+	minimumTimeWeight   = math.LegacyMustNewDecFromStr("0.2000")
+	minimumCandleVolume = math.LegacyMustNewDecFromStr("0.0001")
 )
 
 const (
@@ -27,9 +27,9 @@ func vwap(weightedPrices, volumeSum types.CurrencyPairDec) types.CurrencyPairDec
 	vwap := make(types.CurrencyPairDec)
 
 	for base, p := range weightedPrices {
-		if !volumeSum[base].Equal(sdk.ZeroDec()) {
+		if !volumeSum[base].Equal(math.LegacyZeroDec()) {
 			if _, ok := vwap[base]; !ok {
-				vwap[base] = sdk.ZeroDec()
+				vwap[base] = math.LegacyZeroDec()
 			}
 
 			vwap[base] = p.Quo(volumeSum[base])
@@ -53,10 +53,10 @@ func ComputeVWAP(prices types.AggregatedProviderPrices) types.CurrencyPairDec {
 	for _, providerPrices := range prices {
 		for base, tp := range providerPrices {
 			if _, ok := weightedPrices[base]; !ok {
-				weightedPrices[base] = sdk.ZeroDec()
+				weightedPrices[base] = math.LegacyZeroDec()
 			}
 			if _, ok := volumeSum[base]; !ok {
-				volumeSum[base] = sdk.ZeroDec()
+				volumeSum[base] = math.LegacyZeroDec()
 			}
 
 			// weightedPrices[base] = Σ {P * V} for all TickerPrice
@@ -92,10 +92,10 @@ func ComputeTVWAP(prices types.AggregatedProviderCandles) (types.CurrencyPairDec
 			}
 
 			if _, ok := weightedPrices[base]; !ok {
-				weightedPrices[base] = sdk.ZeroDec()
+				weightedPrices[base] = math.LegacyZeroDec()
 			}
 			if _, ok := volumeSum[base]; !ok {
-				volumeSum[base] = sdk.ZeroDec()
+				volumeSum[base] = math.LegacyZeroDec()
 			}
 
 			// Sort by timestamp old -> new
@@ -103,21 +103,21 @@ func ComputeTVWAP(prices types.AggregatedProviderCandles) (types.CurrencyPairDec
 				return cp[i].TimeStamp < cp[j].TimeStamp
 			})
 
-			period := sdk.NewDec(now - cp[0].TimeStamp)
-			if period.Equal(sdk.ZeroDec()) {
+			period := math.LegacyNewDec(now - cp[0].TimeStamp)
+			if period.Equal(math.LegacyZeroDec()) {
 				return nil, fmt.Errorf("unable to divide by zero")
 			}
 			// weightUnit = (1 - minimumTimeWeight) / period
-			weightUnit := sdk.OneDec().Sub(minimumTimeWeight).Quo(period)
+			weightUnit := math.LegacyOneDec().Sub(minimumTimeWeight).Quo(period)
 
 			// get weighted prices, and sum of volumes
 			for _, candle := range cp {
 				// we only want candles within the last timePeriod
 				if timePeriod < candle.TimeStamp && candle.TimeStamp <= now {
 					// timeDiff = now - candle.TimeStamp
-					timeDiff := sdk.NewDec(now - candle.TimeStamp)
+					timeDiff := math.LegacyNewDec(now - candle.TimeStamp)
 					// set minimum candle volume for low-trading assets
-					if candle.Volume.Equal(sdk.ZeroDec()) {
+					if candle.Volume.Equal(math.LegacyZeroDec()) {
 						candle.Volume = minimumCandleVolume
 					}
 
@@ -144,17 +144,17 @@ func StandardDeviation(
 	var (
 		deviations = make(types.CurrencyPairDec)
 		means      = make(types.CurrencyPairDec)
-		priceSlice = make(map[types.CurrencyPair][]sdk.Dec)
+		priceSlice = make(map[types.CurrencyPair][]math.LegacyDec)
 		priceSums  = make(types.CurrencyPairDec)
 	)
 
 	for _, providerPrices := range prices {
 		for base, p := range providerPrices {
 			if _, ok := priceSums[base]; !ok {
-				priceSums[base] = sdk.ZeroDec()
+				priceSums[base] = math.LegacyZeroDec()
 			}
 			if _, ok := priceSlice[base]; !ok {
-				priceSlice[base] = []sdk.Dec{}
+				priceSlice[base] = []math.LegacyDec{}
 			}
 
 			priceSums[base] = priceSums[base].Add(p)
@@ -168,15 +168,15 @@ func StandardDeviation(
 			continue
 		}
 		if _, ok := deviations[base]; !ok {
-			deviations[base] = sdk.ZeroDec()
+			deviations[base] = math.LegacyZeroDec()
 		}
 		if _, ok := means[base]; !ok {
-			means[base] = sdk.ZeroDec()
+			means[base] = math.LegacyZeroDec()
 		}
 
 		numPrices := int64(len(priceSlice[base]))
 		means[base] = sum.QuoInt64(numPrices)
-		varianceSum := sdk.ZeroDec()
+		varianceSum := math.LegacyZeroDec()
 
 		for _, price := range priceSlice[base] {
 			deviation := price.Sub(means[base])
@@ -267,11 +267,11 @@ func createPairProvidersFromCurrencyPairProvidersList(
 // Ojo's oracle module.
 func createDeviationsFromCurrencyDeviationThresholdList(
 	deviationList oracletypes.CurrencyDeviationThresholdList,
-) (map[string]sdk.Dec, error) {
-	deviations := make(map[string]sdk.Dec, len(deviationList))
+) (map[string]math.LegacyDec, error) {
+	deviations := make(map[string]math.LegacyDec, len(deviationList))
 
 	for _, deviation := range deviationList {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		threshold, err := math.LegacyNewDecFromStr(deviation.Threshold)
 		if err != nil {
 			return nil, err
 		}

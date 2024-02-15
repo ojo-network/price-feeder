@@ -35,7 +35,7 @@ type ChainHeight struct {
 // starts a new goroutine subscribed to EventNewBlockHeader.
 func NewChainHeight(
 	ctx context.Context,
-	client client.TendermintRPC,
+	client client.CometRPC,
 	logger zerolog.Logger,
 	initialHeight int64,
 ) (*ChainHeight, error) {
