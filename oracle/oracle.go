@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkmath "cosmossdk.io/math"
 	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/rs/zerolog"
 	"golang.org/x/sync/errgroup"

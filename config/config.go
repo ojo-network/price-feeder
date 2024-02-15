@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/telemetry"
 	"cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	"github.com/go-playground/validator/v10"
 
 	"github.com/ojo-network/price-feeder/oracle/provider"

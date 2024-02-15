@@ -10,7 +10,7 @@ import (
 type CandlePrice struct {
 	Price     math.LegacyDec // last trade price
 	Volume    math.LegacyDec // volume
-	TimeStamp int64   // timestamp
+	TimeStamp int64          // timestamp
 }
 
 // NewCandlePrice parses the lastPrice and volume to a decimal and returns a CandlePrice
