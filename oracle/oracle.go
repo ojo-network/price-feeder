@@ -167,6 +167,36 @@ func (o *Oracle) Start(ctx context.Context) error {
 	}
 }
 
+// Starts oracle process without a client for running on an Ojo node without submitting
+// prevotes and votes.
+func (o *Oracle) StartClientless(ctx context.Context, params oracletypes.Params) error {
+	o.paramCache.UpdateParamCache(0, params, nil)
+
+	for {
+		select {
+		case <-ctx.Done():
+			o.closer.Close()
+
+		default:
+			o.logger.Debug().Msg("starting clientless oracle tick")
+
+			startTime := time.Now()
+
+			if err := o.tick(ctx); err != nil {
+				telemetry.IncrCounter(1, "failure", "clientless tick")
+				o.logger.Err(err).Msg("clientless oracle tick failed")
+			}
+
+			o.lastPriceSyncTS = time.Now()
+
+			telemetry.MeasureSince(startTime, "runtime", "clientless tick")
+			telemetry.IncrCounter(1, "new", "clientless tick")
+
+			time.Sleep(tickerSleep)
+		}
+	}
+}
+
 // Stop stops the oracle process and waits for it to gracefully exit.
 func (o *Oracle) Stop() {
 	o.closer.Close()
@@ -683,6 +713,16 @@ func (o *Oracle) tick(ctx context.Context) error {
 
 		o.previousPrevote = nil
 		o.previousVotePeriod = 0
+	}
+
+	return nil
+}
+
+func (o *Oracle) tickClientless(ctx context.Context) error {
+	o.logger.Debug().Msg("executing clientless oracle tick")
+
+	if err := o.SetPrices(ctx); err != nil {
+		return err
 	}
 
 	return nil
