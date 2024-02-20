@@ -182,7 +182,7 @@ func (o *Oracle) StartClientless(ctx context.Context, params oracletypes.Params)
 
 			startTime := time.Now()
 
-			if err := o.tick(ctx); err != nil {
+			if err := o.tickClientless(ctx); err != nil {
 				telemetry.IncrCounter(1, "failure", "clientless tick")
 				o.logger.Err(err).Msg("clientless oracle tick failed")
 			}
