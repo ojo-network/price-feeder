@@ -167,9 +167,13 @@ func (o *Oracle) Start(ctx context.Context) error {
 	}
 }
 
-// Starts oracle process without a client for running on an Ojo node without submitting
-// prevotes and votes.
-func (o *Oracle) StartClientless(ctx context.Context, params oracletypes.Params) error {
+// Starts oracle process without a client for running on an Ojo node that runs a
+// price feeder natively.
+func (o *Oracle) StartClientless(
+	ctx context.Context,
+	params oracletypes.Params,
+	tickSleep time.Duration,
+) error {
 	o.paramCache.UpdateParamCache(0, params, nil)
 
 	for {
@@ -192,7 +196,7 @@ func (o *Oracle) StartClientless(ctx context.Context, params oracletypes.Params)
 			telemetry.MeasureSince(startTime, "runtime", "clientless tick")
 			telemetry.IncrCounter(1, "new", "clientless tick")
 
-			time.Sleep(tickerSleep)
+			time.Sleep(tickSleep)
 		}
 	}
 }
