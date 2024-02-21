@@ -117,8 +117,8 @@ func (o *Oracle) LoadProviderPairsAndDeviations(ctx context.Context) error {
 		return err
 	}
 
-	o.providerPairs = createPairProvidersFromCurrencyPairProvidersList(oracleParams.CurrencyPairProviders)
-	o.deviations, err = createDeviationsFromCurrencyDeviationThresholdList(oracleParams.CurrencyDeviationThresholds)
+	o.providerPairs = CreatePairProvidersFromCurrencyPairProvidersList(oracleParams.CurrencyPairProviders)
+	o.deviations, err = CreateDeviationsFromCurrencyDeviationThresholdList(oracleParams.CurrencyDeviationThresholds)
 	if err != nil {
 		return err
 	}
@@ -577,11 +577,11 @@ func (o *Oracle) checkAcceptList(params oracletypes.Params) {
 func (o *Oracle) checkCurrencyPairAndDeviations(currentParams, newParams oracletypes.Params) (err error) {
 	if currentParams.CurrencyPairProviders.String() != newParams.CurrencyPairProviders.String() {
 		o.logger.Debug().Msg("Updating Currency Pair Providers Map")
-		o.providerPairs = createPairProvidersFromCurrencyPairProvidersList(newParams.CurrencyPairProviders)
+		o.providerPairs = CreatePairProvidersFromCurrencyPairProvidersList(newParams.CurrencyPairProviders)
 	}
 	if currentParams.CurrencyDeviationThresholds.String() != newParams.CurrencyDeviationThresholds.String() {
 		o.logger.Debug().Msg("Updating Currency Deviation Thresholds Map")
-		o.deviations, err = createDeviationsFromCurrencyDeviationThresholdList(newParams.CurrencyDeviationThresholds)
+		o.deviations, err = CreateDeviationsFromCurrencyDeviationThresholdList(newParams.CurrencyDeviationThresholds)
 		if err != nil {
 			return err
 		}
