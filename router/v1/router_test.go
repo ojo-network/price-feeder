@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
@@ -27,18 +27,18 @@ var (
 	FOOUSD  = types.CurrencyPair{Base: "FOO", Quote: "USD"}
 
 	mockPrices = types.CurrencyPairDec{
-		ATOMUSD: sdk.MustNewDecFromStr("34.84"),
-		OJOUSD:  sdk.MustNewDecFromStr("4.21"),
+		ATOMUSD: math.LegacyMustNewDecFromStr("34.84"),
+		OJOUSD:  math.LegacyMustNewDecFromStr("4.21"),
 	}
 
 	mockComputedPrices = types.CurrencyPairDecByProvider{
 		provider.ProviderBinance: {
-			ATOMUSD: sdk.MustNewDecFromStr("28.21000000"),
-			OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
+			ATOMUSD: math.LegacyMustNewDecFromStr("28.21000000"),
+			OJOUSD:  math.LegacyMustNewDecFromStr("1.13000000"),
 		},
 		provider.ProviderKraken: {
-			ATOMUSD: sdk.MustNewDecFromStr("28.268700"),
-			OJOUSD:  sdk.MustNewDecFromStr("1.13000000"),
+			ATOMUSD: math.LegacyMustNewDecFromStr("28.268700"),
+			OJOUSD:  math.LegacyMustNewDecFromStr("1.13000000"),
 		},
 	}
 )
@@ -125,7 +125,7 @@ func (rts *RouterTestSuite) TestPrices() {
 	rts.Require().NoError(json.Unmarshal(response.Body.Bytes(), &respBody))
 	rts.Require().Equal(respBody.Prices[ATOMUSD], mockPrices[ATOMUSD])
 	rts.Require().Equal(respBody.Prices[OJOUSD], mockPrices[OJOUSD])
-	rts.Require().Equal(respBody.Prices[FOOUSD], sdk.Dec{})
+	rts.Require().Equal(respBody.Prices[FOOUSD], math.LegacyDec{})
 }
 
 func (rts *RouterTestSuite) TestTvwap() {

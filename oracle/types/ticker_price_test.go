@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,10 +15,10 @@ func TestNewTicketPrice(t *testing.T) {
 		tickerPrice, err := NewTickerPrice(price, volume)
 		require.Nil(t, err, "expected the returned error to be nil")
 
-		parsedPrice, _ := sdk.NewDecFromStr(price)
+		parsedPrice, _ := math.LegacyNewDecFromStr(price)
 		require.Equal(t, tickerPrice.Price, parsedPrice)
 
-		parsedVolume, _ := sdk.NewDecFromStr(volume)
+		parsedVolume, _ := math.LegacyNewDecFromStr(volume)
 		require.Equal(t, tickerPrice.Volume, parsedVolume)
 	})
 

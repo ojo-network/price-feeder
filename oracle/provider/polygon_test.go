@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
@@ -21,8 +21,8 @@ func TestPolygonProvider_GetTickerPrices(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("valid_request_single_ticker", func(t *testing.T) {
-		lastPrice := sdk.MustNewDecFromStr("1.19000000")
-		volume := sdk.MustNewDecFromStr("2396974.02000000")
+		lastPrice := math.LegacyMustNewDecFromStr("1.19000000")
+		volume := math.LegacyMustNewDecFromStr("2396974.02000000")
 
 		tickerMap := map[string]types.TickerPrice{}
 		tickerMap["EUR/USD"] = types.TickerPrice{
@@ -40,9 +40,9 @@ func TestPolygonProvider_GetTickerPrices(t *testing.T) {
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
-		lastPriceEUR := sdk.MustNewDecFromStr("1.19000000")
-		lastPriceJPY := sdk.MustNewDecFromStr("0.00820000")
-		volume := sdk.MustNewDecFromStr("2396974.02000000")
+		lastPriceEUR := math.LegacyMustNewDecFromStr("1.19000000")
+		lastPriceJPY := math.LegacyMustNewDecFromStr("0.00820000")
+		volume := math.LegacyMustNewDecFromStr("2396974.02000000")
 
 		tickerMap := map[string]types.TickerPrice{}
 		tickerMap["EUR/USD"] = types.TickerPrice{
@@ -101,8 +101,8 @@ func TestPolygonProvider_GetCandlePrices(t *testing.T) {
 		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "EUR", Quote: "USD"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		priceDec, _ := sdk.NewDecFromStr(fmt.Sprintf("%f", price))
-		volumeDec, _ := sdk.NewDecFromStr(fmt.Sprintf("%f", volume))
+		priceDec, _ := math.LegacyNewDecFromStr(fmt.Sprintf("%f", price))
+		volumeDec, _ := math.LegacyNewDecFromStr(fmt.Sprintf("%f", volume))
 
 		require.Equal(t, priceDec, prices[EURUSD][0].Price)
 		require.Equal(t, volumeDec, prices[EURUSD][0].Volume)

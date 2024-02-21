@@ -1,8 +1,8 @@
 package provider
 
 import (
-	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
+	"github.com/hashicorp/go-metrics"
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
 

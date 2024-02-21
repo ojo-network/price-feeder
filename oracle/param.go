@@ -40,7 +40,7 @@ type ParamCache struct {
 // param update events events are missed.
 func (paramCache *ParamCache) Initialize(
 	ctx context.Context,
-	client client.TendermintRPC,
+	client client.CometRPC,
 	logger zerolog.Logger,
 ) error {
 	rpcClient := client.(*rpchttp.HTTP)

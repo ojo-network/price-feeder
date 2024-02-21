@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -89,7 +89,7 @@ func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.C
 			)
 		} else {
 			assert.True(t,
-				tickerPrices[cp].Price.GT(sdk.NewDec(0)),
+				tickerPrices[cp].Price.GT(math.LegacyNewDec(0)),
 				"ticker price is zero for %s pair %s",
 				providerName,
 				currencyPairKey,
@@ -105,7 +105,7 @@ func checkForPrices(t *testing.T, pvd provider.Provider, currencyPairs []types.C
 			)
 		} else {
 			assert.True(t,
-				candlePrices[cp][0].Price.GT(sdk.NewDec(0)),
+				candlePrices[cp][0].Price.GT(math.LegacyNewDec(0)),
 				"candle price is zero for %s pair %s",
 				providerName,
 				currencyPairKey,

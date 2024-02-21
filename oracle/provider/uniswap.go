@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
@@ -220,11 +220,11 @@ func (p *UniswapProvider) messageReceived(_ int, _ *WebsocketConnection, bz []by
 }
 
 func (o UniswapTicker) toTickerPrice() (types.TickerPrice, error) {
-	price, err := sdk.NewDecFromStr(o.Price)
+	price, err := math.LegacyNewDecFromStr(o.Price)
 	if err != nil {
 		return types.TickerPrice{}, fmt.Errorf("uniswap: failed to parse ticker price: %w", err)
 	}
-	volume, err := sdk.NewDecFromStr(o.Volume)
+	volume, err := math.LegacyNewDecFromStr(o.Volume)
 	if err != nil {
 		return types.TickerPrice{}, fmt.Errorf("uniswap: failed to parse ticker volume: %w", err)
 	}
@@ -237,11 +237,11 @@ func (o UniswapTicker) toTickerPrice() (types.TickerPrice, error) {
 }
 
 func (o UniswapCandle) toCandlePrice() (types.CandlePrice, error) {
-	close, err := sdk.NewDecFromStr(o.Close)
+	close, err := math.LegacyNewDecFromStr(o.Close)
 	if err != nil {
 		return types.CandlePrice{}, fmt.Errorf("uniswap: failed to parse candle price: %w", err)
 	}
-	volume, err := sdk.NewDecFromStr(o.Volume)
+	volume, err := math.LegacyNewDecFromStr(o.Volume)
 	if err != nil {
 		return types.CandlePrice{}, fmt.Errorf("uniswap: failed to parse candle volume: %w", err)
 	}
