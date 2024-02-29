@@ -448,3 +448,17 @@ providers = [
   "osmosis",
 ]
 quote = "TIA"
+
+[[currency_pairs]]
+base = "BLD"
+providers = [
+  "osmosis",
+]
+quote = "OSMO"
+
+[[currency_pairs]]
+base = "BLD"
+providers = [
+  "gate",
+]
+quote = "USDT"
