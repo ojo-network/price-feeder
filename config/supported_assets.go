@@ -48,6 +48,7 @@ var (
 		{Base: "WBTC", Quote: "WETH"}:  {},
 		{Base: "STARS", Quote: "OSMO"}: {},
 		{Base: "TIA", Quote: "USDT"}:   {},
+		{Base: "DYDX", Quote: "USDC"}:  {},
 	}
 
 	SupportedUniswapCurrencies = map[string]struct{}{
