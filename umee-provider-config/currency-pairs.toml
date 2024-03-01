@@ -462,3 +462,10 @@ providers = [
   "gate",
 ]
 quote = "USDT"
+
+[[currency_pairs]]
+base = "stDYDX"
+providers = [
+  "osmosis",
+]
+quote = "DYDX"
