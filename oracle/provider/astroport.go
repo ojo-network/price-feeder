@@ -19,9 +19,9 @@ var _ Provider = (*AstroportProvider)(nil)
 
 const (
 	ProviderAstroport = "astroport"
-	restURL           = "https://markets-api.astroport.fi"
-	tickersURL        = "/markets/cg/tickers"
-	assetsURL         = "/markets/cmc/v1/assets"
+	restURL           = "https://api.astroport.fi"
+	tickersURL        = "/api/markets/cg/tickers"
+	assetsURL         = "/api/markets/cmc/v1/assets"
 	pollInterval      = 3 * time.Second
 )
 
