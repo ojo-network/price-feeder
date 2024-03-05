@@ -2,3 +2,8 @@
 name = "binance"
 rest = "https://api1.binance.com"
 websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "osmosis"
+rest = "https://api.osmo-api.staging.ojo.network"
+websocket = "api.osmo-api.staging.ojo.network"
