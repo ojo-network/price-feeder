@@ -173,3 +173,7 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "stDYDX"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "SEI"
+threshold = "2"

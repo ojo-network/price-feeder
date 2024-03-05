@@ -469,3 +469,21 @@ providers = [
   "osmosis",
 ]
 quote = "DYDX"
+
+[[currency_pairs]]
+base = "SEI"
+providers = [
+  "binance",
+  "bitget",
+  "gate",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "SEI"
+providers = [
+  "kraken",
+  "crypto",
+  "coinbase",
+]
+quote = "USD"
