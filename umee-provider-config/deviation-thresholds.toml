@@ -177,3 +177,19 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "SEI"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "KAVA"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stSTARS"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "HUAHUA"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "nBTC"
+threshold = "2"
