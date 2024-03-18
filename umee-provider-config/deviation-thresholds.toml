@@ -165,3 +165,11 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "stTIA"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "BLD"
+threshold = "2"
+
+[[deviation_thresholds]]
+base = "stDYDX"
+threshold = "2"
