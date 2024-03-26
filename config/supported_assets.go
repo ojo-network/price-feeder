@@ -42,7 +42,7 @@ var (
 		{Base: "OSMO", Quote: "USD"}: {},
 
 		{Base: "OSMO", Quote: "USDT"}:  {},
-		{Base: "JUNO", Quote: "USDT"}:  {},
+		{Base: "JUNO", Quote: "ATOM"}:  {},
 		{Base: "UMEE", Quote: "USDT"}:  {},
 		{Base: "WETH", Quote: "USDC"}:  {},
 		{Base: "WBTC", Quote: "WETH"}:  {},
