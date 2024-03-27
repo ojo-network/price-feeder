@@ -1,7 +1,7 @@
 [[currency_pairs]]
 base = "UMEE"
 providers = [
-  "mexc",
+  # "mexc",
   "gate",
 ]
 quote = "USDT"
@@ -106,7 +106,7 @@ quote = "USDT"
 [[currency_pairs]]
 base = "BNB"
 providers = [
-  "mexc",
+  # "mexc",
   "bitget",
   "okx",
 ]
@@ -200,10 +200,10 @@ base = "AKT"
 quote = "USD"
 providers = [ "kraken", "crypto",]
 
-[[currency_pairs]]
-base = "JUNO"
-quote = "USDT"
-providers = [ "mexc",]
+# [[currency_pairs]]
+# base = "JUNO"
+# quote = "USDT"
+# providers = [ "mexc",]
 
 [[currency_pairs]]
 base = "JUNO"
@@ -265,7 +265,7 @@ quote = "USD"
 base = "MATIC"
 providers = [
   "gate",
-  "mexc",
+  # "mexc",
   "bitget",
 ]
 quote = "USDT"
@@ -372,7 +372,7 @@ providers = [
   "binance",
   "gate",
   "bitget",
-  "mexc",
+  # "mexc",
 ]
 quote = "USDT"
 
