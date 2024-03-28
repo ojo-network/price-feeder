@@ -37,7 +37,7 @@ func getVersionCmd() *cobra.Command {
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print binary version information",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, args []string) error {
 			verInfo := versionInfo{
 				Version: Version,
 				Commit:  Commit,
