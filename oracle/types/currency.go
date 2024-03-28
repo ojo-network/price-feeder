@@ -30,7 +30,7 @@ func MapPairsToSlice(mapPairs map[string]CurrencyPair) []CurrencyPair {
 	return currencyPairs
 }
 
-func (cp CurrencyPair) MarshalText() (text []byte, err error) {
+func (cp CurrencyPair) MarshalText() ([]byte, error) {
 	type noMethod CurrencyPair
 	return json.Marshal(noMethod(cp))
 }
