@@ -89,7 +89,7 @@ func (r *Router) RegisterRoutes(rtr *mux.Router, prefix string) {
 }
 
 func (r *Router) healthzHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		resp := HealthZResponse{
 			Status: StatusAvailable,
 		}
@@ -101,7 +101,7 @@ func (r *Router) healthzHandler() http.HandlerFunc {
 }
 
 func (r *Router) pricesHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		resp := PricesResponse{
 			Prices: r.oracle.GetPrices(),
 		}
@@ -111,7 +111,7 @@ func (r *Router) pricesHandler() http.HandlerFunc {
 }
 
 func (r *Router) candlePricesHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		resp := PricesPerProviderResponse{
 			Prices: r.oracle.GetTvwapPrices(),
 		}
@@ -121,7 +121,7 @@ func (r *Router) candlePricesHandler() http.HandlerFunc {
 }
 
 func (r *Router) tickerPricesHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		resp := PricesPerProviderResponse{
 			Prices: r.oracle.GetVwapPrices(),
 		}

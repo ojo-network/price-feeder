@@ -32,7 +32,7 @@ func LoadConfigFromFlags(nodeConfigPath, dirPrefix string) (Config, error) {
 // filesInFolder returns a slice of all file paths in a given folder.
 func filesInFolder(folder string) ([]string, error) {
 	var files []string
-	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(folder, func(path string, info os.FileInfo, _ error) error {
 		if info != nil && !info.IsDir() {
 			files = append(files, path)
 		}
