@@ -25,7 +25,7 @@ func TestMexcProvider_GetTickerPrices(t *testing.T) {
 		volume := sdk.MustNewDecFromStr("2396974.02000000")
 
 		tickerMap := map[string]types.TickerPrice{}
-		tickerMap["ATOM_USDT"] = types.TickerPrice{
+		tickerMap["ATOMUSDT"] = types.TickerPrice{
 			Price:  lastPrice,
 			Volume: volume,
 		}
@@ -45,12 +45,12 @@ func TestMexcProvider_GetTickerPrices(t *testing.T) {
 		volume := sdk.MustNewDecFromStr("2396974.02000000")
 
 		tickerMap := map[string]types.TickerPrice{}
-		tickerMap["ATOM_USDT"] = types.TickerPrice{
+		tickerMap["ATOMUSDT"] = types.TickerPrice{
 			Price:  lastPriceAtom,
 			Volume: volume,
 		}
 
-		tickerMap["LUNA_USDT"] = types.TickerPrice{
+		tickerMap["LUNAUSDT"] = types.TickerPrice{
 			Price:  lastPriceLuna,
 			Volume: volume,
 		}
@@ -77,7 +77,7 @@ func TestMexcProvider_GetTickerPrices(t *testing.T) {
 func TestMexcCurrencyPairToMexcPair(t *testing.T) {
 	cp := types.CurrencyPair{Base: "ATOM", Quote: "USDT"}
 	MexcSymbol := currencyPairToMexcPair(cp)
-	require.Equal(t, MexcSymbol, "ATOM_USDT")
+	require.Equal(t, MexcSymbol, "ATOMUSDT")
 }
 
 func TestMexcProvider_getSubscriptionMsgs(t *testing.T) {
@@ -88,8 +88,8 @@ func TestMexcProvider_getSubscriptionMsgs(t *testing.T) {
 	subMsgs := provider.getSubscriptionMsgs(cps...)
 
 	msg, _ := json.Marshal(subMsgs[0])
-	require.Equal(t, "{\"op\":\"sub.kline\",\"symbol\":\"ATOM_USDT\",\"interval\":\"Min1\"}", string(msg))
+	require.Equal(t, "{\"method\":\"SUBSCRIPTION\",\"params\":[\"spot@public.kline.v3.api@ATOMUSDT@Min1\"]}", string(msg))
 
 	msg, _ = json.Marshal(subMsgs[1])
-	require.Equal(t, "{\"op\":\"sub.overview\"}", string(msg))
+	require.Equal(t, "{\"method\":\"SUBSCRIPTION\",\"params\":[\"spot@public.bookTicker.v3.api@ATOMUSDT\"]}", string(msg))
 }

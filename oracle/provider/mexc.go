@@ -3,8 +3,11 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"math/big"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -17,9 +20,9 @@ import (
 
 const (
 	mexcWSHost   = "wbs.mexc.com"
-	mexcWSPath   = "/raw/ws"
-	mexcRestHost = "https://www.mexc.com"
-	mexcRestPath = "/open/api/v2/market/ticker"
+	mexcWSPath   = "/ws"
+	mexcRestHost = "https://api.mexc.com/"
+	mexcRestPath = "/api/v3/ticker/price"
 )
 
 var _ Provider = (*MexcProvider)(nil)
@@ -28,9 +31,7 @@ type (
 	// MexcProvider defines an Oracle provider implemented by the Mexc public
 	// API.
 	//
-	// REF: https://mxcdevelop.github.io/apidocs/spot_v2_en/#ticker-information
-	// REF: https://mxcdevelop.github.io/apidocs/spot_v2_en/#k-line
-	// REF: https://mxcdevelop.github.io/apidocs/spot_v2_en/#overview
+	// REF: https://mexcdevelop.github.io/apidocs/spot_v3_en/
 	MexcProvider struct {
 		wsc       *WebsocketController
 		logger    zerolog.Logger
@@ -42,41 +43,43 @@ type (
 
 	// MexcTickerResponse is the ticker price response object.
 	MexcTickerResponse struct {
-		Symbol map[string]MexcTicker `json:"data"` // e.x. ATOM_USDT
+		Symbol   string     `json:"s"` // e.x. ATOMUSDT
+		Metadata MexcTicker `json:"d"` // Metadata for ticker
 	}
 	MexcTicker struct {
-		LastPrice float64 `json:"p"` // Last price ex.: 0.0025
-		Volume    float64 `json:"v"` // Total traded base asset volume ex.: 1000
+		LastPrice string `json:"b"` // Best bid price ex.: 0.0025
+		Volume    string `json:"B"` // Best bid qty ex.: 1000
 	}
 
 	// MexcCandle is the candle websocket response object.
 	MexcCandleResponse struct {
-		Symbol   string     `json:"symbol"` // Symbol ex.: ATOM_USDT
-		Metadata MexcCandle `json:"data"`   // Metadata for candle
+		Symbol   string     `json:"s"` // Symbol ex.: ATOMUSDT
+		Metadata MexcCandle `json:"d"` // Metadata for candle
 	}
 	MexcCandle struct {
-		Close     float64 `json:"c"` // Price at close
-		TimeStamp int64   `json:"t"` // Close time in unix epoch ex.: 1645756200000
-		Volume    float64 `json:"v"` // Volume during period
+		Data MexcCandleData `json:"k"`
+	}
+	MexcCandleData struct {
+		Close     *big.Float `json:"c"` // Price at close
+		TimeStamp int64      `json:"T"` // Close time in unix epoch ex.: 1645756200
+		Volume    *big.Float `json:"v"` // Volume during period
 	}
 
 	// MexcCandleSubscription Msg to subscribe all the candle channels.
 	MexcCandleSubscription struct {
-		OP       string `json:"op"`       // kline
-		Symbol   string `json:"symbol"`   // streams to subscribe ex.: atom_usdt
-		Interval string `json:"interval"` // Min1、Min5、Min15、Min30
+		Method string   `json:"method"` // ex.: SUBSCRIPTION
+		Params []string `json:"params"` // ex.: [spot@public.kline.v3.api@<symbol>@<interval>]
 	}
 
 	// MexcTickerSubscription Msg to subscribe all the ticker channels.
 	MexcTickerSubscription struct {
-		OP string `json:"op"` // kline
+		Method string   `json:"method"` // ex.: SUBSCRIPTION
+		Params []string `json:"params"` // ex.: [spot@public.bookTicker.v3.api@<symbol>]
 	}
 
 	// MexcPairSummary defines the response structure for a Mexc pair
 	// summary.
-	MexcPairSummary struct {
-		Data []MexcPairData `json:"data"`
-	}
+	MexcPairSummary []MexcPairData
 
 	// MexcPairData defines the data response structure for an Mexc pair.
 	MexcPairData struct {
@@ -144,12 +147,13 @@ func (p *MexcProvider) StartConnections() {
 }
 
 func (p *MexcProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {
-	subscriptionMsgs := make([]interface{}, 0, len(cps)+1)
+	subscriptionMsgs := make([]interface{}, 0, len(cps)*2)
+	mexcPairs := make([]string, 0, len(cps))
 	for _, cp := range cps {
-		mexcPair := currencyPairToMexcPair(cp)
-		subscriptionMsgs = append(subscriptionMsgs, newMexcCandleSubscriptionMsg(mexcPair))
+		mexcPairs = append(mexcPairs, currencyPairToMexcPair(cp))
 	}
-	subscriptionMsgs = append(subscriptionMsgs, newMexcTickerSubscriptionMsg())
+	subscriptionMsgs = append(subscriptionMsgs, newMexcCandleSubscriptionMsg(mexcPairs))
+	subscriptionMsgs = append(subscriptionMsgs, newMexcTickerSubscriptionMsg(mexcPairs))
 	return subscriptionMsgs
 }
 
@@ -195,20 +199,14 @@ func (p *MexcProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte)
 	)
 
 	tickerErr = json.Unmarshal(bz, &tickerResp)
-	for _, cp := range p.subscribedPairs {
-		mexcPair := currencyPairToMexcPair(cp)
-		if tickerResp.Symbol[mexcPair].LastPrice != 0 {
-			p.setTickerPair(
-				tickerResp.Symbol[mexcPair],
-				mexcPair,
-			)
-			telemetryWebsocketMessage(ProviderMexc, MessageTypeTicker)
-			return
-		}
+	if tickerResp.Metadata.LastPrice != "" {
+		p.setTickerPair(tickerResp.Metadata, tickerResp.Symbol)
+		telemetryWebsocketMessage(ProviderMexc, MessageTypeTicker)
+		return
 	}
 
 	candleErr = json.Unmarshal(bz, &candleResp)
-	if candleResp.Metadata.Close != 0 {
+	if candleResp.Metadata.Data.Close != nil {
 		p.setCandlePair(candleResp.Metadata, candleResp.Symbol)
 		telemetryWebsocketMessage(ProviderMexc, MessageTypeCandle)
 		return
@@ -224,11 +222,20 @@ func (p *MexcProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte)
 }
 
 func (mt MexcTicker) toTickerPrice() (types.TickerPrice, error) {
-	price, err := decmath.NewDecFromFloat(mt.LastPrice)
+	tickerPrice, err := strconv.ParseFloat(mt.LastPrice, 64)
 	if err != nil {
 		return types.TickerPrice{}, err
 	}
-	volume, err := decmath.NewDecFromFloat(mt.Volume)
+	price, err := decmath.NewDecFromFloat(tickerPrice)
+	if err != nil {
+		return types.TickerPrice{}, err
+	}
+
+	tickerVolume, err := strconv.ParseFloat(mt.Volume, 64)
+	if err != nil {
+		return types.TickerPrice{}, err
+	}
+	volume, err := decmath.NewDecFromFloat(tickerVolume)
 	if err != nil {
 		return types.TickerPrice{}, err
 	}
@@ -241,19 +248,23 @@ func (mt MexcTicker) toTickerPrice() (types.TickerPrice, error) {
 }
 
 func (mc MexcCandle) toCandlePrice() (types.CandlePrice, error) {
-	close, err := decmath.NewDecFromFloat(mc.Close)
+	candleClose, _ := mc.Data.Close.Float64()
+	close, err := decmath.NewDecFromFloat(candleClose)
 	if err != nil {
 		return types.CandlePrice{}, err
 	}
-	volume, err := decmath.NewDecFromFloat(mc.Volume)
+
+	candleVolume, _ := mc.Data.Volume.Float64()
+	volume, err := decmath.NewDecFromFloat(candleVolume)
 	if err != nil {
 		return types.CandlePrice{}, err
 	}
+
 	candle := types.CandlePrice{
 		Price:  close,
 		Volume: volume,
 		// convert seconds -> milli
-		TimeStamp: SecondsToMilli(mc.TimeStamp),
+		TimeStamp: SecondsToMilli(mc.Data.TimeStamp),
 	}
 	return candle, nil
 }
@@ -279,9 +290,9 @@ func (p *MexcProvider) GetAvailablePairs() (map[string]struct{}, error) {
 		return nil, err
 	}
 
-	availablePairs := make(map[string]struct{}, len(pairsSummary.Data))
-	for _, pairName := range pairsSummary.Data {
-		availablePairs[strings.ToUpper(strings.ReplaceAll(pairName.Symbol, "_", ""))] = struct{}{}
+	availablePairs := make(map[string]struct{}, len(pairsSummary))
+	for _, pairName := range pairsSummary {
+		availablePairs[strings.ToUpper(pairName.Symbol)] = struct{}{}
 	}
 
 	return availablePairs, nil
@@ -290,21 +301,29 @@ func (p *MexcProvider) GetAvailablePairs() (map[string]struct{}, error) {
 // currencyPairToMexcPair receives a currency pair and return mexc
 // ticker symbol atomusdt@ticker.
 func currencyPairToMexcPair(cp types.CurrencyPair) string {
-	return strings.ToUpper(cp.Base + "_" + cp.Quote)
+	return strings.ToUpper(cp.Base + cp.Quote)
 }
 
 // newMexcCandleSubscriptionMsg returns a new candle subscription Msg.
-func newMexcCandleSubscriptionMsg(param string) MexcCandleSubscription {
+func newMexcCandleSubscriptionMsg(symbols []string) MexcCandleSubscription {
+	params := make([]string, len(symbols))
+	for i, symbol := range symbols {
+		params[i] = fmt.Sprintf("spot@public.kline.v3.api@%s@Min1", symbol)
+	}
 	return MexcCandleSubscription{
-		OP:       "sub.kline",
-		Symbol:   param,
-		Interval: "Min1",
+		Method: "SUBSCRIPTION",
+		Params: params,
 	}
 }
 
 // newMexcTickerSubscriptionMsg returns a new ticker subscription Msg.
-func newMexcTickerSubscriptionMsg() MexcTickerSubscription {
+func newMexcTickerSubscriptionMsg(symbols []string) MexcTickerSubscription {
+	params := make([]string, len(symbols))
+	for i, symbol := range symbols {
+		params[i] = fmt.Sprintf("spot@public.bookTicker.v3.api@%s", symbol)
+	}
 	return MexcTickerSubscription{
-		OP: "sub.overview",
+		Method: "SUBSCRIPTION",
+		Params: params,
 	}
 }
