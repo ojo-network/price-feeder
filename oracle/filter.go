@@ -1,7 +1,7 @@
 package oracle
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/rs/zerolog"
 
 	"github.com/ojo-network/price-feeder/oracle/provider"
@@ -11,14 +11,14 @@ import (
 // defaultDeviationThreshold defines how many 𝜎 a provider can be away
 // from the mean without being considered faulty. This can be overridden
 // in the config.
-var defaultDeviationThreshold = sdk.MustNewDecFromStr("1.0")
+var defaultDeviationThreshold = math.LegacyMustNewDecFromStr("1.0")
 
 // FilterTickerDeviations finds the standard deviations of the prices of
 // all assets, and filters out any providers that are not within 2𝜎 of the mean.
 func FilterTickerDeviations(
 	logger zerolog.Logger,
 	prices types.AggregatedProviderPrices,
-	deviationThresholds map[string]sdk.Dec,
+	deviationThresholds map[string]math.LegacyDec,
 ) (types.AggregatedProviderPrices, error) {
 	var (
 		filteredPrices = make(types.AggregatedProviderPrices)
@@ -28,7 +28,7 @@ func FilterTickerDeviations(
 	for providerName, priceTickers := range prices {
 		p, ok := priceMap[providerName]
 		if !ok {
-			p = map[types.CurrencyPair]sdk.Dec{}
+			p = map[types.CurrencyPair]math.LegacyDec{}
 			priceMap[providerName] = p
 		}
 		for base, tp := range priceTickers {
@@ -77,7 +77,7 @@ func FilterTickerDeviations(
 func FilterCandleDeviations(
 	logger zerolog.Logger,
 	candles types.AggregatedProviderCandles,
-	deviationThresholds map[string]sdk.Dec,
+	deviationThresholds map[string]math.LegacyDec,
 ) (types.AggregatedProviderCandles, error) {
 	var (
 		filteredCandles = make(types.AggregatedProviderCandles)
@@ -146,7 +146,7 @@ func FilterCandleDeviations(
 	return filteredCandles, nil
 }
 
-func isBetween(p, mean, margin sdk.Dec) bool {
+func isBetween(p, mean, margin math.LegacyDec) bool {
 	return p.GTE(mean.Sub(margin)) &&
 		p.LTE(mean.Add(margin))
 }

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/telemetry"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/go-playground/validator/v10"
 
 	"github.com/ojo-network/price-feeder/oracle/provider"
@@ -32,7 +32,7 @@ var (
 
 	// maxDeviationThreshold is the maxmimum allowed amount of standard
 	// deviations which validators are able to set for a given asset.
-	maxDeviationThreshold = sdk.MustNewDecFromStr("3.0")
+	maxDeviationThreshold = math.LegacyMustNewDecFromStr("3.0")
 )
 
 type (
@@ -42,8 +42,8 @@ type (
 		Server              Server              `mapstructure:"server"`
 		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs" validate:"required,gt=0,dive,required"`
 		Deviations          []Deviation         `mapstructure:"deviation_thresholds"`
-		Account             Account             `mapstructure:"account" validate:"required,gt=0,dive,required"`
-		Keyring             Keyring             `mapstructure:"keyring" validate:"required,gt=0,dive,required"`
+		Account             Account             `mapstructure:"account"`
+		Keyring             Keyring             `mapstructure:"keyring"`
 		RPC                 RPC                 `mapstructure:"rpc" validate:"required,gt=0,dive,required"`
 		Telemetry           telemetry.Config    `mapstructure:"telemetry"`
 		GasAdjustment       float64             `mapstructure:"gas_adjustment"`
@@ -86,15 +86,15 @@ type (
 	// Account defines account related configuration that is related to the Ojo
 	// network and transaction signing functionality.
 	Account struct {
-		ChainID   string `mapstructure:"chain_id" validate:"required"`
-		Address   string `mapstructure:"address" validate:"required"`
-		Validator string `mapstructure:"validator" validate:"required"`
+		ChainID   string `mapstructure:"chain_id"`
+		Address   string `mapstructure:"address"`
+		Validator string `mapstructure:"validator"`
 	}
 
 	// Keyring defines the required Ojo keyring configuration.
 	Keyring struct {
-		Backend string `mapstructure:"backend" validate:"required"`
-		Dir     string `mapstructure:"dir" validate:"required"`
+		Backend string `mapstructure:"backend"`
+		Dir     string `mapstructure:"dir"`
 	}
 
 	// RPC defines RPC configuration of both the Ojo gRPC and Tendermint nodes.
@@ -156,7 +156,7 @@ func (c Config) Validate() (err error) {
 
 func (c Config) validateDeviations() error {
 	for _, deviation := range c.Deviations {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		threshold, err := math.LegacyNewDecFromStr(deviation.Threshold)
 		if err != nil {
 			return fmt.Errorf("deviation thresholds must be numeric: %w", err)
 		}
@@ -270,11 +270,11 @@ func (c Config) ProviderEndpointsMap() map[types.ProviderName]provider.Endpoint 
 }
 
 // DeviationsMap converts the deviation_thresholds from the config file into
-// a map of sdk.Dec where the key is the base asset.
-func (c Config) DeviationsMap() (map[string]sdk.Dec, error) {
-	deviations := make(map[string]sdk.Dec, len(c.Deviations))
+// a map of math.LegacyDec where the key is the base asset.
+func (c Config) DeviationsMap() (map[string]math.LegacyDec, error) {
+	deviations := make(map[string]math.LegacyDec, len(c.Deviations))
 	for _, deviation := range c.Deviations {
-		threshold, err := sdk.NewDecFromStr(deviation.Threshold)
+		threshold, err := math.LegacyNewDecFromStr(deviation.Threshold)
 		if err != nil {
 			return nil, err
 		}
