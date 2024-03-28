@@ -9,7 +9,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.3
 	github.com/go-playground/validator/v10 v10.15.0
 	github.com/golangci/golangci-lint v1.54.2
-	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/hasura/go-graphql-client v0.10.0
 	github.com/justinas/alice v1.2.0
@@ -96,7 +96,6 @@ require (
 	github.com/fzipp/gocyclo v0.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/getsentry/sentry-go v0.23.0 // indirect
-	github.com/gin-gonic/gin v1.8.1 // indirect
 	github.com/go-critic/go-critic v0.9.0 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
