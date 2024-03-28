@@ -7,15 +7,14 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
-
-	"github.com/ojo-network/ojo/util/decmath"
 )
 
 const (
@@ -222,20 +221,11 @@ func (p *MexcProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte)
 }
 
 func (mt MexcTicker) toTickerPrice() (types.TickerPrice, error) {
-	tickerPrice, err := strconv.ParseFloat(mt.LastPrice, 64)
+	price, err := sdk.NewDecFromStr(mt.LastPrice)
 	if err != nil {
 		return types.TickerPrice{}, err
 	}
-	price, err := decmath.NewDecFromFloat(tickerPrice)
-	if err != nil {
-		return types.TickerPrice{}, err
-	}
-
-	tickerVolume, err := strconv.ParseFloat(mt.Volume, 64)
-	if err != nil {
-		return types.TickerPrice{}, err
-	}
-	volume, err := decmath.NewDecFromFloat(tickerVolume)
+	volume, err := sdk.NewDecFromStr(mt.Volume)
 	if err != nil {
 		return types.TickerPrice{}, err
 	}
@@ -248,14 +238,11 @@ func (mt MexcTicker) toTickerPrice() (types.TickerPrice, error) {
 }
 
 func (mc MexcCandle) toCandlePrice() (types.CandlePrice, error) {
-	candleClose, _ := mc.Data.Close.Float64()
-	close, err := decmath.NewDecFromFloat(candleClose)
+	close, err := sdk.NewDecFromStr(mc.Data.Close.String())
 	if err != nil {
 		return types.CandlePrice{}, err
 	}
-
-	candleVolume, _ := mc.Data.Volume.Float64()
-	volume, err := decmath.NewDecFromFloat(candleVolume)
+	volume, err := sdk.NewDecFromStr(mc.Data.Volume.String())
 	if err != nil {
 		return types.CandlePrice{}, err
 	}
