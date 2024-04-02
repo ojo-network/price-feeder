@@ -3,7 +3,7 @@ package oracle_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/ojo-network/price-feeder/oracle"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/stretchr/testify/assert"
@@ -11,16 +11,16 @@ import (
 
 func TestConvertRatesToUSD(t *testing.T) {
 	rates := types.CurrencyPairDec{
-		types.CurrencyPair{Base: "ATOM", Quote: "USD"}:  sdk.NewDec(10),
-		types.CurrencyPair{Base: "OSMO", Quote: "ATOM"}: sdk.NewDec(3),
-		types.CurrencyPair{Base: "JUNO", Quote: "ATOM"}: sdk.NewDec(20),
-		types.CurrencyPair{Base: "LTC", Quote: "USDT"}:  sdk.NewDec(20),
+		types.CurrencyPair{Base: "ATOM", Quote: "USD"}:  math.LegacyNewDec(10),
+		types.CurrencyPair{Base: "OSMO", Quote: "ATOM"}: math.LegacyNewDec(3),
+		types.CurrencyPair{Base: "JUNO", Quote: "ATOM"}: math.LegacyNewDec(20),
+		types.CurrencyPair{Base: "LTC", Quote: "USDT"}:  math.LegacyNewDec(20),
 	}
 
 	expected := types.CurrencyPairDec{
-		types.CurrencyPair{Base: "ATOM", Quote: "USD"}: sdk.NewDec(10),
-		types.CurrencyPair{Base: "OSMO", Quote: "USD"}: sdk.NewDec(30),
-		types.CurrencyPair{Base: "JUNO", Quote: "USD"}: sdk.NewDec(200),
+		types.CurrencyPair{Base: "ATOM", Quote: "USD"}: math.LegacyNewDec(10),
+		types.CurrencyPair{Base: "OSMO", Quote: "USD"}: math.LegacyNewDec(30),
+		types.CurrencyPair{Base: "JUNO", Quote: "USD"}: math.LegacyNewDec(200),
 	}
 
 	convertedRates := oracle.ConvertRatesToUSD(rates)
@@ -46,50 +46,50 @@ func TestConvertAggregatedCandles(t *testing.T) {
 	candles := types.AggregatedProviderCandles{
 		"Provider1": types.CurrencyPairCandles{
 			types.CurrencyPair{Base: "ATOM", Quote: "USDC"}: []types.CandlePrice{
-				{Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"), TimeStamp: 1},
-				{Price: sdk.MustNewDecFromStr("40"), Volume: sdk.MustNewDecFromStr("1500"), TimeStamp: 2},
+				{Price: math.LegacyMustNewDecFromStr("35"), Volume: math.LegacyMustNewDecFromStr("1000"), TimeStamp: 1},
+				{Price: math.LegacyMustNewDecFromStr("40"), Volume: math.LegacyMustNewDecFromStr("1500"), TimeStamp: 2},
 			},
 			types.CurrencyPair{Base: "UMEE", Quote: "USDC"}: []types.CandlePrice{
-				{Price: sdk.MustNewDecFromStr("18"), Volume: sdk.MustNewDecFromStr("500"), TimeStamp: 1},
-				{Price: sdk.MustNewDecFromStr("22"), Volume: sdk.MustNewDecFromStr("800"), TimeStamp: 2},
+				{Price: math.LegacyMustNewDecFromStr("18"), Volume: math.LegacyMustNewDecFromStr("500"), TimeStamp: 1},
+				{Price: math.LegacyMustNewDecFromStr("22"), Volume: math.LegacyMustNewDecFromStr("800"), TimeStamp: 2},
 			},
 		},
 		"Provider2": types.CurrencyPairCandles{
 			types.CurrencyPair{Base: "ATOM", Quote: "USDT"}: []types.CandlePrice{
-				{Price: sdk.MustNewDecFromStr("30"), Volume: sdk.MustNewDecFromStr("800"), TimeStamp: 1},
-				{Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"), TimeStamp: 2},
+				{Price: math.LegacyMustNewDecFromStr("30"), Volume: math.LegacyMustNewDecFromStr("800"), TimeStamp: 1},
+				{Price: math.LegacyMustNewDecFromStr("35"), Volume: math.LegacyMustNewDecFromStr("1000"), TimeStamp: 2},
 			},
 			types.CurrencyPair{Base: "JUNO", Quote: "USDT"}: []types.CandlePrice{
-				{Price: sdk.MustNewDecFromStr("5"), Volume: sdk.MustNewDecFromStr("200"), TimeStamp: 1},
-				{Price: sdk.MustNewDecFromStr("6"), Volume: sdk.MustNewDecFromStr("300"), TimeStamp: 2},
+				{Price: math.LegacyMustNewDecFromStr("5"), Volume: math.LegacyMustNewDecFromStr("200"), TimeStamp: 1},
+				{Price: math.LegacyMustNewDecFromStr("6"), Volume: math.LegacyMustNewDecFromStr("300"), TimeStamp: 2},
 			},
 		},
 	}
 
 	rates := types.CurrencyPairDec{
-		types.CurrencyPair{Base: "USDT", Quote: "USD"}: sdk.MustNewDecFromStr("2"),
-		types.CurrencyPair{Base: "USDC", Quote: "USD"}: sdk.MustNewDecFromStr("1"),
+		types.CurrencyPair{Base: "USDT", Quote: "USD"}: math.LegacyMustNewDecFromStr("2"),
+		types.CurrencyPair{Base: "USDC", Quote: "USD"}: math.LegacyMustNewDecFromStr("1"),
 	}
 
 	expectedResult := types.AggregatedProviderCandles{
 		"Provider1": types.CurrencyPairCandles{
 			types.CurrencyPair{Base: "ATOM", Quote: "USD"}: []types.CandlePrice{
-				{Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"), TimeStamp: 1},
-				{Price: sdk.MustNewDecFromStr("40"), Volume: sdk.MustNewDecFromStr("1500"), TimeStamp: 2},
+				{Price: math.LegacyMustNewDecFromStr("35"), Volume: math.LegacyMustNewDecFromStr("1000"), TimeStamp: 1},
+				{Price: math.LegacyMustNewDecFromStr("40"), Volume: math.LegacyMustNewDecFromStr("1500"), TimeStamp: 2},
 			},
 			types.CurrencyPair{Base: "UMEE", Quote: "USD"}: []types.CandlePrice{
-				{Price: sdk.MustNewDecFromStr("18"), Volume: sdk.MustNewDecFromStr("500"), TimeStamp: 1},
-				{Price: sdk.MustNewDecFromStr("22"), Volume: sdk.MustNewDecFromStr("800"), TimeStamp: 2},
+				{Price: math.LegacyMustNewDecFromStr("18"), Volume: math.LegacyMustNewDecFromStr("500"), TimeStamp: 1},
+				{Price: math.LegacyMustNewDecFromStr("22"), Volume: math.LegacyMustNewDecFromStr("800"), TimeStamp: 2},
 			},
 		},
 		"Provider2": types.CurrencyPairCandles{
 			types.CurrencyPair{Base: "ATOM", Quote: "USD"}: []types.CandlePrice{
-				{Price: sdk.MustNewDecFromStr("60"), Volume: sdk.MustNewDecFromStr("800"), TimeStamp: 1},
-				{Price: sdk.MustNewDecFromStr("70"), Volume: sdk.MustNewDecFromStr("1000"), TimeStamp: 2},
+				{Price: math.LegacyMustNewDecFromStr("60"), Volume: math.LegacyMustNewDecFromStr("800"), TimeStamp: 1},
+				{Price: math.LegacyMustNewDecFromStr("70"), Volume: math.LegacyMustNewDecFromStr("1000"), TimeStamp: 2},
 			},
 			types.CurrencyPair{Base: "JUNO", Quote: "USD"}: []types.CandlePrice{
-				{Price: sdk.MustNewDecFromStr("10"), Volume: sdk.MustNewDecFromStr("200"), TimeStamp: 1},
-				{Price: sdk.MustNewDecFromStr("12"), Volume: sdk.MustNewDecFromStr("300"), TimeStamp: 2},
+				{Price: math.LegacyMustNewDecFromStr("10"), Volume: math.LegacyMustNewDecFromStr("200"), TimeStamp: 1},
+				{Price: math.LegacyMustNewDecFromStr("12"), Volume: math.LegacyMustNewDecFromStr("300"), TimeStamp: 2},
 			},
 		},
 	}
@@ -104,42 +104,42 @@ func TestConvertAggregatedTickers(t *testing.T) {
 	tickers := types.AggregatedProviderPrices{
 		"Provider1": types.CurrencyPairTickers{
 			types.CurrencyPair{Base: "ATOM", Quote: "USDC"}: types.TickerPrice{
-				Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"),
+				Price: math.LegacyMustNewDecFromStr("35"), Volume: math.LegacyMustNewDecFromStr("1000"),
 			},
 			types.CurrencyPair{Base: "UMEE", Quote: "USDC"}: types.TickerPrice{
-				Price: sdk.MustNewDecFromStr("18"), Volume: sdk.MustNewDecFromStr("500"),
+				Price: math.LegacyMustNewDecFromStr("18"), Volume: math.LegacyMustNewDecFromStr("500"),
 			},
 		},
 		"Provider2": types.CurrencyPairTickers{
 			types.CurrencyPair{Base: "ATOM", Quote: "USDT"}: types.TickerPrice{
-				Price: sdk.MustNewDecFromStr("30"), Volume: sdk.MustNewDecFromStr("800"),
+				Price: math.LegacyMustNewDecFromStr("30"), Volume: math.LegacyMustNewDecFromStr("800"),
 			},
 			types.CurrencyPair{Base: "JUNO", Quote: "USDT"}: types.TickerPrice{
-				Price: sdk.MustNewDecFromStr("5"), Volume: sdk.MustNewDecFromStr("200"),
+				Price: math.LegacyMustNewDecFromStr("5"), Volume: math.LegacyMustNewDecFromStr("200"),
 			},
 		},
 	}
 
 	rates := types.CurrencyPairDec{
-		types.CurrencyPair{Base: "USDT", Quote: "USD"}: sdk.MustNewDecFromStr("2"),
-		types.CurrencyPair{Base: "USDC", Quote: "USD"}: sdk.MustNewDecFromStr("1"),
+		types.CurrencyPair{Base: "USDT", Quote: "USD"}: math.LegacyMustNewDecFromStr("2"),
+		types.CurrencyPair{Base: "USDC", Quote: "USD"}: math.LegacyMustNewDecFromStr("1"),
 	}
 
 	expectedResult := types.AggregatedProviderPrices{
 		"Provider1": types.CurrencyPairTickers{
 			types.CurrencyPair{Base: "ATOM", Quote: "USD"}: types.TickerPrice{
-				Price: sdk.MustNewDecFromStr("35"), Volume: sdk.MustNewDecFromStr("1000"),
+				Price: math.LegacyMustNewDecFromStr("35"), Volume: math.LegacyMustNewDecFromStr("1000"),
 			},
 			types.CurrencyPair{Base: "UMEE", Quote: "USD"}: types.TickerPrice{
-				Price: sdk.MustNewDecFromStr("18"), Volume: sdk.MustNewDecFromStr("500"),
+				Price: math.LegacyMustNewDecFromStr("18"), Volume: math.LegacyMustNewDecFromStr("500"),
 			},
 		},
 		"Provider2": types.CurrencyPairTickers{
 			types.CurrencyPair{Base: "ATOM", Quote: "USD"}: types.TickerPrice{
-				Price: sdk.MustNewDecFromStr("60"), Volume: sdk.MustNewDecFromStr("800"),
+				Price: math.LegacyMustNewDecFromStr("60"), Volume: math.LegacyMustNewDecFromStr("800"),
 			},
 			types.CurrencyPair{Base: "JUNO", Quote: "USD"}: types.TickerPrice{
-				Price: sdk.MustNewDecFromStr("10"), Volume: sdk.MustNewDecFromStr("200"),
+				Price: math.LegacyMustNewDecFromStr("10"), Volume: math.LegacyMustNewDecFromStr("200"),
 			},
 		},
 	}

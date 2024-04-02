@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
@@ -38,8 +38,8 @@ func TestGateProvider_GetTickerPrices(t *testing.T) {
 		prices, err := p.GetTickerPrices(types.CurrencyPair{Base: "ATOM", Quote: "USDT"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPrice), prices[ATOMUSDT].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
+		require.Equal(t, math.LegacyMustNewDecFromStr(lastPrice), prices[ATOMUSDT].Price)
+		require.Equal(t, math.LegacyMustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -70,10 +70,10 @@ func TestGateProvider_GetTickerPrices(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.Len(t, prices, 2)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPriceAtom), prices[ATOMUSDT].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
-		require.Equal(t, sdk.MustNewDecFromStr(lastPriceOJO), prices[OJOUSDT].Price)
-		require.Equal(t, sdk.MustNewDecFromStr(volume), prices[OJOUSDT].Volume)
+		require.Equal(t, math.LegacyMustNewDecFromStr(lastPriceAtom), prices[ATOMUSDT].Price)
+		require.Equal(t, math.LegacyMustNewDecFromStr(volume), prices[ATOMUSDT].Volume)
+		require.Equal(t, math.LegacyMustNewDecFromStr(lastPriceOJO), prices[OJOUSDT].Price)
+		require.Equal(t, math.LegacyMustNewDecFromStr(volume), prices[OJOUSDT].Volume)
 	})
 
 	t.Run("invalid_request_invalid_ticker", func(t *testing.T) {

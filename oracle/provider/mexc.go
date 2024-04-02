@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -221,11 +221,11 @@ func (p *MexcProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte)
 }
 
 func (mt MexcTicker) toTickerPrice() (types.TickerPrice, error) {
-	price, err := sdk.NewDecFromStr(mt.LastPrice)
+	price, err := math.LegacyNewDecFromStr(mt.LastPrice)
 	if err != nil {
 		return types.TickerPrice{}, err
 	}
-	volume, err := sdk.NewDecFromStr(mt.Volume)
+	volume, err := math.LegacyNewDecFromStr(mt.Volume)
 	if err != nil {
 		return types.TickerPrice{}, err
 	}
@@ -238,11 +238,11 @@ func (mt MexcTicker) toTickerPrice() (types.TickerPrice, error) {
 }
 
 func (mc MexcCandle) toCandlePrice() (types.CandlePrice, error) {
-	close, err := sdk.NewDecFromStr(mc.Data.Close.String())
+	close, err := math.LegacyNewDecFromStr(mc.Data.Close.String())
 	if err != nil {
 		return types.CandlePrice{}, err
 	}
-	volume, err := sdk.NewDecFromStr(mc.Data.Volume.String())
+	volume, err := math.LegacyNewDecFromStr(mc.Data.Volume.String())
 	if err != nil {
 		return types.CandlePrice{}, err
 	}

@@ -1,7 +1,7 @@
 package oracle
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/rs/zerolog"
 
 	"github.com/ojo-network/price-feeder/config"
@@ -37,7 +37,7 @@ func ConvertRatesToUSD(rates types.CurrencyPairDec) types.CurrencyPairDec {
 func CalcCurrencyPairRates(
 	candles types.AggregatedProviderCandles,
 	tickers types.AggregatedProviderPrices,
-	deviationThresholds map[string]sdk.Dec,
+	deviationThresholds map[string]math.LegacyDec,
 	currencyPairs []types.CurrencyPair,
 	logger zerolog.Logger,
 ) (types.CurrencyPairDec, error) {
@@ -138,7 +138,7 @@ func ConvertAggregatedCandles(
 	return convertedCandles
 }
 
-func convertCandles(candles []types.CandlePrice, rate sdk.Dec) []types.CandlePrice {
+func convertCandles(candles []types.CandlePrice, rate math.LegacyDec) []types.CandlePrice {
 	convertedCandles := []types.CandlePrice{}
 	for _, candle := range candles {
 		candle.Price = candle.Price.Mul(rate)
@@ -180,7 +180,7 @@ func ConvertAggregatedTickers(
 	return convertedTickers
 }
 
-func convertTicker(ticker types.TickerPrice, rate sdk.Dec) types.TickerPrice {
+func convertTicker(ticker types.TickerPrice, rate math.LegacyDec) types.TickerPrice {
 	ticker.Price = ticker.Price.Mul(rate)
 	return ticker
 }

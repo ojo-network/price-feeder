@@ -3,7 +3,7 @@ package types
 import (
 	"sync"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 )
 
 type (
@@ -18,7 +18,7 @@ type (
 	}
 
 	// CurrencyPairDec is a map of sdk.Dec by CurrencyPair
-	CurrencyPairDec map[CurrencyPair]sdk.Dec
+	CurrencyPairDec map[CurrencyPair]math.LegacyDec
 
 	// CurrencyPairDecByProvider ia a map of CurrencyPairDec by provider name
 	CurrencyPairDecByProvider map[ProviderName]CurrencyPairDec
