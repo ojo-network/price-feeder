@@ -725,11 +725,7 @@ func (o *Oracle) tick(ctx context.Context) error {
 func (o *Oracle) tickClientless(ctx context.Context) error {
 	o.logger.Debug().Msg("executing clientless oracle tick")
 
-	if err := o.SetPrices(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return o.SetPrices(ctx)
 }
 
 // GenerateSalt generates a random salt, size length/2,  as a HEX encoded string.
