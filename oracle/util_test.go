@@ -331,7 +331,7 @@ func TestStandardDeviation(t *testing.T) {
 				},
 				OJOUSD: {
 					mean:      math.LegacyMustNewDecFromStr("1.1335"),
-					deviation: math.LegacyMustNewDecFromStr("0.004600724580614014"),
+					deviation: math.LegacyMustNewDecFromStr("0.004600724580614015"),
 				},
 			},
 		},
@@ -361,11 +361,11 @@ func TestStandardDeviation(t *testing.T) {
 				},
 				OJOUSD: {
 					mean:      math.LegacyMustNewDecFromStr("1.1335"),
-					deviation: math.LegacyMustNewDecFromStr("0.004600724580614014"),
+					deviation: math.LegacyMustNewDecFromStr("0.004600724580614015"),
 				},
 				LUNAUSD: {
 					mean:      math.LegacyMustNewDecFromStr("64.606666666666666666"),
-					deviation: math.LegacyMustNewDecFromStr("0.358360464089193608"),
+					deviation: math.LegacyMustNewDecFromStr("0.358360464089193609"),
 				},
 			},
 		},
