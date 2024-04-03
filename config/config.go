@@ -42,8 +42,8 @@ type (
 		Server              Server              `mapstructure:"server"`
 		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs" validate:"required,gt=0,dive,required"`
 		Deviations          []Deviation         `mapstructure:"deviation_thresholds"`
-		Account             Account             `mapstructure:"account" validate:"required,gt=0,dive,required"`
-		Keyring             Keyring             `mapstructure:"keyring" validate:"required,gt=0,dive,required"`
+		Account             Account             `mapstructure:"account"`
+		Keyring             Keyring             `mapstructure:"keyring"`
 		RPC                 RPC                 `mapstructure:"rpc" validate:"required,gt=0,dive,required"`
 		Telemetry           telemetry.Config    `mapstructure:"telemetry"`
 		GasAdjustment       float64             `mapstructure:"gas_adjustment"`
@@ -86,15 +86,15 @@ type (
 	// Account defines account related configuration that is related to the Ojo
 	// network and transaction signing functionality.
 	Account struct {
-		ChainID   string `mapstructure:"chain_id" validate:"required"`
-		Address   string `mapstructure:"address" validate:"required"`
-		Validator string `mapstructure:"validator" validate:"required"`
+		ChainID   string `mapstructure:"chain_id"`
+		Address   string `mapstructure:"address"`
+		Validator string `mapstructure:"validator"`
 	}
 
 	// Keyring defines the required Ojo keyring configuration.
 	Keyring struct {
-		Backend string `mapstructure:"backend" validate:"required"`
-		Dir     string `mapstructure:"dir" validate:"required"`
+		Backend string `mapstructure:"backend"`
+		Dir     string `mapstructure:"dir"`
 	}
 
 	// RPC defines RPC configuration of both the Ojo gRPC and Tendermint nodes.
