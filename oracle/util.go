@@ -224,10 +224,10 @@ func ComputeVwapsByProvider(prices types.AggregatedProviderPrices) types.Currenc
 	return vwaps
 }
 
-// createPairProvidersFromCurrencyPairProvidersList will create the pair providers
+// CreatePairProvidersFromCurrencyPairProvidersList will create the pair providers
 // map used by the price feeder Oracle from a CurrencyPairProvidersList defined by
 // Ojo's oracle module.
-func createPairProvidersFromCurrencyPairProvidersList(
+func CreatePairProvidersFromCurrencyPairProvidersList(
 	currencyPairs oracletypes.CurrencyPairProvidersList,
 ) map[types.ProviderName][]types.CurrencyPair {
 	providerPairs := make(map[types.ProviderName][]types.CurrencyPair)
@@ -262,10 +262,10 @@ func createPairProvidersFromCurrencyPairProvidersList(
 	return providerPairs
 }
 
-// createDeviationsFromCurrencyDeviationThresholdList will create the deviations
+// CreateDeviationsFromCurrencyDeviationThresholdList will create the deviations
 // map used by the price feeder Oracle from a CurrencyDeviationThresholdList defined by
 // Ojo's oracle module.
-func createDeviationsFromCurrencyDeviationThresholdList(
+func CreateDeviationsFromCurrencyDeviationThresholdList(
 	deviationList oracletypes.CurrencyDeviationThresholdList,
 ) (map[string]math.LegacyDec, error) {
 	deviations := make(map[string]math.LegacyDec, len(deviationList))
