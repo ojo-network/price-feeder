@@ -479,3 +479,21 @@ providers = ["binance", "gate", "bitget", "binanceus", "crypto"]
 base = "KAVA"
 quote = "USD"
 providers = ["kraken", "coinbase", "crypto"]
+
+[[currency_pairs]]
+base = "SEI"
+providers = [
+  "binance",
+  "bitget",
+  "gate",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "SEI"
+providers = [
+  "kraken",
+  "crypto",
+  "coinbase",
+]
+quote = "USD"
