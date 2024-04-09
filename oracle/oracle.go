@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
@@ -63,7 +64,7 @@ type Oracle struct {
 	previousVotePeriod float64
 	priceProviders     map[types.ProviderName]provider.Provider
 	oracleClient       client.OracleClient
-	deviations         map[string]sdk.Dec
+	deviations         map[string]sdkmath.LegacyDec
 	endpoints          map[types.ProviderName]provider.Endpoint
 	paramCache         *ParamCache
 	chainConfig        bool
@@ -81,7 +82,7 @@ func New(
 	oc client.OracleClient,
 	providerPairs map[types.ProviderName][]types.CurrencyPair,
 	providerTimeout time.Duration,
-	deviations map[string]sdk.Dec,
+	deviations map[string]sdkmath.LegacyDec,
 	endpoints map[types.ProviderName]provider.Endpoint,
 	chainConfig bool,
 ) *Oracle {
@@ -116,8 +117,8 @@ func (o *Oracle) LoadProviderPairsAndDeviations(ctx context.Context) error {
 		return err
 	}
 
-	o.providerPairs = createPairProvidersFromCurrencyPairProvidersList(oracleParams.CurrencyPairProviders)
-	o.deviations, err = createDeviationsFromCurrencyDeviationThresholdList(oracleParams.CurrencyDeviationThresholds)
+	o.providerPairs = CreatePairProvidersFromCurrencyPairProvidersList(oracleParams.CurrencyPairProviders)
+	o.deviations, err = CreateDeviationsFromCurrencyDeviationThresholdList(oracleParams.CurrencyDeviationThresholds)
 	if err != nil {
 		return err
 	}
@@ -162,6 +163,41 @@ func (o *Oracle) Start(ctx context.Context) error {
 			telemetry.IncrCounter(1, "new", "tick")
 
 			time.Sleep(tickerSleep)
+		}
+	}
+}
+
+// Starts oracle process without a client for running on an Ojo node that runs a
+// price feeder natively.
+func (o *Oracle) StartClientless(
+	ctx context.Context,
+	params oracletypes.Params,
+	tickSleep time.Duration,
+) error {
+	// start with most up to date oracle params
+	o.paramCache.UpdateParamCache(0, params, nil)
+
+	for {
+		select {
+		case <-ctx.Done():
+			o.closer.Close()
+
+		default:
+			o.logger.Debug().Msg("starting clientless oracle tick")
+
+			startTime := time.Now()
+
+			if err := o.tickClientless(ctx); err != nil {
+				telemetry.IncrCounter(1, "failure", "clientless tick")
+				o.logger.Err(err).Msg("clientless oracle tick failed")
+			}
+
+			o.lastPriceSyncTS = time.Now()
+
+			telemetry.MeasureSince(startTime, "runtime", "clientless tick")
+			telemetry.IncrCounter(1, "new", "clientless tick")
+
+			time.Sleep(tickSleep)
 		}
 	}
 }
@@ -546,11 +582,11 @@ func (o *Oracle) checkAcceptList(params oracletypes.Params) {
 func (o *Oracle) checkCurrencyPairAndDeviations(currentParams, newParams oracletypes.Params) (err error) {
 	if currentParams.CurrencyPairProviders.String() != newParams.CurrencyPairProviders.String() {
 		o.logger.Debug().Msg("Updating Currency Pair Providers Map")
-		o.providerPairs = createPairProvidersFromCurrencyPairProvidersList(newParams.CurrencyPairProviders)
+		o.providerPairs = CreatePairProvidersFromCurrencyPairProvidersList(newParams.CurrencyPairProviders)
 	}
 	if currentParams.CurrencyDeviationThresholds.String() != newParams.CurrencyDeviationThresholds.String() {
 		o.logger.Debug().Msg("Updating Currency Deviation Thresholds Map")
-		o.deviations, err = createDeviationsFromCurrencyDeviationThresholdList(newParams.CurrencyDeviationThresholds)
+		o.deviations, err = CreateDeviationsFromCurrencyDeviationThresholdList(newParams.CurrencyDeviationThresholds)
 		if err != nil {
 			return err
 		}
@@ -685,6 +721,12 @@ func (o *Oracle) tick(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (o *Oracle) tickClientless(ctx context.Context) error {
+	o.logger.Debug().Msg("executing clientless oracle tick")
+
+	return o.SetPrices(ctx)
 }
 
 // GenerateSalt generates a random salt, size length/2,  as a HEX encoded string.

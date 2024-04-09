@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
@@ -18,8 +18,8 @@ func TestSuccessFilterCandleDeviations(t *testing.T) {
 		Quote: "USDT",
 	}
 
-	atomPrice := sdk.MustNewDecFromStr("29.93")
-	atomVolume := sdk.MustNewDecFromStr("1994674.34000000")
+	atomPrice := math.LegacyMustNewDecFromStr("29.93")
+	atomVolume := math.LegacyMustNewDecFromStr("1994674.34000000")
 
 	atomCandlePrice := []types.CandlePrice{
 		{
@@ -41,7 +41,7 @@ func TestSuccessFilterCandleDeviations(t *testing.T) {
 	providerCandles[provider.ProviderCoinbase] = types.CurrencyPairCandles{
 		pair: {
 			{
-				Price:     sdk.MustNewDecFromStr("27.1"),
+				Price:     math.LegacyMustNewDecFromStr("27.1"),
 				Volume:    atomVolume,
 				TimeStamp: provider.PastUnixTime(1 * time.Minute),
 			},
@@ -51,15 +51,15 @@ func TestSuccessFilterCandleDeviations(t *testing.T) {
 	pricesFiltered, err := FilterCandleDeviations(
 		zerolog.Nop(),
 		providerCandles,
-		make(map[string]sdk.Dec),
+		make(map[string]math.LegacyDec),
 	)
 
 	_, ok := pricesFiltered[provider.ProviderCoinbase]
 	require.NoError(t, err, "It should successfully filter out the provider using candles")
 	require.False(t, ok, "The filtered candle deviation price at coinbase should be empty")
 
-	customDeviations := make(map[string]sdk.Dec, 1)
-	customDeviations[pair.Base] = sdk.NewDec(2)
+	customDeviations := make(map[string]math.LegacyDec, 1)
+	customDeviations[pair.Base] = math.LegacyNewDec(2)
 
 	pricesFilteredCustom, err := FilterCandleDeviations(
 		zerolog.Nop(),
@@ -79,8 +79,8 @@ func TestSuccessFilterTickerDeviations(t *testing.T) {
 		Quote: "USDT",
 	}
 
-	atomPrice := sdk.MustNewDecFromStr("29.93")
-	atomVolume := sdk.MustNewDecFromStr("1994674.34000000")
+	atomPrice := math.LegacyMustNewDecFromStr("29.93")
+	atomVolume := math.LegacyMustNewDecFromStr("1994674.34000000")
 
 	atomTickerPrice := types.TickerPrice{
 		Price:  atomPrice,
@@ -98,7 +98,7 @@ func TestSuccessFilterTickerDeviations(t *testing.T) {
 	}
 	providerTickers[provider.ProviderCoinbase] = types.CurrencyPairTickers{
 		pair: {
-			Price:  sdk.MustNewDecFromStr("27.1"),
+			Price:  math.LegacyMustNewDecFromStr("27.1"),
 			Volume: atomVolume,
 		},
 	}
@@ -106,15 +106,15 @@ func TestSuccessFilterTickerDeviations(t *testing.T) {
 	pricesFiltered, err := FilterTickerDeviations(
 		zerolog.Nop(),
 		providerTickers,
-		make(map[string]sdk.Dec),
+		make(map[string]math.LegacyDec),
 	)
 
 	_, ok := pricesFiltered[provider.ProviderCoinbase]
 	require.NoError(t, err, "It should successfully filter out the provider using tickers")
 	require.False(t, ok, "The filtered ticker deviation price at coinbase should be empty")
 
-	customDeviations := make(map[string]sdk.Dec, 1)
-	customDeviations[pair.Base] = sdk.NewDec(2)
+	customDeviations := make(map[string]math.LegacyDec, 1)
+	customDeviations[pair.Base] = math.LegacyNewDec(2)
 
 	pricesFilteredCustom, err := FilterTickerDeviations(
 		zerolog.Nop(),

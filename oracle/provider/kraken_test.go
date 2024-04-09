@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
@@ -21,8 +21,8 @@ func TestKrakenProvider_GetTickerPrices(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("valid_request_single_ticker", func(t *testing.T) {
-		lastPrice := sdk.MustNewDecFromStr("34.69000000")
-		volume := sdk.MustNewDecFromStr("2396974.02000000")
+		lastPrice := math.LegacyMustNewDecFromStr("34.69000000")
+		volume := math.LegacyMustNewDecFromStr("2396974.02000000")
 
 		tickerMap := map[string]types.TickerPrice{}
 		tickerMap["ATOMUSDT"] = types.TickerPrice{
@@ -40,9 +40,9 @@ func TestKrakenProvider_GetTickerPrices(t *testing.T) {
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
-		lastPriceAtom := sdk.MustNewDecFromStr("34.69000000")
-		lastPriceLuna := sdk.MustNewDecFromStr("41.35000000")
-		volume := sdk.MustNewDecFromStr("2396974.02000000")
+		lastPriceAtom := math.LegacyMustNewDecFromStr("34.69000000")
+		lastPriceLuna := math.LegacyMustNewDecFromStr("41.35000000")
+		volume := math.LegacyMustNewDecFromStr("2396974.02000000")
 
 		tickerMap := map[string]types.TickerPrice{}
 		tickerMap["ATOMUSDT"] = types.TickerPrice{
