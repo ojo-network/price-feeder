@@ -174,6 +174,7 @@ func (o *Oracle) StartClientless(
 	params oracletypes.Params,
 	tickSleep time.Duration,
 ) error {
+	// start with most up to date oracle params
 	o.paramCache.UpdateParamCache(0, params, nil)
 
 	for {
