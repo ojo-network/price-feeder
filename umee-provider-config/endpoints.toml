@@ -2,3 +2,8 @@
 name = "binance"
 rest = "https://api1.binance.com"
 websocket = "stream.binance.com:9443"
+
+## If you observe the following error: "ERR failed to initialize binance provider" then most likely
+## someone is blocking your connection. In such case, try to use the Binance US API instead:
+# rest = "https://api.binance.us"
+# websocket = "stream.binance.us:9443"
