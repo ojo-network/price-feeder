@@ -13,8 +13,8 @@ core differences are as follows:
 
 ## Forks - Other Projects that use the Ojo Price Feeder
 
-* [Kujira](https://github.com/team-kujira/oracle-price-feeder)
-* [Sei](https://github.com/sei-protocol/sei-chain/tree/master/oracle/price-feeder)
+- [Kujira](https://github.com/team-kujira/oracle-price-feeder)
+- [Sei](https://github.com/sei-protocol/sei-chain/tree/master/oracle/price-feeder)
 
 ## Background
 
@@ -75,8 +75,6 @@ In the PF config file you can set either:
 
 - `gas_adjustment`
 - or `gas_prevote` and `gas_vote` - fixed amount of gas used for `MsgAggregateExchangeRatePrevote` and `MsgAggregateExchangeRateVote` transactions respectively.
-
-## Configuration: `umee-provider-config`
 
 ## Configuration
 
