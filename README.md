@@ -96,7 +96,7 @@ A set of options for the application's telemetry, which is disabled by default. 
 The `server` section contains configuration pertaining to the API served by the
 `price-feeder` process such the listening address and various HTTP timeouts.
 
-### `currency_pairs.toml` file.
+### `currency_pairs.toml` file
 
 The `currency_pairs` sections contains one or more exchange rates along with the
 providers from which to get market data from. It is important to note that the
