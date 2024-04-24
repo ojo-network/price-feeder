@@ -23,6 +23,7 @@ The `price-feeder` tool is responsible for performing the following:
    specification.
 
 <!-- markdown-link-check-disable -->
+
 ## Providers
 
 The list of current supported providers:
@@ -67,29 +68,35 @@ The easiest is to just set constant gas. We recommend 10k below the `MaxMsgGasUs
 
 In the PF config file you can set either:
 
-* `gas_adjustment`
-* or `gas_prevote` and `gas_vote` - fixed amount of gas used for `MsgAggregateExchangeRatePrevote` and `MsgAggregateExchangeRateVote` transactions respectively.
+- `gas_adjustment`
+- or `gas_prevote` and `gas_vote` - fixed amount of gas used for `MsgAggregateExchangeRatePrevote` and `MsgAggregateExchangeRateVote` transactions respectively.
+
+## Configuration: `umee-provider-config`
 
 ## Configuration
+
+Copy the `price-feeder.example.toml` file to `price-feeder.toml` and update accordingly.
+
+### `config_dir`
+
+Price Feeder requires instructions what endpoints to use and which currencies to track. The following files must be present in the directory specified by `config_dir`:
+
+- `currencty-pairs.toml`
+- `deviation-thresholds.toml`: Deviation allows validators to set a custom amount of standard deviations around the median which is helpful if any providers become faulty. It should be noted that the default for this option is 1 standard deviation.
+- `endpoints.toml`: enables validators to setup their own API endpoints for a given provider.
+
+Depending where you run your validator node, certain locations may block some endpoints. Make sure you read through the comments in the config file.
 
 ### `telemetry`
 
 A set of options for the application's telemetry, which is disabled by default. An in-memory sink is the default, but Prometheus is also supported. We use the [cosmos sdk telemetry package](https://github.com/cosmos/cosmos-sdk/blob/3689d6f41ad8afa6e0f9b4ecb03b4d7f2d3a9e94/docs/docs/core/09-telemetry.md).
-
-### `deviation`
-
-Deviation allows validators to set a custom amount of standard deviations around the median which is helpful if any providers become faulty. It should be noted that the default for this option is 1 standard deviation.
-
-### `provider_endpoints`
-
-The provider_endpoints option enables validators to setup their own API endpoints for a given provider.
 
 ### `server`
 
 The `server` section contains configuration pertaining to the API served by the
 `price-feeder` process such the listening address and various HTTP timeouts.
 
-### `currency_pairs`
+### `currency_pairs.toml` file
 
 The `currency_pairs` sections contains one or more exchange rates along with the
 providers from which to get market data from. It is important to note that the
