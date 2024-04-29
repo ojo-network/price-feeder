@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/go-metrics v0.5.1
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ojo-network/ojo v0.3.1-0.20240319152030-fb860328ba68
+	github.com/ojo-network/ojo v0.3.1-rc2
 	github.com/rs/cors v1.10.1
 	github.com/rs/zerolog v1.32.0
 	github.com/spf13/cobra v1.8.0
