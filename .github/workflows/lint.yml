@@ -29,13 +29,13 @@ jobs:
           exclude: "*.pb.go;*.pb.gw.go;*.pulsar.go;swagger/..."
           path: "./..."
       - name: golangci-lint main
-        uses: golangci/golangci-lint-action@v5
+        uses: golangci/golangci-lint-action@v6
         if: env.GIT_DIFF
         with:
           version: latest
           args: --timeout 8m
       - name: golangci-lint pricefeeder
-        uses: golangci/golangci-lint-action@v5
+        uses: golangci/golangci-lint-action@v6
         if: ${{ contains(env.GIT_DIFF, 'price-feeder/')  }}
         with:
           version: latest
