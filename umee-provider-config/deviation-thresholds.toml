@@ -193,3 +193,7 @@ threshold = "2"
 [[deviation_thresholds]]
 base = "nBTC"
 threshold = "2"
+
+[[deviation_thresholds]]
+base = "NTRN"
+threshold = "2"

@@ -539,3 +539,8 @@ providers = [
   "osmosis",
 ]
 quote = "USDC"
+
+[[currency_pairs]]
+base = "NTRN"
+quote = "USDT"
+providers = [ "binance", "bitget", "gate",]
