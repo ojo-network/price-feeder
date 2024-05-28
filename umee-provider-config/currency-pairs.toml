@@ -497,3 +497,8 @@ providers = [
   "coinbase",
 ]
 quote = "USD"
+
+[[currency_pairs]]
+base = "NTRN"
+quote = "USDT"
+providers = [ "binance", "bitget", "gate",]
