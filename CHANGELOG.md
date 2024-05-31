@@ -45,6 +45,8 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+- [391](https://github.com/ojo-network/price-feeder/pull/391) feat: adding NTRN asset config.
+
 ## v2.4.0
 
 - [337](https://github.com/ojo-network/price-feeder/pull/337) feat: support fixed gas for vote and prevote transactions.
@@ -52,6 +54,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ## Old
 
 ### Improvements
+
 - [48](https://github.com/ojo-network/price-feeder/pull/48) Update goreleaser to have release process for umee price-feeder
 - [55](https://github.com/ojo-network/price-feeder/pull/55) Update DockerFile to work in umee's e2e test
 - [58](https://github.com/ojo-network/price-feeder/pull/59) Add skip provider check flag
