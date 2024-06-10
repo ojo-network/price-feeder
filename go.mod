@@ -12,7 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.15.0
 	github.com/golangci/golangci-lint v1.55.2
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.1
+	github.com/gorilla/websocket v1.5.2
 	github.com/hashicorp/go-metrics v0.5.1
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -279,13 +279,13 @@ require (
 	go.tmz.dev/musttag v0.7.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/mod v0.15.0 // indirect
-	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
-	golang.org/x/term v0.17.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
 	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
