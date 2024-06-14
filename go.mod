@@ -19,7 +19,7 @@ require (
 	github.com/ojo-network/ojo v0.3.1-0.20240319152030-fb860328ba68
 	github.com/rs/cors v1.10.1
 	github.com/rs/zerolog v1.32.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/sync v0.6.0
