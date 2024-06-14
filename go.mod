@@ -12,7 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.15.0
 	github.com/golangci/golangci-lint v1.55.2
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/websocket v1.5.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/go-metrics v0.5.1
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
