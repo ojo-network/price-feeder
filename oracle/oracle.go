@@ -726,6 +726,20 @@ func (o *Oracle) tick(ctx context.Context) error {
 func (o *Oracle) tickClientless(ctx context.Context) error {
 	o.logger.Debug().Msg("executing clientless oracle tick")
 
+	blockHeight, err := o.oracleClient.ChainHeight.GetChainHeight()
+	if err != nil {
+		return err
+	}
+	if blockHeight < 1 {
+		return fmt.Errorf("expected positive block height")
+	}
+
+	// Make sure param cache does not become outdated.
+	_, err = o.GetParamCache(ctx, blockHeight)
+	if err != nil {
+		return err
+	}
+
 	return o.SetPrices(ctx)
 }
 
