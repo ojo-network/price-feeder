@@ -171,13 +171,10 @@ func (o *Oracle) Start(ctx context.Context) error {
 // price feeder natively.
 func (o *Oracle) StartClientless(
 	ctx context.Context,
+	params oracletypes.Params,
 	tickSleep time.Duration,
 ) error {
 	// start with most up to date oracle params
-	params, err := o.GetParams(ctx)
-	if err != nil {
-		return err
-	}
 	o.paramCache.UpdateParamCache(0, params, nil)
 
 	for {
