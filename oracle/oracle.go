@@ -171,11 +171,12 @@ func (o *Oracle) Start(ctx context.Context) error {
 // price feeder natively.
 func (o *Oracle) StartClientless(
 	ctx context.Context,
+	currentBlockHeight int64,
 	params oracletypes.Params,
 	tickSleep time.Duration,
 ) error {
 	// start with most up to date oracle params
-	o.paramCache.UpdateParamCache(0, params, nil)
+	o.paramCache.UpdateParamCache(currentBlockHeight, params, nil)
 
 	for {
 		select {
@@ -198,6 +199,20 @@ func (o *Oracle) StartClientless(
 			telemetry.IncrCounter(1, "new", "clientless tick")
 
 			time.Sleep(tickSleep)
+
+			currentBlockHeight, err := o.oracleClient.ChainHeight.GetChainHeight()
+			if err != nil {
+				return err
+			}
+			if currentBlockHeight < 1 {
+				return fmt.Errorf("expected positive block height")
+			}
+
+			// Make sure param cache does not become outdated.
+			_, err = o.GetParamCache(ctx, currentBlockHeight)
+			if err != nil {
+				return err
+			}
 		}
 	}
 }
@@ -725,20 +740,6 @@ func (o *Oracle) tick(ctx context.Context) error {
 
 func (o *Oracle) tickClientless(ctx context.Context) error {
 	o.logger.Debug().Msg("executing clientless oracle tick")
-
-	blockHeight, err := o.oracleClient.ChainHeight.GetChainHeight()
-	if err != nil {
-		return err
-	}
-	if blockHeight < 1 {
-		return fmt.Errorf("expected positive block height")
-	}
-
-	// Make sure param cache does not become outdated.
-	_, err = o.GetParamCache(ctx, blockHeight)
-	if err != nil {
-		return err
-	}
 
 	return o.SetPrices(ctx)
 }
