@@ -14,7 +14,6 @@ var (
 		provider.ProviderKraken:     false,
 		provider.ProviderBinance:    false,
 		provider.ProviderBinanceUS:  false,
-		provider.ProviderCrescent:   false,
 		provider.ProviderOsmosis:    false,
 		provider.ProviderOkx:        false,
 		provider.ProviderHuobi:      false,
