@@ -21,7 +21,6 @@ const (
 	ProviderMexc       types.ProviderName = "mexc"
 	ProviderCrypto     types.ProviderName = "crypto"
 	ProviderPolygon    types.ProviderName = "polygon"
-	ProviderCrescent   types.ProviderName = "crescent"
 	ProviderEthUniswap types.ProviderName = "eth-uniswap"
 	ProviderKujira     types.ProviderName = "kujira"
 	ProviderMock       types.ProviderName = "mock"
