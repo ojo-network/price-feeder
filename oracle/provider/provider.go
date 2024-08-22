@@ -9,6 +9,7 @@ import (
 const (
 	defaultTimeout = 10 * time.Second
 
+<<<<<<< HEAD
 	ProviderKraken     types.ProviderName = "kraken"
 	ProviderBinance    types.ProviderName = "binance"
 	ProviderBinanceUS  types.ProviderName = "binanceus"
@@ -25,6 +26,27 @@ const (
 	ProviderEthUniswap types.ProviderName = "eth-uniswap"
 	ProviderKujira     types.ProviderName = "kujira"
 	ProviderMock       types.ProviderName = "mock"
+=======
+	ProviderKraken      types.ProviderName = "kraken"
+	ProviderBinance     types.ProviderName = "binance"
+	ProviderBinanceUS   types.ProviderName = "binanceus"
+	ProviderOsmosis     types.ProviderName = "osmosis"
+	ProviderHuobi       types.ProviderName = "huobi"
+	ProviderOkx         types.ProviderName = "okx"
+	ProviderGate        types.ProviderName = "gate"
+	ProviderCoinbase    types.ProviderName = "coinbase"
+	ProviderBitget      types.ProviderName = "bitget"
+	ProviderMexc        types.ProviderName = "mexc"
+	ProviderCrypto      types.ProviderName = "crypto"
+	ProviderPolygon     types.ProviderName = "polygon"
+	ProviderEthUniswap  types.ProviderName = "eth-uniswap"
+	ProviderEthCamelot  types.ProviderName = "eth-camelot"
+	ProviderEthBalancer types.ProviderName = "eth-balancer"
+	ProviderEthPancake  types.ProviderName = "eth-pancake"
+	ProviderEthCurve    types.ProviderName = "eth-curve"
+	ProviderKujira      types.ProviderName = "kujira"
+	ProviderMock        types.ProviderName = "mock"
+>>>>>>> 3db3979 (feat: Separate eth providers into individual providers per exchange (#406))
 )
 
 var (

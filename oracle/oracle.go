@@ -475,6 +475,24 @@ func NewProvider(
 
 	case provider.ProviderEthUniswap:
 		return provider.NewUniswapProvider(ctx, logger, endpoint, providerPairs...)
+<<<<<<< HEAD
+=======
+
+	case provider.ProviderEthCamelot:
+		return provider.NewCamelotProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderEthBalancer:
+		return provider.NewBalancerProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderEthPancake:
+		return provider.NewPancakeProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderEthCurve:
+		return provider.NewCurveProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderAstroport:
+		return provider.NewAstroportProvider(ctx, logger, endpoint, providerPairs...)
+>>>>>>> 3db3979 (feat: Separate eth providers into individual providers per exchange (#406))
 	}
 
 	return nil, fmt.Errorf("provider %s not found", providerName)

@@ -9,29 +9,29 @@ import (
 	"strings"
 	"sync"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 )
 
 const (
-	uniswapWSHost   = "api.eth-api.prod.ojo.network"
-	uniswapWSPath   = "/uniswap/ws"
-	uniswapWSScheme = "wss"
-	uniswapRestHost = "https://api.eth-api.prod.ojo.network"
-	uniswapRestPath = "/uniswap/assetpairs"
-	uniswapAckMsg   = "ack"
+	curveWSHost   = "api.eth-api.prod.ojo.network"
+	curveWSPath   = "/curve/ws"
+	curveWSScheme = "wss"
+	curveRestHost = "https://api.eth-api.prod.ojo.network"
+	curveRestPath = "/curve/assetpairs"
+	curveAckMsg   = "ack"
 )
 
-var _ Provider = (*UniswapProvider)(nil)
+var _ Provider = (*CurveProvider)(nil)
 
 type (
-	// UniswapProvider defines an Oracle provider implemented by OJO's
-	// Uniswap API.
+	// CurveProvider defines an Oracle provider implemented by OJO's
+	// Curve API.
 	//
 	// REF: https://github.com/ojo-network/ehereum-api
-	UniswapProvider struct {
+	CurveProvider struct {
 		wsc       *WebsocketController
 		wsURL     url.URL
 		logger    zerolog.Logger
@@ -41,59 +41,59 @@ type (
 		priceStore
 	}
 
-	UniswapTicker struct {
+	CurveTicker struct {
 		Price  string `json:"Price"`
 		Volume string `json:"Volume"`
 	}
 
-	UniswapCandle struct {
+	CurveCandle struct {
 		Close   string `json:"Close"`
 		Volume  string `json:"Volume"`
 		EndTime int64  `json:"EndTime"`
 	}
 
-	// UniswapPairsSummary defines the response structure for an Uniswap pairs
+	// CurvePairsSummary defines the response structure for an Curve pairs
 	// summary.
-	UniswapPairsSummary struct {
-		Data []UniswapPairData `json:"data"`
+	CurvePairsSummary struct {
+		Data []CurvePairData `json:"data"`
 	}
 
-	// UniswapPairData defines the data response structure for an Uniswap pair.
-	UniswapPairData struct {
+	// CurvePairData defines the data response structure for an Curve pair.
+	CurvePairData struct {
 		Base  string `json:"base"`
 		Quote string `json:"quote"`
 	}
 )
 
-func NewUniswapProvider(
+func NewCurveProvider(
 	ctx context.Context,
 	logger zerolog.Logger,
 	endpoints Endpoint,
 	pairs ...types.CurrencyPair,
-) (*UniswapProvider, error) {
-	if endpoints.Name != ProviderEthUniswap {
+) (*CurveProvider, error) {
+	if endpoints.Name != ProviderEthCurve {
 		endpoints = Endpoint{
-			Name:      ProviderEthUniswap,
-			Rest:      uniswapRestHost,
-			Websocket: uniswapWSHost,
+			Name:      ProviderEthCurve,
+			Rest:      curveRestHost,
+			Websocket: curveWSHost,
 		}
 	}
 
 	wsURL := url.URL{
-		Scheme: uniswapWSScheme,
+		Scheme: curveWSScheme,
 		Host:   endpoints.Websocket,
-		Path:   uniswapWSPath,
+		Path:   curveWSPath,
 	}
 
-	uniswapLogger := logger.With().Str("provider", "uniswap").Logger()
+	curveLogger := logger.With().Str("provider", "curve").Logger()
 
-	provider := &UniswapProvider{
+	provider := &CurveProvider{
 		wsURL:      wsURL,
-		logger:     uniswapLogger,
+		logger:     curveLogger,
 		endpoints:  endpoints,
-		priceStore: newPriceStore(uniswapLogger),
+		priceStore: newPriceStore(curveLogger),
 	}
-	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToUniswapPair)
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToCurvePair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
@@ -115,19 +115,19 @@ func NewUniswapProvider(
 		provider.messageReceived,
 		defaultPingDuration,
 		websocket.PingMessage,
-		uniswapLogger,
+		curveLogger,
 	)
 
 	return provider, nil
 }
 
-func (p *UniswapProvider) StartConnections() {
+func (p *CurveProvider) StartConnections() {
 	p.wsc.StartConnections()
 }
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *UniswapProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
+func (p *CurveProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -144,18 +144,18 @@ func (p *UniswapProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-func (p *UniswapProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
+func (p *CurveProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	// check if message is an ack
-	if string(bz) == uniswapAckMsg {
+	if string(bz) == curveAckMsg {
 		return
 	}
 
 	var (
 		messageResp map[string]interface{}
 		messageErr  error
-		tickerResp  UniswapTicker
+		tickerResp  CurveTicker
 		tickerErr   error
-		candleResp  []UniswapCandle
+		candleResp  []CurveCandle
 		candleErr   error
 	)
 
@@ -170,8 +170,8 @@ func (p *UniswapProvider) messageReceived(_ int, _ *WebsocketConnection, bz []by
 	// Check the response for currency pairs that the provider is subscribed
 	// to and determine whether it is a ticker or candle.
 	for _, pair := range p.subscribedPairs {
-		uniswapPair := currencyPairToUniswapPair(pair)
-		if msg, ok := messageResp[uniswapPair]; ok {
+		curvePair := currencyPairToCurvePair(pair)
+		if msg, ok := messageResp[curvePair]; ok {
 			switch v := msg.(type) {
 			// ticker response
 			case map[string]interface{}:
@@ -186,9 +186,9 @@ func (p *UniswapProvider) messageReceived(_ int, _ *WebsocketConnection, bz []by
 				}
 				p.setTickerPair(
 					tickerResp,
-					uniswapPair,
+					curvePair,
 				)
-				telemetryWebsocketMessage(ProviderEthUniswap, MessageTypeTicker)
+				telemetryWebsocketMessage(ProviderEthCurve, MessageTypeTicker)
 				continue
 
 			// candle response
@@ -209,24 +209,24 @@ func (p *UniswapProvider) messageReceived(_ int, _ *WebsocketConnection, bz []by
 				for _, singleCandle := range candleResp {
 					p.setCandlePair(
 						singleCandle,
-						uniswapPair,
+						curvePair,
 					)
 				}
-				telemetryWebsocketMessage(ProviderEthUniswap, MessageTypeCandle)
+				telemetryWebsocketMessage(ProviderEthCurve, MessageTypeCandle)
 				continue
 			}
 		}
 	}
 }
 
-func (o UniswapTicker) toTickerPrice() (types.TickerPrice, error) {
-	price, err := sdk.NewDecFromStr(o.Price)
+func (o CurveTicker) toTickerPrice() (types.TickerPrice, error) {
+	price, err := math.LegacyNewDecFromStr(o.Price)
 	if err != nil {
-		return types.TickerPrice{}, fmt.Errorf("uniswap: failed to parse ticker price: %w", err)
+		return types.TickerPrice{}, fmt.Errorf("curve: failed to parse ticker price: %w", err)
 	}
-	volume, err := sdk.NewDecFromStr(o.Volume)
+	volume, err := math.LegacyNewDecFromStr(o.Volume)
 	if err != nil {
-		return types.TickerPrice{}, fmt.Errorf("uniswap: failed to parse ticker volume: %w", err)
+		return types.TickerPrice{}, fmt.Errorf("curve: failed to parse ticker volume: %w", err)
 	}
 
 	tickerPrice := types.TickerPrice{
@@ -236,14 +236,14 @@ func (o UniswapTicker) toTickerPrice() (types.TickerPrice, error) {
 	return tickerPrice, nil
 }
 
-func (o UniswapCandle) toCandlePrice() (types.CandlePrice, error) {
-	close, err := sdk.NewDecFromStr(o.Close)
+func (o CurveCandle) toCandlePrice() (types.CandlePrice, error) {
+	close, err := math.LegacyNewDecFromStr(o.Close)
 	if err != nil {
-		return types.CandlePrice{}, fmt.Errorf("uniswap: failed to parse candle price: %w", err)
+		return types.CandlePrice{}, fmt.Errorf("curve: failed to parse candle price: %w", err)
 	}
-	volume, err := sdk.NewDecFromStr(o.Volume)
+	volume, err := math.LegacyNewDecFromStr(o.Volume)
 	if err != nil {
-		return types.CandlePrice{}, fmt.Errorf("uniswap: failed to parse candle volume: %w", err)
+		return types.CandlePrice{}, fmt.Errorf("curve: failed to parse candle volume: %w", err)
 	}
 	candlePrice := types.CandlePrice{
 		Price:     close,
@@ -254,7 +254,7 @@ func (o UniswapCandle) toCandlePrice() (types.CandlePrice, error) {
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
-func (p *UniswapProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
+func (p *CurveProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
 	for _, cp := range cps {
 		p.subscribedPairs[cp.String()] = cp
 	}
@@ -262,14 +262,14 @@ func (p *UniswapProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
 
 // GetAvailablePairs returns all pairs to which the provider can subscribe.
 // ex.: map["ATOMUSDT" => {}, "OJOUSDC" => {}].
-func (p *UniswapProvider) GetAvailablePairs() (map[string]struct{}, error) {
-	resp, err := http.Get(p.endpoints.Rest + uniswapRestPath)
+func (p *CurveProvider) GetAvailablePairs() (map[string]struct{}, error) {
+	resp, err := http.Get(p.endpoints.Rest + curveRestPath)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var pairsSummary []UniswapPairData
+	var pairsSummary []CurvePairData
 	if err := json.NewDecoder(resp.Body).Decode(&pairsSummary); err != nil {
 		return nil, err
 	}
@@ -286,8 +286,8 @@ func (p *UniswapProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return availablePairs, nil
 }
 
-// currencyPairToUniswapPair receives a currency pair and return uniswap
+// currencyPairToCurvePair receives a currency pair and return curve
 // ticker symbol atomusdt@ticker.
-func currencyPairToUniswapPair(cp types.CurrencyPair) string {
+func currencyPairToCurvePair(cp types.CurrencyPair) string {
 	return cp.Base + "/" + cp.Quote
 }
