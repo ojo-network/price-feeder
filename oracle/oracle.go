@@ -513,9 +513,6 @@ func NewProvider(
 	case provider.ProviderPolygon:
 		return provider.NewPolygonProvider(ctx, logger, endpoint, providerPairs...)
 
-	case provider.ProviderCrescent:
-		return provider.NewCrescentProvider(ctx, logger, endpoint, providerPairs...)
-
 	case provider.ProviderKujira:
 		return provider.NewKujiraProvider(ctx, logger, endpoint, providerPairs...)
 
@@ -524,6 +521,18 @@ func NewProvider(
 
 	case provider.ProviderEthUniswap:
 		return provider.NewUniswapProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderEthCamelot:
+		return provider.NewCamelotProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderEthBalancer:
+		return provider.NewBalancerProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderEthPancake:
+		return provider.NewPancakeProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderEthCurve:
+		return provider.NewCurveProvider(ctx, logger, endpoint, providerPairs...)
 
 	case provider.ProviderAstroport:
 		return provider.NewAstroportProvider(ctx, logger, endpoint, providerPairs...)

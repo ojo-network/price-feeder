@@ -3,30 +3,35 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 
+	"cosmossdk.io/math"
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 )
 
 const (
-	crescentV2WSHost   = "api.cresc-api.prod.ojo.network"
-	crescentV2WSPath   = "ws"
-	crescentV2RestHost = "https://api.cresc-api.prod.ojo.network"
-	crescentV2RestPath = "/assetpairs"
-	crescentAckMsg     = "ack"
+	balancerWSHost   = "api.eth-api.prod.ojo.network"
+	balancerWSPath   = "/balancer/ws"
+	balancerWSScheme = "wss"
+	balancerRestHost = "https://api.eth-api.prod.ojo.network"
+	balancerRestPath = "/balancer/assetpairs"
+	balancerAckMsg   = "ack"
 )
 
-var _ Provider = (*CrescentProvider)(nil)
+var _ Provider = (*BalancerProvider)(nil)
 
 type (
-	// CrescentProvider defines an Oracle provider implemented by OJO's
-	// Crescent API.
-	CrescentProvider struct {
+	// BalancerProvider defines an Oracle provider implemented by OJO's
+	// Balancer API.
+	//
+	// REF: https://github.com/ojo-network/ehereum-api
+	BalancerProvider struct {
 		wsc       *WebsocketController
 		wsURL     url.URL
 		logger    zerolog.Logger
@@ -36,59 +41,59 @@ type (
 		priceStore
 	}
 
-	CrescentTicker struct {
+	BalancerTicker struct {
 		Price  string `json:"Price"`
 		Volume string `json:"Volume"`
 	}
 
-	CrescentCandle struct {
+	BalancerCandle struct {
 		Close   string `json:"Close"`
 		Volume  string `json:"Volume"`
 		EndTime int64  `json:"EndTime"`
 	}
 
-	// CrescentPairsSummary defines the response structure for an Crescent pairs
+	// BalancerPairsSummary defines the response structure for an Balancer pairs
 	// summary.
-	CrescentPairsSummary struct {
-		Data []CrescentPairData `json:"data"`
+	BalancerPairsSummary struct {
+		Data []BalancerPairData `json:"data"`
 	}
 
-	// CrescentPairData defines the data response structure for an Crescent pair.
-	CrescentPairData struct {
+	// BalancerPairData defines the data response structure for an Balancer pair.
+	BalancerPairData struct {
 		Base  string `json:"base"`
 		Quote string `json:"quote"`
 	}
 )
 
-func NewCrescentProvider(
+func NewBalancerProvider(
 	ctx context.Context,
 	logger zerolog.Logger,
 	endpoints Endpoint,
 	pairs ...types.CurrencyPair,
-) (*CrescentProvider, error) {
-	if endpoints.Name != ProviderCrescent {
+) (*BalancerProvider, error) {
+	if endpoints.Name != ProviderEthBalancer {
 		endpoints = Endpoint{
-			Name:      ProviderCrescent,
-			Rest:      crescentV2RestHost,
-			Websocket: crescentV2WSHost,
+			Name:      ProviderEthBalancer,
+			Rest:      balancerRestHost,
+			Websocket: balancerWSHost,
 		}
 	}
 
 	wsURL := url.URL{
-		Scheme: "wss",
+		Scheme: balancerWSScheme,
 		Host:   endpoints.Websocket,
-		Path:   crescentV2WSPath,
+		Path:   balancerWSPath,
 	}
 
-	crescentV2Logger := logger.With().Str("provider", "crescent").Logger()
+	balancerLogger := logger.With().Str("provider", "balancer").Logger()
 
-	provider := &CrescentProvider{
+	provider := &BalancerProvider{
 		wsURL:      wsURL,
-		logger:     crescentV2Logger,
+		logger:     balancerLogger,
 		endpoints:  endpoints,
-		priceStore: newPriceStore(crescentV2Logger),
+		priceStore: newPriceStore(balancerLogger),
 	}
-	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToCrescentPair)
+	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToBalancerPair)
 
 	confirmedPairs, err := ConfirmPairAvailability(
 		provider,
@@ -110,19 +115,19 @@ func NewCrescentProvider(
 		provider.messageReceived,
 		defaultPingDuration,
 		websocket.PingMessage,
-		crescentV2Logger,
+		balancerLogger,
 	)
 
 	return provider, nil
 }
 
-func (p *CrescentProvider) StartConnections() {
+func (p *BalancerProvider) StartConnections() {
 	p.wsc.StartConnections()
 }
 
 // SubscribeCurrencyPairs sends the new subscription messages to the websocket
 // and adds them to the providers subscribedPairs array
-func (p *CrescentProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
+func (p *BalancerProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -139,18 +144,18 @@ func (p *CrescentProvider) SubscribeCurrencyPairs(cps ...types.CurrencyPair) {
 	p.setSubscribedPairs(confirmedPairs...)
 }
 
-func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
+func (p *BalancerProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
 	// check if message is an ack
-	if string(bz) == crescentAckMsg {
+	if string(bz) == balancerAckMsg {
 		return
 	}
 
 	var (
 		messageResp map[string]interface{}
 		messageErr  error
-		tickerResp  CrescentTicker
+		tickerResp  BalancerTicker
 		tickerErr   error
-		candleResp  []CrescentCandle
+		candleResp  []BalancerCandle
 		candleErr   error
 	)
 
@@ -165,8 +170,8 @@ func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 	// Check the response for currency pairs that the provider is subscribed
 	// to and determine whether it is a ticker or candle.
 	for _, pair := range p.subscribedPairs {
-		crescentPair := currencyPairToCrescentPair(pair)
-		if msg, ok := messageResp[crescentPair]; ok {
+		balancerPair := currencyPairToBalancerPair(pair)
+		if msg, ok := messageResp[balancerPair]; ok {
 			switch v := msg.(type) {
 			// ticker response
 			case map[string]interface{}:
@@ -181,9 +186,9 @@ func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 				}
 				p.setTickerPair(
 					tickerResp,
-					crescentPair,
+					balancerPair,
 				)
-				telemetryWebsocketMessage(ProviderCrescent, MessageTypeTicker)
+				telemetryWebsocketMessage(ProviderEthBalancer, MessageTypeTicker)
 				continue
 
 			// candle response
@@ -204,33 +209,52 @@ func (p *CrescentProvider) messageReceived(_ int, _ *WebsocketConnection, bz []b
 				for _, singleCandle := range candleResp {
 					p.setCandlePair(
 						singleCandle,
-						crescentPair,
+						balancerPair,
 					)
 				}
-				telemetryWebsocketMessage(ProviderCrescent, MessageTypeCandle)
+				telemetryWebsocketMessage(ProviderEthBalancer, MessageTypeCandle)
 				continue
 			}
 		}
 	}
 }
 
-func (ct CrescentTicker) toTickerPrice() (types.TickerPrice, error) {
-	return types.NewTickerPrice(
-		ct.Price,
-		ct.Volume,
-	)
+func (o BalancerTicker) toTickerPrice() (types.TickerPrice, error) {
+	price, err := math.LegacyNewDecFromStr(o.Price)
+	if err != nil {
+		return types.TickerPrice{}, fmt.Errorf("balancer: failed to parse ticker price: %w", err)
+	}
+	volume, err := math.LegacyNewDecFromStr(o.Volume)
+	if err != nil {
+		return types.TickerPrice{}, fmt.Errorf("balancer: failed to parse ticker volume: %w", err)
+	}
+
+	tickerPrice := types.TickerPrice{
+		Price:  price,
+		Volume: volume,
+	}
+	return tickerPrice, nil
 }
 
-func (cc CrescentCandle) toCandlePrice() (types.CandlePrice, error) {
-	return types.NewCandlePrice(
-		cc.Close,
-		cc.Volume,
-		cc.EndTime,
-	)
+func (o BalancerCandle) toCandlePrice() (types.CandlePrice, error) {
+	close, err := math.LegacyNewDecFromStr(o.Close)
+	if err != nil {
+		return types.CandlePrice{}, fmt.Errorf("balancer: failed to parse candle price: %w", err)
+	}
+	volume, err := math.LegacyNewDecFromStr(o.Volume)
+	if err != nil {
+		return types.CandlePrice{}, fmt.Errorf("balancer: failed to parse candle volume: %w", err)
+	}
+	candlePrice := types.CandlePrice{
+		Price:     close,
+		Volume:    volume,
+		TimeStamp: o.EndTime,
+	}
+	return candlePrice, nil
 }
 
 // setSubscribedPairs sets N currency pairs to the map of subscribed pairs.
-func (p *CrescentProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
+func (p *BalancerProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
 	for _, cp := range cps {
 		p.subscribedPairs[cp.String()] = cp
 	}
@@ -238,14 +262,14 @@ func (p *CrescentProvider) setSubscribedPairs(cps ...types.CurrencyPair) {
 
 // GetAvailablePairs returns all pairs to which the provider can subscribe.
 // ex.: map["ATOMUSDT" => {}, "OJOUSDC" => {}].
-func (p *CrescentProvider) GetAvailablePairs() (map[string]struct{}, error) {
-	resp, err := http.Get(p.endpoints.Rest + crescentV2RestPath)
+func (p *BalancerProvider) GetAvailablePairs() (map[string]struct{}, error) {
+	resp, err := http.Get(p.endpoints.Rest + balancerRestPath)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var pairsSummary []CrescentPairData
+	var pairsSummary []BalancerPairData
 	if err := json.NewDecoder(resp.Body).Decode(&pairsSummary); err != nil {
 		return nil, err
 	}
@@ -262,8 +286,8 @@ func (p *CrescentProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return availablePairs, nil
 }
 
-// currencyPairToCrescentPair receives a currency pair and return crescent
+// currencyPairToBalancerPair receives a currency pair and return balancer
 // ticker symbol atomusdt@ticker.
-func currencyPairToCrescentPair(cp types.CurrencyPair) string {
+func currencyPairToBalancerPair(cp types.CurrencyPair) string {
 	return cp.Base + "/" + cp.Quote
 }

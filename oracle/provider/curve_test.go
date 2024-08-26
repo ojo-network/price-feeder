@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCrescentProvider_GetTickerPrices(t *testing.T) {
-	p, err := NewCrescentProvider(
+func TestCurveProvider_GetTickerPrices(t *testing.T) {
+	p, err := NewCurveProvider(
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		BCREATOM,
+		OSMOATOM,
 	)
 	require.NoError(t, err)
 
@@ -24,18 +24,18 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 		volume := math.LegacyMustNewDecFromStr("2396974.02000000")
 
 		tickerMap := map[string]types.TickerPrice{}
-		tickerMap["BCRE/ATOM"] = types.TickerPrice{
+		tickerMap["OSMO/ATOM"] = types.TickerPrice{
 			Price:  lastPrice,
 			Volume: volume,
 		}
 
 		p.tickers = tickerMap
 
-		prices, err := p.GetTickerPrices(BCREATOM)
+		prices, err := p.GetTickerPrices(OSMOATOM)
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, lastPrice, prices[BCREATOM].Price)
-		require.Equal(t, volume, prices[BCREATOM].Volume)
+		require.Equal(t, lastPrice, prices[OSMOATOM].Price)
+		require.Equal(t, volume, prices[OSMOATOM].Volume)
 	})
 
 	t.Run("valid_request_multi_ticker", func(t *testing.T) {
@@ -73,12 +73,12 @@ func TestCrescentProvider_GetTickerPrices(t *testing.T) {
 	})
 }
 
-func TestCrescentProvider_GetCandlePrices(t *testing.T) {
-	p, err := NewCrescentProvider(
+func TestCurveProvider_GetCandlePrices(t *testing.T) {
+	p, err := NewCurveProvider(
 		context.TODO(),
 		zerolog.Nop(),
 		Endpoint{},
-		BCREATOM,
+		types.CurrencyPair{Base: "OSMO", Quote: "ATOM"},
 	)
 	require.NoError(t, err)
 
@@ -87,20 +87,20 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 		volume := "2396974.000000000000000000"
 		time := int64(1000000)
 
-		candle := CrescentCandle{
+		candle := CurveCandle{
 			Volume:  volume,
 			Close:   price,
 			EndTime: time,
 		}
 
-		p.setCandlePair(candle, "BCRE/ATOM")
+		p.setCandlePair(candle, "OSMO/ATOM")
 
-		prices, err := p.GetCandlePrices(BCREATOM)
+		prices, err := p.GetCandlePrices(types.CurrencyPair{Base: "OSMO", Quote: "ATOM"})
 		require.NoError(t, err)
 		require.Len(t, prices, 1)
-		require.Equal(t, math.LegacyMustNewDecFromStr(price), prices[BCREATOM][0].Price)
-		require.Equal(t, math.LegacyMustNewDecFromStr(volume), prices[BCREATOM][0].Volume)
-		require.Equal(t, time, prices[BCREATOM][0].TimeStamp)
+		require.Equal(t, math.LegacyMustNewDecFromStr(price), prices[OSMOATOM][0].Price)
+		require.Equal(t, math.LegacyMustNewDecFromStr(volume), prices[OSMOATOM][0].Volume)
+		require.Equal(t, time, prices[OSMOATOM][0].TimeStamp)
 	})
 
 	t.Run("invalid_request_invalid_candle", func(t *testing.T) {
@@ -109,8 +109,8 @@ func TestCrescentProvider_GetCandlePrices(t *testing.T) {
 	})
 }
 
-func TestCrescentCurrencyPairToCrescentPair(t *testing.T) {
-	cp := types.CurrencyPair{Base: "BCRE", Quote: "USDT"}
-	crescentSymbol := currencyPairToCrescentPair(cp)
-	require.Equal(t, crescentSymbol, "BCRE/USDT")
+func TestCurveCurrencyPairToCurvePair(t *testing.T) {
+	cp := types.CurrencyPair{Base: "ATOM", Quote: "USDT"}
+	curveSymbol := currencyPairToCurvePair(cp)
+	require.Equal(t, curveSymbol, "ATOM/USDT")
 }
