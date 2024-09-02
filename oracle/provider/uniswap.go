@@ -17,10 +17,10 @@ import (
 
 const (
 	uniswapWSHost   = "api.eth-api.prod.ojo.network"
-	uniswapWSPath   = "ws"
+	uniswapWSPath   = "/uniswap/ws"
 	uniswapWSScheme = "wss"
 	uniswapRestHost = "https://api.eth-api.prod.ojo.network"
-	uniswapRestPath = "/assetpairs"
+	uniswapRestPath = "/uniswap/assetpairs"
 	uniswapAckMsg   = "ack"
 )
 
