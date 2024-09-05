@@ -47,13 +47,14 @@ var (
 		{Base: "INJ", Quote: "USD"}:  {},
 		{Base: "TIA", Quote: "USD"}:  {},
 
-		{Base: "OSMO", Quote: "USDT"}: {},
-		{Base: "JUNO", Quote: "USDT"}: {},
-		{Base: "WETH", Quote: "USDC"}: {},
-		{Base: "WBTC", Quote: "BTC"}:  {},
-		{Base: "WBTC", Quote: "WETH"}: {},
-		{Base: "INJ", Quote: "USDT"}:  {},
-		{Base: "TIA", Quote: "USDT"}:  {},
+		{Base: "OSMO", Quote: "USDT"}:   {},
+		{Base: "JUNO", Quote: "USDT"}:   {},
+		{Base: "WETH", Quote: "USDC"}:   {},
+		{Base: "WBTC", Quote: "BTC"}:    {},
+		{Base: "WBTC", Quote: "WETH"}:   {},
+		{Base: "INJ", Quote: "USDT"}:    {},
+		{Base: "TIA", Quote: "USDT"}:    {},
+		{Base: "WSTETH", Quote: "WETH"}: {},
 	}
 
 	SupportedUniswapCurrencies = map[string]struct{}{

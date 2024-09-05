@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 
@@ -13,8 +14,9 @@ import (
 )
 
 var (
-	minimumTimeWeight   = sdk.MustNewDecFromStr("0.2000")
-	minimumCandleVolume = sdk.MustNewDecFromStr("0.0001")
+	minimumTimeWeight   = math.LegacyMustNewDecFromStr("0.2000")
+	minimumTickerVolume = math.LegacyMustNewDecFromStr("0.000000000000001")
+	minimumCandleVolume = math.LegacyMustNewDecFromStr("0.0001")
 )
 
 const (
@@ -57,6 +59,9 @@ func ComputeVWAP(prices types.AggregatedProviderPrices) types.CurrencyPairDec {
 			}
 			if _, ok := volumeSum[base]; !ok {
 				volumeSum[base] = sdk.ZeroDec()
+			}
+			if tp.Volume.LT(minimumTickerVolume) {
+				tp.Volume = minimumTickerVolume
 			}
 
 			// weightedPrices[base] = Σ {P * V} for all TickerPrice
