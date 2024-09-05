@@ -18,10 +18,32 @@ func ConvertRatesToUSD(rates types.CurrencyPairDec) types.CurrencyPairDec {
 			continue
 		}
 
+		var converted bool
 		for cpConvert, rateConvert := range rates {
 			if cpConvert.Quote == config.DenomUSD && cpConvert.Base == cp.Quote {
 				convertedPair := types.CurrencyPair{Base: cp.Base, Quote: config.DenomUSD}
 				convertedRates[convertedPair] = rate.Mul(rateConvert)
+				converted = true
+			}
+		}
+
+		// If the rate is not converted, try one conversion path deeper.
+		if !converted {
+			for cpConvert, rateConvert := range rates {
+				if cpConvert.Base == cp.Quote {
+					var quoteRate math.LegacyDec
+					var foundQuoteRate bool
+					for cpConvert2, rateConvert2 := range rates {
+						if cpConvert2.Quote == config.DenomUSD && cpConvert2.Base == cpConvert.Quote {
+							quoteRate = rateConvert2
+							foundQuoteRate = true
+						}
+					}
+					if foundQuoteRate {
+						convertedPair := types.CurrencyPair{Base: cp.Base, Quote: config.DenomUSD}
+						convertedRates[convertedPair] = rate.Mul(rateConvert).Mul(quoteRate)
+					}
+				}
 			}
 		}
 	}
