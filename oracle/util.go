@@ -59,8 +59,8 @@ func ComputeVWAP(prices types.AggregatedProviderPrices) types.CurrencyPairDec {
 			if _, ok := volumeSum[base]; !ok {
 				volumeSum[base] = math.LegacyZeroDec()
 			}
-			if tp.Volume.LT(minimumCandleVolume) {
-				tp.Volume = minimumCandleVolume
+			if tp.Volume.LT(minimumTickerVolume) {
+				tp.Volume = minimumTickerVolume
 			}
 
 			// weightedPrices[base] = Σ {P * V} for all TickerPrice
