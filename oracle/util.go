@@ -14,6 +14,7 @@ import (
 
 var (
 	minimumTimeWeight   = math.LegacyMustNewDecFromStr("0.2000")
+	minimumTickerVolume = math.LegacyMustNewDecFromStr("0.000000000000001")
 	minimumCandleVolume = math.LegacyMustNewDecFromStr("0.0001")
 )
 
@@ -57,6 +58,9 @@ func ComputeVWAP(prices types.AggregatedProviderPrices) types.CurrencyPairDec {
 			}
 			if _, ok := volumeSum[base]; !ok {
 				volumeSum[base] = math.LegacyZeroDec()
+			}
+			if tp.Volume.LT(minimumTickerVolume) {
+				tp.Volume = minimumTickerVolume
 			}
 
 			// weightedPrices[base] = Σ {P * V} for all TickerPrice
