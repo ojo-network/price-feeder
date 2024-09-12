@@ -591,6 +591,9 @@ func (o *Oracle) tick(ctx context.Context) error {
 
 	// Get oracle vote period, next block height, current vote period, and index
 	// in the vote period.
+	if oracleParams.VotePeriod > math.MaxInt64 {
+		return fmt.Errorf("got vote period higher than max int64 value")
+	}
 	oracleVotePeriod := int64(oracleParams.VotePeriod)
 	nextBlockHeight := blockHeight + 1
 	currentVotePeriod := math.Floor(float64(nextBlockHeight) / float64(oracleVotePeriod))
