@@ -520,6 +520,7 @@ func (o *Oracle) GetParamCache(ctx context.Context, currentBlockHeight int64) (o
 
 // GetParams returns the current on-chain parameters of the x/oracle module.
 func (o *Oracle) GetParams(ctx context.Context) (oracletypes.Params, error) {
+	//nolint: all
 	grpcConn, err := grpc.Dial(
 		o.oracleClient.GRPCEndpoint,
 		// the Cosmos SDK doesn't support any transport security mechanism
