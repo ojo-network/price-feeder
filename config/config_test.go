@@ -105,7 +105,7 @@ func TestValidate(t *testing.T) {
 		{
 			"invalid base",
 			invalidBase,
-			true,
+			false,
 		},
 		{
 			"invalid quote",
