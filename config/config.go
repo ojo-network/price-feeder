@@ -40,7 +40,7 @@ type (
 	Config struct {
 		ConfigDir           string              `mapstructure:"config_dir"`
 		Server              Server              `mapstructure:"server"`
-		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs" validate:"required,gt=0,dive,required"`
+		CurrencyPairs       []CurrencyPair      `mapstructure:"currency_pairs"`
 		Deviations          []Deviation         `mapstructure:"deviation_thresholds"`
 		Account             Account             `mapstructure:"account"`
 		Keyring             Keyring             `mapstructure:"keyring"`

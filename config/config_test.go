@@ -100,7 +100,7 @@ func TestValidate(t *testing.T) {
 		{
 			"empty pairs",
 			emptyPairs,
-			true,
+			false,
 		},
 		{
 			"invalid base",
