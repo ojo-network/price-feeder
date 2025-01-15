@@ -1,6 +1,6 @@
 module github.com/ojo-network/price-feeder
 
-go 1.22.7
+go 1.23
 
 toolchain go1.23.1
 
@@ -17,7 +17,7 @@ require (
 	github.com/hashicorp/go-metrics v0.5.3
 	github.com/justinas/alice v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ojo-network/ojo v0.4.0-rc1.0.20240912201233-2af60de6026b
+	github.com/ojo-network/ojo v0.5.1-rc3.0.20250115184042-c9d13e9aa254
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
@@ -37,7 +37,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
 	cloud.google.com/go/iam v1.1.12 // indirect
 	cloud.google.com/go/storage v1.41.0 // indirect
-	cosmossdk.io/api v0.7.5 // indirect
+	cosmossdk.io/api v0.7.6 // indirect
 	cosmossdk.io/client/v2 v2.0.0-beta.3 // indirect
 	cosmossdk.io/collections v0.4.0 // indirect
 	cosmossdk.io/core v0.11.1 // indirect
