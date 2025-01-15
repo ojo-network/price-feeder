@@ -73,6 +73,7 @@ type Oracle struct {
 	pricesMutex     sync.RWMutex
 	lastPriceSyncTS time.Time
 	prices          types.CurrencyPairDec
+	externLiquidity map[uint64]types.ExternalLiquidity
 
 	tvwapsByProvider types.PricesWithMutex
 	vwapsByProvider  types.PricesWithMutex
@@ -200,6 +201,22 @@ func (o *Oracle) GetPrices() types.CurrencyPairDec {
 	return prices
 }
 
+// GetExternalLiquidity returns a copy of the current external liquidity map.
+func (o *Oracle) GetExternalLiquidity() map[uint64]types.ExternalLiquidity {
+	o.pricesMutex.RLock()
+	defer o.pricesMutex.RUnlock()
+
+	// Creates a new array for the prices in the oracle
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(o.externLiquidity))
+
+	for k, v := range o.externLiquidity {
+		// Fills in the external liquiduty map with each value in the oracle
+		externalLiquidity[k] = v
+	}
+
+	return externalLiquidity
+}
+
 // GetTvwapPrices returns a copy of the tvwapsByProvider map
 func (o *Oracle) GetTvwapPrices() types.CurrencyPairDecByProvider {
 	return o.tvwapsByProvider.GetPricesClone()
@@ -220,6 +237,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 	mtx := new(sync.Mutex)
 	providerPrices := make(types.AggregatedProviderPrices)
 	providerCandles := make(types.AggregatedProviderCandles)
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, 0)
 	requiredRates := make(map[types.CurrencyPair]struct{})
 
 	for providerName, currencyPairs := range o.providerPairs {
@@ -243,6 +261,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 		g.Go(func() error {
 			prices := make(types.CurrencyPairTickers, 0)
 			candles := make(types.CurrencyPairCandles, 0)
+			providerExternalLiquidity := make(map[uint64]types.ExternalLiquidity, 0)
 			ch := make(chan struct{})
 			errCh := make(chan error, 1)
 
@@ -255,6 +274,12 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 				}
 
 				candles, err = priceProvider.GetCandlePrices(currencyPairs...)
+				if err != nil {
+					provider.TelemetryFailure(providerName, provider.MessageTypeCandle)
+					errCh <- err
+				}
+
+				providerExternalLiquidity, err = priceProvider.GetExternalLiquidity(o.oracleClient.Client, currencyPairs...)
 				if err != nil {
 					provider.TelemetryFailure(providerName, provider.MessageTypeCandle)
 					errCh <- err
@@ -282,6 +307,10 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 				}
 			}
 
+			for poolId, el := range providerExternalLiquidity {
+				externalLiquidity[poolId] = el
+			}
+
 			mtx.Unlock()
 			return nil
 		})
@@ -307,6 +336,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 
 	o.pricesMutex.Lock()
 	o.prices = computedPrices
+	o.externLiquidity = externalLiquidity
 	o.pricesMutex.Unlock()
 	return nil
 }
@@ -487,6 +517,12 @@ func NewProvider(
 
 	case provider.ProviderAstroport:
 		return provider.NewAstroportProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderCoinEx:
+		return provider.NewCoinExProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderCryptoCompare:
+		return provider.NewCryptoCompareProvider(ctx, logger, endpoint, providerPairs...)
 	}
 
 	return nil, fmt.Errorf("provider %s not found", providerName)

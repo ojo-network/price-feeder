@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
@@ -430,6 +431,13 @@ func (p *KrakenProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
+}
+
+// GetExternalLiquidity returns external liquidity info on the provided pairs
+func (p *KrakenProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
 }
 
 // toTickerPrice return a TickerPrice based on the KrakenTicker.

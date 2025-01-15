@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
 
@@ -278,6 +279,13 @@ func (p *OkxProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
+}
+
+// GetExternalLiquidity returns external liquidity info on the provided pairs
+func (p *OkxProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
 }
 
 func (ticker OkxTickerPair) toTickerPrice() (types.TickerPrice, error) {

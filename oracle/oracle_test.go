@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/ojo-network/price-feeder/oracle/client"
+	oracleclient "github.com/ojo-network/price-feeder/oracle/client"
 	"github.com/ojo-network/price-feeder/oracle/provider"
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
@@ -67,6 +68,12 @@ func (m mockProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return map[string]struct{}{}, nil
 }
 
+func (p mockProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
+}
+
 type failingProvider struct {
 	prices types.CurrencyPairTickers
 }
@@ -87,6 +94,12 @@ func (m failingProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return map[string]struct{}{}, nil
 }
 
+func (m failingProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
+}
+
 type OracleTestSuite struct {
 	suite.Suite
 
@@ -97,7 +110,7 @@ type OracleTestSuite struct {
 func (ots *OracleTestSuite) SetupSuite() {
 	ots.oracle = New(
 		zerolog.Nop(),
-		client.OracleClient{},
+		oracleclient.OracleClient{},
 		map[types.ProviderName][]types.CurrencyPair{
 			provider.ProviderBinance: {
 				{

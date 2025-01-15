@@ -17,11 +17,12 @@ import (
 )
 
 const (
-	gateWSHost    = "ws.gate.io"
-	gateWSPath    = "/v4"
-	gatePingCheck = time.Second * 28 // should be < 30
-	gateRestHost  = "https://api.gateio.ws"
-	gateRestPath  = "/api/v4/spot/currency_pairs"
+	gateWSHost        = "ws.gate.io"
+	gateWSPath        = "/v4"
+	gatePingCheck     = time.Second * 28 // should be < 30
+	gateRestHost      = "https://api.gateio.ws"
+	gateRestPath      = "/api/v4/spot/currency_pairs"
+	gateRestOrderBook = "/api/v4/spot/order_book"
 )
 
 var _ Provider = (*GateProvider)(nil)

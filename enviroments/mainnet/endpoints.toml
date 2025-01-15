@@ -1,0 +1,25 @@
+[[provider_endpoints]]
+name = "osmosis"
+rest = "https://api.osmo-api.prod.ojo.network"
+websocket = "api.osmo-api.prod.ojo.network"
+
+[[provider_endpoints]]
+name = "crescent"
+rest = "https://api.cresc-api.prod.ojo.network"
+websocket = "api.cresc-api.prod.ojo.network"
+
+[[provider_endpoints]]
+name = "binance"
+rest = "https://api1.binance.com"
+websocket = "stream.binance.com:9443"
+
+[[provider_endpoints]]
+name = "eth-uniswap"
+rest = "https://api.studio.thegraph.com/query/46403/unidexer/version/latest"
+websocket = "not supported"
+
+[[provider_endpoints]]
+name = "cryptocompare"
+rest = "https://api.studio.thegraph.com/query/46403/unidexer/version/latest"
+apikey = "fc9179febd0f68655d22d110ea8e517ab0a35e3c6da27066812549e0a452b6b3"
+websocket = "data-streamer.cryptocompare.com"

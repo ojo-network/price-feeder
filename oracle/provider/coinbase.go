@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
 
@@ -215,6 +216,13 @@ func (p *CoinbaseProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
+}
+
+// GetExternalLiquidity returns external liquidity info on the provided pairs
+func (p *CoinbaseProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
 }
 
 func (p *CoinbaseProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {

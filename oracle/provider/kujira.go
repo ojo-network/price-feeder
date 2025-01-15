@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
@@ -283,6 +284,13 @@ func (p *KujiraProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
+}
+
+// GetExternalLiquidity returns external liquidity info on the provided pairs
+func (p *KujiraProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
 }
 
 // currencyPairToKujiraPair receives a currency pair and return kujira
