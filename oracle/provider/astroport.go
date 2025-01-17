@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 
 	"github.com/ojo-network/ojo/util/decmath"
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -237,7 +237,11 @@ func (p *AstroportProvider) getAvailableAssets() (map[string]types.CurrencyPair,
 }
 
 // GetExternalLiquidity returns external liquidity info on the provided pairs
-func (p *AstroportProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+func (p *AstroportProvider) GetExternalLiquidity(
+	ammPools map[uint64]oracletypes.Pool,
+	accountedPools map[uint64]oracletypes.AccountedPool,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
 
 	return externalLiquidity, nil

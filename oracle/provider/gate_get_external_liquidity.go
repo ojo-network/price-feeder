@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/ojo-network/price-feeder/oracle/queries"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/ojo-network/price-feeder/usecase"
@@ -21,7 +21,11 @@ type GateResponseSpotOrderBook struct {
 const gateProvider = "gate"
 
 // GetExternalLiquidity returns external liquidity info on the provided pairs
-func (p *GateProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+func (p *GateProvider) GetExternalLiquidity(
+	ammPools map[uint64]oracletypes.Pool,
+	accountedPools map[uint64]oracletypes.AccountedPool,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
 
 	for _, pair := range pairs {
@@ -90,7 +94,7 @@ func (p *GateProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.C
 		}
 
 		assetFound := true
-		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ctx, pair.PoolId)
+		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolId)
 		if err != nil {
 			assetFound = false
 			p.logger.Err(err).

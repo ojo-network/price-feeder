@@ -3,7 +3,7 @@ package provider
 import (
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
@@ -50,7 +50,11 @@ type (
 		GetAvailablePairs() (map[string]struct{}, error)
 
 		// GetExternalLiquidity returns external liquidity objects
-		GetExternalLiquidity(client client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error)
+		GetExternalLiquidity(
+			ammPools map[uint64]oracletypes.Pool,
+			accountedPools map[uint64]oracletypes.AccountedPool,
+			pairs ...types.CurrencyPair,
+		) (map[uint64]types.ExternalLiquidity, error)
 
 		// SubscribeCurrencyPairs sends subscription messages for the new currency
 		// pairs and adds them to the providers subscribed pairs

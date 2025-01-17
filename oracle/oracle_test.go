@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/client"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -68,7 +68,11 @@ func (m mockProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return map[string]struct{}{}, nil
 }
 
-func (p mockProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+func (p mockProvider) GetExternalLiquidity(
+	ammPools map[uint64]oracletypes.Pool,
+	accountedPools map[uint64]oracletypes.AccountedPool,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
 
 	return externalLiquidity, nil
@@ -94,7 +98,11 @@ func (m failingProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return map[string]struct{}{}, nil
 }
 
-func (m failingProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+func (m failingProvider) GetExternalLiquidity(
+	ammPools map[uint64]oracletypes.Pool,
+	accountedPools map[uint64]oracletypes.AccountedPool,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
 
 	return externalLiquidity, nil

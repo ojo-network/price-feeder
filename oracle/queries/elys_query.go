@@ -1,14 +1,11 @@
 package queries
 
 import (
-	"context"
 	"fmt"
 	"os"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types"
-	accountedtypes "github.com/elys-network/elys/x/accountedpool/types"
-	ammtypes "github.com/elys-network/elys/x/amm/types"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 )
 
 // TESTNET USDC DENOM
@@ -23,35 +20,38 @@ type FinaliseAssetInfo struct {
 }
 
 // Finalise and set AssetB to USDC
-func QueryExtLiqPoolAssetInfo(oracleClient client.Context, poolId uint64) (FinaliseAssetInfo, error) {
+func QueryExtLiqPoolAssetInfo(
+	ammPools map[uint64]oracletypes.Pool,
+	accountedPools map[uint64]oracletypes.AccountedPool,
+	poolId uint64,
+) (FinaliseAssetInfo, error) {
 	finaliseAssetInfo := FinaliseAssetInfo{}
 
-	ammPool, err := QueryAmmPool(oracleClient, poolId)
-	if err != nil {
-		return FinaliseAssetInfo{}, fmt.Errorf("failed to get elys x/amm Pool: %w", err)
+	ammPool, existsAmm := ammPools[poolId]
+	if !existsAmm {
+		return FinaliseAssetInfo{}, fmt.Errorf("ammPool not found for poolId: %d", poolId)
 	}
 
-	// TODO: Optimise here by making async queries
-	accountedPool, accountedPoolerr := QueryAccountedPool(oracleClient, poolId)
+	accountedPool, existsAccountPool := accountedPools[poolId]
 
 	if len(ammPool.PoolAssets) != 2 {
-		return FinaliseAssetInfo{}, fmt.Errorf("more than 2 assets found in the ammPool: %w", err)
+		return FinaliseAssetInfo{}, fmt.Errorf("more than 2 assets found in the ammPool")
 	}
 
 	finaliseAssetInfo.TokenA = ammPool.PoolAssets[0].Token
 	finaliseAssetInfo.TokenB = ammPool.PoolAssets[1].Token
 
-	if accountedPoolerr == nil && len(ammPool.PoolAssets) == 2 {
-		if accountedPool.PoolAssets[0].Token.Denom == finaliseAssetInfo.TokenA.Denom &&
-			accountedPool.PoolAssets[1].Token.Denom == finaliseAssetInfo.TokenB.Denom {
+	if existsAccountPool && len(ammPool.PoolAssets) == 2 {
+		if accountedPool.TotalTokens[0].Denom == finaliseAssetInfo.TokenA.Denom &&
+			accountedPool.TotalTokens[1].Denom == finaliseAssetInfo.TokenB.Denom {
 
-			finaliseAssetInfo.TokenA = accountedPool.PoolAssets[0].Token
-			finaliseAssetInfo.TokenB = accountedPool.PoolAssets[1].Token
-		} else if accountedPool.PoolAssets[1].Token.Denom == finaliseAssetInfo.TokenA.Denom &&
-			accountedPool.PoolAssets[0].Token.Denom == finaliseAssetInfo.TokenB.Denom {
+			finaliseAssetInfo.TokenA = accountedPool.TotalTokens[0]
+			finaliseAssetInfo.TokenB = accountedPool.TotalTokens[1]
+		} else if accountedPool.TotalTokens[1].Denom == finaliseAssetInfo.TokenA.Denom &&
+			accountedPool.TotalTokens[0].Denom == finaliseAssetInfo.TokenB.Denom {
 
-			finaliseAssetInfo.TokenA = accountedPool.PoolAssets[1].Token
-			finaliseAssetInfo.TokenB = accountedPool.PoolAssets[0].Token
+			finaliseAssetInfo.TokenA = accountedPool.TotalTokens[1]
+			finaliseAssetInfo.TokenB = accountedPool.TotalTokens[0]
 		}
 		// Else we have found different pair in accounted pool, leave it use amm-pool (Should Not Happen)
 	}
@@ -70,26 +70,4 @@ func QueryExtLiqPoolAssetInfo(oracleClient client.Context, poolId uint64) (Final
 	}
 
 	return finaliseAssetInfo, nil
-}
-
-func QueryAmmPool(ctx client.Context, poolId uint64) (ammtypes.Pool, error) {
-	queryClient := ammtypes.NewQueryClient(ctx)
-
-	queryResponse, err := queryClient.Pool(context.Background(), &ammtypes.QueryGetPoolRequest{PoolId: poolId})
-	if err != nil {
-		return ammtypes.Pool{}, fmt.Errorf("failed to get elys x/amm Pool: %w", err)
-	}
-
-	return queryResponse.Pool, nil
-}
-
-func QueryAccountedPool(ctx client.Context, poolId uint64) (accountedtypes.AccountedPool, error) {
-	queryClient := accountedtypes.NewQueryClient(ctx)
-
-	queryResponse, err := queryClient.AccountedPool(context.Background(), &accountedtypes.QueryGetAccountedPoolRequest{PoolId: poolId})
-	if err != nil {
-		return accountedtypes.AccountedPool{}, fmt.Errorf("failed to get elys x/accountedpool Pool: %w", err)
-	}
-
-	return queryResponse.AccountedPool, nil
 }

@@ -18,10 +18,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	elysapp "github.com/elys-network/elys/app"
-	elysparams "github.com/elys-network/elys/app/params"
+	ojoparams "github.com/ojo-network/ojo/app/params"
 	"github.com/rs/zerolog"
 )
 
@@ -39,14 +39,13 @@ type (
 		OracleAddrString    string
 		ValidatorAddr       sdk.ValAddress
 		ValidatorAddrString string
-		Encoding            elysparams.EncodingConfig
+		Encoding            testutil.TestEncodingConfig
 		GasPrices           string
 		GasAdjustment       float64
 		Gas                 uint64
 		GRPCEndpoint        string
 		KeyringPassphrase   string
 		ChainHeight         *ChainHeight
-		Client              client.Context
 	}
 
 	passReader struct {
@@ -54,22 +53,6 @@ type (
 		buf  *bytes.Buffer
 	}
 )
-
-func initSDKConfig() {
-	// Set prefixes
-	accountPubKeyPrefix := elysapp.AccountAddressPrefix + "pub"
-	validatorAddressPrefix := elysapp.AccountAddressPrefix + "valoper"
-	validatorPubKeyPrefix := elysapp.AccountAddressPrefix + "valoperpub"
-	consNodeAddressPrefix := elysapp.AccountAddressPrefix + "valcons"
-	consNodePubKeyPrefix := elysapp.AccountAddressPrefix + "valconspub"
-
-	// Set and seal config
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(elysapp.AccountAddressPrefix, accountPubKeyPrefix)
-	config.SetBech32PrefixForValidator(validatorAddressPrefix, validatorPubKeyPrefix)
-	config.SetBech32PrefixForConsensusNode(consNodeAddressPrefix, consNodePubKeyPrefix)
-	config.Seal()
-}
 
 func NewOracleClient(
 	ctx context.Context,
@@ -91,9 +74,6 @@ func NewOracleClient(
 		return OracleClient{}, err
 	}
 
-	encodingConfig := elysapp.MakeEncodingConfig()
-	authtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-
 	oracleClient := OracleClient{
 		Logger:              logger.With().Str("module", "oracle_client").Logger(),
 		ChainID:             chainID,
@@ -106,7 +86,7 @@ func NewOracleClient(
 		OracleAddrString:    oracleAddrString,
 		ValidatorAddr:       sdk.ValAddress(validatorAddrString),
 		ValidatorAddrString: validatorAddrString,
-		Encoding:            encodingConfig,
+		Encoding:            ojoparams.MakeEncodingConfig(),
 		GasAdjustment:       gasAdjustment,
 		Gas:                 gas,
 		GRPCEndpoint:        grpcEndpoint,
@@ -132,8 +112,6 @@ func NewOracleClient(
 		return OracleClient{}, err
 	}
 	oracleClient.ChainHeight = chainHeight
-
-	oracleClient.Client = clientCtx
 
 	return oracleClient, nil
 }
@@ -237,7 +215,7 @@ func (oc OracleClient) CreateClientContext() (client.Context, error) {
 		keyringInput = os.Stdin
 	}
 
-	kr, err := keyring.New("oracle", oc.KeyringBackend, oc.KeyringDir, keyringInput, oc.Encoding.Marshaler)
+	kr, err := keyring.New("oracle", oc.KeyringBackend, oc.KeyringDir, keyringInput, oc.Encoding.Codec)
 	if err != nil {
 		return client.Context{}, err
 	}
@@ -265,7 +243,7 @@ func (oc OracleClient) CreateClientContext() (client.Context, error) {
 		BroadcastMode:     flags.BroadcastSync,
 		TxConfig:          oc.Encoding.TxConfig,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		Codec:             oc.Encoding.Marshaler,
+		Codec:             oc.Encoding.Codec,
 		LegacyAmino:       oc.Encoding.Amino,
 		Input:             os.Stdin,
 		NodeURI:           oc.TMRPC,

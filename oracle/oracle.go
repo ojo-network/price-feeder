@@ -68,6 +68,8 @@ type Oracle struct {
 	deviations         map[string]sdkmath.LegacyDec
 	endpoints          map[types.ProviderName]provider.Endpoint
 	ParamCache         *ParamCache
+	AmmPools           map[uint64]oracletypes.Pool
+	AccountedPools     map[uint64]oracletypes.AccountedPool
 	chainConfig        bool
 
 	pricesMutex     sync.RWMutex
@@ -98,6 +100,8 @@ func New(
 		providerTimeout: providerTimeout,
 		deviations:      deviations,
 		ParamCache:      &ParamCache{params: nil},
+		AmmPools:        make(map[uint64]oracletypes.Pool),
+		AccountedPools:  make(map[uint64]oracletypes.AccountedPool),
 		chainConfig:     chainConfig,
 		endpoints:       endpoints,
 	}
@@ -279,7 +283,7 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 					errCh <- err
 				}
 
-				providerExternalLiquidity, err = priceProvider.GetExternalLiquidity(o.oracleClient.Client, currencyPairs...)
+				providerExternalLiquidity, err = priceProvider.GetExternalLiquidity(o.AmmPools, o.AccountedPools, currencyPairs...)
 				if err != nil {
 					provider.TelemetryFailure(providerName, provider.MessageTypeCandle)
 					errCh <- err

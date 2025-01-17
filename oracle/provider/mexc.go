@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/client"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -287,7 +287,11 @@ func (p *MexcProvider) GetAvailablePairs() (map[string]struct{}, error) {
 }
 
 // GetExternalLiquidity returns external liquidity info on the provided pairs
-func (p *MexcProvider) GetExternalLiquidity(ctx client.Context, pairs ...types.CurrencyPair) (map[uint64]types.ExternalLiquidity, error) {
+func (p *MexcProvider) GetExternalLiquidity(
+	ammPools map[uint64]oracletypes.Pool,
+	accountedPools map[uint64]oracletypes.AccountedPool,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
 
 	return externalLiquidity, nil
