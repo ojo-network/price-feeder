@@ -186,7 +186,6 @@ func priceFeederCmdHandler(cmd *cobra.Command, args []string) error {
 		deviations,
 		cfg.ProviderEndpointsMap(),
 		!configCurrencyProviders,
-		cfg.Account.Address,
 	)
 
 	if !configCurrencyProviders {

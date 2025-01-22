@@ -155,7 +155,6 @@ func (ots *OracleTestSuite) SetupSuite() {
 		make(map[string]math.LegacyDec),
 		make(map[types.ProviderName]provider.Endpoint),
 		false,
-		"",
 	)
 }
 
