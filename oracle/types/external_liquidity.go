@@ -9,6 +9,7 @@ import (
 // ExternalLiquidity defines price, volume, and time information for an exchange rate.
 type ExternalLiquidity struct {
 	PoolId      uint64
+	FeederAddr  string
 	BaseAsset   string
 	QuoteAsset  string
 	BaseAmount  math.LegacyDec
@@ -18,7 +19,10 @@ type ExternalLiquidity struct {
 }
 
 // NewExternalLiquidity parses a new external liquidity object from string
-func NewExternalLiquidity(poolId uint64, baseAsset, quoteAsset, baseAmount, quoteAmount, baseDepth, quoteDepth string) (ExternalLiquidity, error) {
+func NewExternalLiquidity(
+	poolId uint64,
+	baseAsset, quoteAsset, baseAmount, quoteAmount, baseDepth, quoteDepth string,
+) (ExternalLiquidity, error) {
 	baseAmountInt, err := math.LegacyNewDecFromStr(baseAmount)
 	if err != nil {
 		return ExternalLiquidity{}, fmt.Errorf("failed to parse base amount (%s): %w", baseAmount, err)

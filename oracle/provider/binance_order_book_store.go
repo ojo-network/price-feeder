@@ -106,7 +106,10 @@ func ProcessBinanceOrderBook(binanceProvider *BinanceProvider, binanceDepth Bina
 
 		orderBook := binanceDepthDataResponseToBinanceOrderBook(snapshot)
 		orderBook.Symbol = symbol
-		binanceProviderBookStore.SetOrderBook(&orderBook, false)
+		err = binanceProviderBookStore.SetOrderBook(&orderBook, false)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	}
@@ -120,20 +123,29 @@ func ProcessBinanceOrderBook(binanceProvider *BinanceProvider, binanceDepth Bina
 
 	if binanceDepth.U <= last_update_id+1 && binanceDepth.U0 >= last_update_id+1 {
 		orderBook := binanceDepthToBinanceOrderBook(binanceDepth)
-		binanceProviderBookStore.SetOrderBook(&orderBook, false)
+		err = binanceProviderBookStore.SetOrderBook(&orderBook, false)
+		if err != nil {
+			return err
+		}
+
 		log.Debug().Str("event", "ok").Str("pair", symbol).Msg("BINANCE_ORDER_BOOK_STORE")
 		return nil
 	}
 
-	log.Info().Str("event", "sync").Str("pair", symbol).Uint64("last_update_id", uint64(last_update_id)).Msg("BINANCE_ORDER_BOOK_STORE")
+	log.Info().Str("event", "sync").Str("pair", symbol).Uint64("last_update_id", uint64(last_update_id)).
+		Msg("BINANCE_ORDER_BOOK_STORE")
 	snapshot, err := binanceProvider.GetSnapshotOrderBook(symbol)
-
 	if err != nil {
 		return err
 	}
+
 	orderBook := binanceDepthDataResponseToBinanceOrderBook(snapshot)
 	orderBook.Symbol = symbol
-	binanceProviderBookStore.SetOrderBook(&orderBook, true)
+	err = binanceProviderBookStore.SetOrderBook(&orderBook, true)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

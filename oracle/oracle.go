@@ -71,6 +71,7 @@ type Oracle struct {
 	AmmPools           map[uint64]oracletypes.Pool
 	AccountedPools     map[uint64]oracletypes.AccountedPool
 	chainConfig        bool
+	feederAddr         string
 
 	pricesMutex     sync.RWMutex
 	lastPriceSyncTS time.Time
@@ -89,6 +90,7 @@ func New(
 	deviations map[string]sdkmath.LegacyDec,
 	endpoints map[types.ProviderName]provider.Endpoint,
 	chainConfig bool,
+	feederAddr string,
 ) *Oracle {
 	return &Oracle{
 		logger:          logger.With().Str("module", "oracle").Logger(),
@@ -104,6 +106,7 @@ func New(
 		AccountedPools:  make(map[uint64]oracletypes.AccountedPool),
 		chainConfig:     chainConfig,
 		endpoints:       endpoints,
+		feederAddr:      feederAddr,
 	}
 }
 
@@ -312,6 +315,8 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 			}
 
 			for poolId, el := range providerExternalLiquidity {
+				// add oracle feeder address to external liquidity
+				el.FeederAddr = o.feederAddr
 				externalLiquidity[poolId] = el
 			}
 

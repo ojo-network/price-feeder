@@ -154,7 +154,7 @@ func (p *CoinExProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interf
 		CoinExTickerPair := currencyPairToCoinExTickerPair(cp)
 		subscriptionMsgs = append(subscriptionMsgs, newCoinExSubscriptionMsg(CoinExTickerPair))
 
-		//CoinExCandlePair := currencyPairToCoinExCandlePair(cp)
+		// CoinExCandlePair := currencyPairToCoinExCandlePair(cp)
 		//subscriptionMsgs = append(subscriptionMsgs, newCoinExSubscriptionMsg(CoinExCandlePair))
 	}
 	return subscriptionMsgs
@@ -253,7 +253,7 @@ func (p *CoinExProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byt
 			p.setTickerPair(coinExTicker, coinExTicker.Symbol)
 			telemetryWebsocketMessage(ProviderCoinEx, MessageTypeTicker)
 
-			//go p.GetAndSetCandle(state.Market)
+			// go p.GetAndSetCandle(state.Market)
 		}
 		return
 	}
@@ -447,7 +447,12 @@ func (p *CoinExProvider) GetExternalLiquidity(
 		}
 
 		price, _ := p.GetTickerPrice(pair)
-		externalLiquidityEntity, err := usecase.CalculateExternalLiquidityUseCase(depthDataEntity, poolAssetInfo, assetFound, price)
+		externalLiquidityEntity, err := usecase.CalculateExternalLiquidityUseCase(
+			depthDataEntity,
+			poolAssetInfo,
+			assetFound,
+			price,
+		)
 		if err != nil {
 			p.logger.Err(err).
 				Str("provider", coinExProvider).

@@ -54,6 +54,7 @@ func TestPriceAccuracy(t *testing.T) {
 		deviations,
 		cfg.ProviderEndpointsMap(),
 		false,
+		"",
 	)
 
 	symbols := cfg.ExpectedSymbols()

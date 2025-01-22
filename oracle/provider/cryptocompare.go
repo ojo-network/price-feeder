@@ -87,7 +87,7 @@ func NewCryptoCompareProvider(
 		endpoints:  endpoints,
 		priceStore: newPriceStore(cryptoCompareLogger),
 	}
-	//Modificar aqui
+	// Modificar aqui
 	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToCryptoComparePairPriceStore)
 
 	/*confirmedPairs, err := ConfirmPairAvailability(
@@ -200,7 +200,7 @@ func (p *CryptoCompareProvider) messageReceived(_ int, _ *WebsocketConnection, b
 		return
 	}
 
-	//REVISAR ESTO POR QUE EL TIPO PUEDE SER DIFERENTE APARENTEMENTE HAY 4
+	// REVISAR ESTO POR QUE EL TIPO PUEDE SER DIFERENTE APARENTEMENTE HAY 4
 	//https://developers.cryptocompare.com/documentation/data-streamer/index_cc_v1_latest_tick_adaptive_inclusion_methodology
 	if tickerResp.Type == "985" || tickerResp.Type == "266" || tickerResp.Type == "987" || tickerResp.Type == "1101" {
 

@@ -61,7 +61,7 @@ type (
 	}
 
 	BinanceDepth struct {
-		E  string     `json:"e"` //depthUpdate // Event type
+		E  string     `json:"e"` // depthUpdate // Event type
 		E0 int64      `json:"E"` // Event time
 		S  string     `json:"s"` // Symbol ex.: BTCUSDT
 		U  int64      `json:"U"` // First update ID in event
@@ -254,7 +254,8 @@ func (p *BinanceProvider) messageReceived(_ int, _ *WebsocketConnection, bz []by
 
 	depthErr = json.Unmarshal(bz, &depthResp)
 	if len(depthResp.A) != 0 {
-		ProcessBinanceOrderBook(p, depthResp)
+		err := ProcessBinanceOrderBook(p, depthResp)
+		p.logger.Error().AnErr("Error processing binance order book", err)
 		return
 	}
 
@@ -421,7 +422,12 @@ func (p *BinanceProvider) GetExternalLiquidity(
 		}
 
 		price, _ := p.GetTickerPrice(pair)
-		externalLiquidityEntity, err := usecase.CalculateExternalLiquidityUseCase(depthDataEntity, poolAssetInfo, assetFound, price)
+		externalLiquidityEntity, err := usecase.CalculateExternalLiquidityUseCase(
+			depthDataEntity,
+			poolAssetInfo,
+			assetFound,
+			price,
+		)
 
 		if err != nil {
 			p.logger.Err(err).

@@ -9,7 +9,7 @@ import (
 )
 
 // TESTNET USDC DENOM
-//var USDC_DENOM = "ibc/2180E84E20F5679FCC760D8C165B60F42065DEF7F46A72B447CFF1B7DC6C0A65"
+// var USDC_DENOM = "ibc/2180E84E20F5679FCC760D8C165B60F42065DEF7F46A72B447CFF1B7DC6C0A65"
 
 // DEVNET USDC DENOM
 // var USDC_DENOM = "uusdc"
@@ -19,7 +19,7 @@ type FinaliseAssetInfo struct {
 	TokenB types.Coin // Assuming TokenB will always be USDC
 }
 
-// Finalise and set AssetB to USDC
+// Finalize and set AssetB to USDC
 func QueryExtLiqPoolAssetInfo(
 	ammPools map[uint64]oracletypes.Pool,
 	accountedPools map[uint64]oracletypes.AccountedPool,
@@ -64,9 +64,7 @@ func QueryExtLiqPoolAssetInfo(
 
 	// Make AssetB -> USDC
 	if finaliseAssetInfo.TokenA.Denom == USDC_DENOM {
-		usdcAsset := finaliseAssetInfo.TokenA
-		finaliseAssetInfo.TokenA = finaliseAssetInfo.TokenB
-		finaliseAssetInfo.TokenB = usdcAsset
+		finaliseAssetInfo.TokenA, finaliseAssetInfo.TokenB = finaliseAssetInfo.TokenB, finaliseAssetInfo.TokenA
 	}
 
 	return finaliseAssetInfo, nil
