@@ -184,6 +184,11 @@ func (p *BinanceProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []inter
 
 		binanceCandlePair := currencyPairToBinanceCandlePair(cp)
 		subscriptionMsgs = append(subscriptionMsgs, newBinanceSubscriptionMsg(binanceCandlePair))
+
+		if cp.PoolId > 0 {
+			binanceDepthPair := currencyPairToBinanceDepthPair(cp)
+			subscriptionMsgs = append(subscriptionMsgs, newBinanceSubscriptionMsg(binanceDepthPair))
+		}
 	}
 	return subscriptionMsgs
 }
