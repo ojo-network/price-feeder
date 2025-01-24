@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -103,7 +102,7 @@ type (
 	}
 
 	BinanceDepthDataResponse struct {
-		LastUpdateId int64       `json:"lastUpdateId"`
+		LastUpdateID int64       `json:"lastUpdateId"`
 		Asks         [][2]string `json:"asks"`
 		Bids         [][2]string `json:"bids"`
 	}
@@ -185,7 +184,7 @@ func (p *BinanceProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []inter
 		binanceCandlePair := currencyPairToBinanceCandlePair(cp)
 		subscriptionMsgs = append(subscriptionMsgs, newBinanceSubscriptionMsg(binanceCandlePair))
 
-		if cp.PoolId > 0 {
+		if cp.PoolID > 0 {
 			binanceDepthPair := currencyPairToBinanceDepthPair(cp)
 			subscriptionMsgs = append(subscriptionMsgs, newBinanceSubscriptionMsg(binanceDepthPair))
 		}
@@ -273,34 +272,6 @@ func (p *BinanceProvider) messageReceived(_ int, _ *WebsocketConnection, bz []by
 		Msg("Error on receive message")
 }
 
-func (depth BinanceDepth) toDepthPrice() (types.DepthData, error) {
-	depthData := types.DepthData{}
-
-	asks := make([][2]string, len(depth.A))
-	bids := make([][2]string, len(depth.B))
-
-	if len(depth.A) == 0 {
-		return depthData, errors.New("errors asks array is equal to 0")
-	}
-
-	if len(depth.B) == 0 {
-		return depthData, errors.New("errors bids array is equal to 0")
-	}
-
-	for k, a := range depth.A {
-		asks[k] = [2]string{a[0], a[1]}
-	}
-
-	for k, b := range depth.B {
-		bids[k] = [2]string{b[0], b[1]}
-	}
-
-	depthData.Asks = asks
-	depthData.Bids = bids
-
-	return depthData, nil
-}
-
 func (ticker BinanceTicker) toTickerPrice() (types.TickerPrice, error) {
 	return types.NewTickerPrice(ticker.LastPrice, ticker.Volume)
 }
@@ -360,7 +331,7 @@ func (p *BinanceProvider) GetExternalLiquidity(
 ) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
 	for _, pair := range pairs {
-		if pair.PoolId == 0 {
+		if pair.PoolID == 0 {
 			continue
 		}
 
@@ -417,7 +388,7 @@ func (p *BinanceProvider) GetExternalLiquidity(
 		}
 
 		assetFound := true
-		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolId)
+		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolID)
 		if err != nil {
 			assetFound = false
 			p.logger.Err(err).
@@ -452,7 +423,7 @@ func (p *BinanceProvider) GetExternalLiquidity(
 			quoteAsset = pair.Quote
 		}
 		liq, err := types.NewExternalLiquidity(
-			pair.PoolId,
+			pair.PoolID,
 			baseAsset,
 			quoteAsset,
 			fmt.Sprintf("%f", externalLiquidityEntity.BaseAmount),
@@ -471,7 +442,7 @@ func (p *BinanceProvider) GetExternalLiquidity(
 			Str("provider", binanceProvider).
 			Interface("pair", pair).Msg("EXTERNAL_LIQUIDITY_WAS_CREATED")
 
-		externalLiquidity[pair.PoolId] = liq
+		externalLiquidity[pair.PoolID] = liq
 	}
 
 	return externalLiquidity, nil

@@ -23,16 +23,16 @@ type FinaliseAssetInfo struct {
 func QueryExtLiqPoolAssetInfo(
 	ammPools map[uint64]oracletypes.Pool,
 	accountedPools map[uint64]oracletypes.AccountedPool,
-	poolId uint64,
+	poolID uint64,
 ) (FinaliseAssetInfo, error) {
 	finaliseAssetInfo := FinaliseAssetInfo{}
 
-	ammPool, existsAmm := ammPools[poolId]
+	ammPool, existsAmm := ammPools[poolID]
 	if !existsAmm {
-		return FinaliseAssetInfo{}, fmt.Errorf("ammPool not found for poolId: %d", poolId)
+		return FinaliseAssetInfo{}, fmt.Errorf("ammPool not found for poolId: %d", poolID)
 	}
 
-	accountedPool, existsAccountPool := accountedPools[poolId]
+	accountedPool, existsAccountPool := accountedPools[poolID]
 
 	if len(ammPool.PoolAssets) != 2 {
 		return FinaliseAssetInfo{}, fmt.Errorf("more than 2 assets found in the ammPool")
@@ -56,14 +56,14 @@ func QueryExtLiqPoolAssetInfo(
 		// Else we have found different pair in accounted pool, leave it use amm-pool (Should Not Happen)
 	}
 
-	USDC_DENOM, _ := os.LookupEnv("USDC_DENOM")
+	usdcDENOM, _ := os.LookupEnv("USDC_DENOM")
 
-	if finaliseAssetInfo.TokenA.Denom != USDC_DENOM && finaliseAssetInfo.TokenB.Denom != USDC_DENOM {
+	if finaliseAssetInfo.TokenA.Denom != usdcDENOM && finaliseAssetInfo.TokenB.Denom != usdcDENOM {
 		return FinaliseAssetInfo{}, fmt.Errorf("pool asset info does not contain USDC")
 	}
 
 	// Make AssetB -> USDC
-	if finaliseAssetInfo.TokenA.Denom == USDC_DENOM {
+	if finaliseAssetInfo.TokenA.Denom == usdcDENOM {
 		finaliseAssetInfo.TokenA, finaliseAssetInfo.TokenB = finaliseAssetInfo.TokenB, finaliseAssetInfo.TokenA
 	}
 

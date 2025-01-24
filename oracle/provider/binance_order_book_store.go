@@ -114,14 +114,14 @@ func ProcessBinanceOrderBook(binanceProvider *BinanceProvider, binanceDepth Bina
 		return nil
 	}
 
-	last_update_id := gotOrderBook.lastU
+	lastUpdateID := gotOrderBook.lastU
 
-	if binanceDepth.U0 <= int64(last_update_id) {
-		log.Info().Str("pair", symbol).Uint64("last_update_id", uint64(last_update_id)).Msg("BINANCE_ORDER_BOOK_STORE")
+	if binanceDepth.U0 <= lastUpdateID {
+		log.Info().Str("pair", symbol).Uint64("last_update_id", uint64(lastUpdateID)).Msg("BINANCE_ORDER_BOOK_STORE")
 		return nil
 	}
 
-	if binanceDepth.U <= last_update_id+1 && binanceDepth.U0 >= last_update_id+1 {
+	if binanceDepth.U <= lastUpdateID+1 && binanceDepth.U0 >= lastUpdateID+1 {
 		orderBook := binanceDepthToBinanceOrderBook(binanceDepth)
 		err = binanceProviderBookStore.SetOrderBook(&orderBook, false)
 		if err != nil {
@@ -132,7 +132,7 @@ func ProcessBinanceOrderBook(binanceProvider *BinanceProvider, binanceDepth Bina
 		return nil
 	}
 
-	log.Info().Str("event", "sync").Str("pair", symbol).Uint64("last_update_id", uint64(last_update_id)).
+	log.Info().Str("event", "sync").Str("pair", symbol).Uint64("last_update_id", uint64(lastUpdateID)).
 		Msg("BINANCE_ORDER_BOOK_STORE")
 	snapshot, err := binanceProvider.GetSnapshotOrderBook(symbol)
 	if err != nil {
@@ -154,7 +154,7 @@ func binanceDepthDataResponseToBinanceOrderBook(bddr BinanceDepthDataResponse) B
 	binanceOrderBook := BinanceOrderBook{
 		Bids:  map[float64]float64{},
 		Asks:  map[float64]float64{},
-		lastU: bddr.LastUpdateId,
+		lastU: bddr.LastUpdateID,
 	}
 
 	for _, bid := range bddr.Bids {

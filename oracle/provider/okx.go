@@ -283,8 +283,8 @@ func (p *OkxProvider) GetAvailablePairs() (map[string]struct{}, error) {
 
 // GetExternalLiquidity returns external liquidity info on the provided pairs
 func (p *OkxProvider) GetExternalLiquidity(
-	ammPools map[uint64]oracletypes.Pool,
-	accountedPools map[uint64]oracletypes.AccountedPool,
+	_ map[uint64]oracletypes.Pool,
+	_ map[uint64]oracletypes.AccountedPool,
 	pairs ...types.CurrencyPair,
 ) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))

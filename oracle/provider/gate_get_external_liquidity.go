@@ -29,7 +29,7 @@ func (p *GateProvider) GetExternalLiquidity(
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
 
 	for _, pair := range pairs {
-		if pair.PoolId == 0 {
+		if pair.PoolID == 0 {
 			continue
 		}
 		//https://api.gateio.ws/api/v4/spot/order_book?currency_pair=BTC_USDT&limit=5000
@@ -94,7 +94,7 @@ func (p *GateProvider) GetExternalLiquidity(
 		}
 
 		assetFound := true
-		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolId)
+		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolID)
 		if err != nil {
 			assetFound = false
 			p.logger.Err(err).
@@ -104,7 +104,12 @@ func (p *GateProvider) GetExternalLiquidity(
 		}
 
 		price, _ := p.GetTickerPrice(pair)
-		externalLiquidityEntity, err := usecase.CalculateExternalLiquidityUseCase(depthDataEntity, poolAssetInfo, assetFound, price)
+		externalLiquidityEntity, err := usecase.CalculateExternalLiquidityUseCase(
+			depthDataEntity,
+			poolAssetInfo,
+			assetFound,
+			price,
+		)
 		if err != nil {
 			p.logger.Err(err).
 				Str("provider", gateProvider).
@@ -124,7 +129,7 @@ func (p *GateProvider) GetExternalLiquidity(
 		}
 
 		liq, err := types.NewExternalLiquidity(
-			pair.PoolId,
+			pair.PoolID,
 			baseAsset,
 			quoteAsset,
 			fmt.Sprintf("%f", externalLiquidityEntity.BaseAmount),
@@ -143,7 +148,7 @@ func (p *GateProvider) GetExternalLiquidity(
 		p.logger.Info().
 			Str("provider", gateProvider).
 			Interface("pair", pair).Msg("EXTERNAL_LIQUIDITY_WAS_CREATED")
-		externalLiquidity[pair.PoolId] = liq
+		externalLiquidity[pair.PoolID] = liq
 
 	}
 

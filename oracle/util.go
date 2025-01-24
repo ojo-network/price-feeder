@@ -238,9 +238,9 @@ func CreatePairProvidersFromCurrencyPairProvidersList(
 
 	for _, pair := range currencyPairs {
 		for _, provider := range pair.Providers {
-			poolId := uint64(0)
+			poolID := uint64(0)
 			if provider == pair.ExternLiquidityProvider {
-				poolId = pair.PoolId
+				poolID = pair.PoolId
 			}
 			if len(pair.PairAddress) > 0 {
 				for _, uniPair := range pair.PairAddress {
@@ -263,7 +263,7 @@ func CreatePairProvidersFromCurrencyPairProvidersList(
 						Quote:      pair.QuoteDenom,
 						BaseProxy:  pair.BaseProxyDenom,
 						QuoteProxy: pair.QuoteProxyDenom,
-						PoolId:     poolId,
+						PoolID:     poolID,
 					},
 				)
 			}

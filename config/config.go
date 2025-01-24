@@ -71,7 +71,7 @@ type (
 		QuoteProxy              string                `mapstructure:"quote_proxy"`
 		PairAddress             []PairAddressProvider `mapstructure:"pair_address_providers" validate:"dive"`
 		Providers               []types.ProviderName  `mapstructure:"providers" validate:"required,gt=0,dive,required"`
-		PoolId                  uint64                `mapstructure:"pool_id"`
+		PoolID                  uint64                `mapstructure:"pool_id"`
 		ExternLiquidityProvider types.ProviderName    `mapstructure:"extern_liquidity_provider"`
 		CryptoCompareExchange   string                `mapstructure:"cryptocompare_exchange"`
 	}
@@ -242,9 +242,9 @@ func (c Config) ProviderPairs() map[types.ProviderName][]types.CurrencyPair {
 
 	for _, pair := range c.CurrencyPairs {
 		for _, provider := range pair.Providers {
-			poolId := uint64(0)
+			poolID := uint64(0)
 			if provider == pair.ExternLiquidityProvider {
-				poolId = pair.PoolId
+				poolID = pair.PoolID
 			}
 			if len(pair.PairAddress) > 0 {
 				for _, uniPair := range pair.PairAddress {
@@ -262,7 +262,7 @@ func (c Config) ProviderPairs() map[types.ProviderName][]types.CurrencyPair {
 					Quote:      pair.Quote,
 					BaseProxy:  pair.BaseProxy,
 					QuoteProxy: pair.QuoteProxy,
-					PoolId:     poolId,
+					PoolID:     poolID,
 				})
 			}
 		}

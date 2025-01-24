@@ -154,8 +154,8 @@ func (p *CoinExProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interf
 		CoinExTickerPair := currencyPairToCoinExTickerPair(cp)
 		subscriptionMsgs = append(subscriptionMsgs, newCoinExSubscriptionMsg(CoinExTickerPair))
 
-		// CoinExCandlePair := currencyPairToCoinExCandlePair(cp)
-		//subscriptionMsgs = append(subscriptionMsgs, newCoinExSubscriptionMsg(CoinExCandlePair))
+		CoinExCandlePair := currencyPairToCoinExCandlePair(cp)
+		subscriptionMsgs = append(subscriptionMsgs, newCoinExSubscriptionMsg(CoinExCandlePair))
 	}
 	return subscriptionMsgs
 }
@@ -201,6 +201,16 @@ func (p *CoinExProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byt
 	)
 
 	reader, err := gzip.NewReader(bytes.NewReader(bz))
+	if err != nil {
+		p.logger.Error().
+			Err(err).
+			Int("length", len(bz)).
+			AnErr("ticker", tickerErr).
+			Str("provider", coinExProvider).
+			Str("event", "gzip").
+			Msg("ERROR_CREATING_NEW_READER")
+		return
+	}
 	defer reader.Close()
 
 	if err != nil {
@@ -371,7 +381,7 @@ func (p *CoinExProvider) GetExternalLiquidity(
 ) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
 	for _, pair := range pairs {
-		if pair.PoolId == 0 {
+		if pair.PoolID == 0 {
 			continue
 		}
 		// https://api.coinex.com/v2/spot/depth?market=STARSUSDT&limit=50&interval=0.001
@@ -437,7 +447,7 @@ func (p *CoinExProvider) GetExternalLiquidity(
 		}
 
 		assetFound := true
-		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolId)
+		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolID)
 		if err != nil {
 			assetFound = false
 			p.logger.Err(err).
@@ -471,7 +481,7 @@ func (p *CoinExProvider) GetExternalLiquidity(
 			quoteAsset = pair.Quote
 		}
 		liq, err := types.NewExternalLiquidity(
-			pair.PoolId,
+			pair.PoolID,
 			baseAsset,
 			quoteAsset,
 			fmt.Sprintf("%f", externalLiquidityEntity.BaseAmount),
@@ -490,7 +500,7 @@ func (p *CoinExProvider) GetExternalLiquidity(
 			Str("provider", coinExProvider).
 			Interface("pair", pair).Msg("EXTERNAL_LIQUIDITY_WAS_CREATED")
 
-		externalLiquidity[pair.PoolId] = liq
+		externalLiquidity[pair.PoolID] = liq
 	}
 
 	return externalLiquidity, nil

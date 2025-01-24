@@ -311,8 +311,8 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 				}
 			}
 
-			for poolId, el := range providerExternalLiquidity {
-				externalLiquidity[poolId] = el
+			for poolID, el := range providerExternalLiquidity {
+				externalLiquidity[poolID] = el
 			}
 
 			mtx.Unlock()

@@ -11,7 +11,7 @@ type CurrencyPair struct {
 	BaseProxy  string
 	QuoteProxy string
 	Address    string
-	PoolId     uint64
+	PoolID     uint64
 }
 
 // String implements the Stringer interface and defines a ticker symbol for

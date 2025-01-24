@@ -12,14 +12,19 @@ import (
 // highestBidAllowedFactor = if (( 1 - pool base ratio) >= 0.5), max ( 0.15, 1-pool base ratio) else 0.5
 // lowestAskAllowedFactor = if (( 1 - pool quote ratio) >= 0.5), max ( 0.15, 1-pool quote ratio) else 0.5
 // AssetB is USDC,(Base token Atom, quote token USDC) made sure in QueryExtLiqPoolAssetInfo
-func CalculateExternalLiquidityUseCase(depthData entity.DepthData, assetInfo queries.FinaliseAssetInfo, assetFound bool, tPrice types.TickerPrice) (*entity.ExternalLiquidity, error) {
+func CalculateExternalLiquidityUseCase(
+	depthData entity.DepthData,
+	assetInfo queries.FinaliseAssetInfo,
+	assetFound bool,
+	tPrice types.TickerPrice,
+) (*entity.ExternalLiquidity, error) {
 
 	var highestPrice = float64(0)
 	var lowestPrice = float64(0)
 	var baseAmount = float64(0)
 	var quoteAmount = float64(0)
-	var highestBid = float64(0)
-	var lowestAsk = float64(0)
+	var highestBid float64
+	var lowestAsk float64
 
 	highestBid = depthData.Bids[0][0]
 	lowestAsk = depthData.Asks[0][0]
