@@ -39,30 +39,39 @@ func NewOrderBookStore(binanceProvider *BinanceProvider) *BinanceProviderBookSto
 	return binanceProviderBookStore
 }
 
-func (obs *BinanceProviderBookStore) GetOrderBook(symbol string) (*BinanceOrderBook, error) {
+func (obs *BinanceProviderBookStore) GetOrderBook(symbol string) (BinanceOrderBook, error) {
 	obs.mutex.RLock()
 	defer obs.mutex.RUnlock()
 
 	orderBook, ok := obs.orderBooks[symbol]
 
 	if !ok {
-		return nil, errors.New("order book not found")
+		return BinanceOrderBook{}, errors.New("order book not found")
 	}
 
-	return orderBook, nil
+	// Copiar mapas de bids y asks
+	bidsCopy := make(map[float64]float64, len(orderBook.Bids))
+	asksCopy := make(map[float64]float64, len(orderBook.Asks))
+	for price, amount := range orderBook.Bids {
+		bidsCopy[price] = amount
+	}
+	for price, amount := range orderBook.Asks {
+		asksCopy[price] = amount
+	}
+	return BinanceOrderBook{
+		Symbol: orderBook.Symbol,
+		Bids:   bidsCopy,
+		Asks:   asksCopy,
+		lastU:  orderBook.lastU,
+	}, nil
 }
 
 func (obs *BinanceProviderBookStore) SetOrderBook(orderBook *BinanceOrderBook, sync bool) error {
-
-	gotOrderBook, err := binanceProviderBookStore.GetOrderBook(orderBook.Symbol)
 	obs.mutex.Lock()
 	defer obs.mutex.Unlock()
-	if err != nil {
-		binanceProviderBookStore.orderBooks[orderBook.Symbol] = orderBook
-		return nil
-	}
 
-	if sync {
+	gotOrderBook, ok := binanceProviderBookStore.orderBooks[orderBook.Symbol]
+	if !ok || sync {
 		binanceProviderBookStore.orderBooks[orderBook.Symbol] = orderBook
 		return nil
 	}
@@ -95,9 +104,9 @@ func ProcessBinanceOrderBook(binanceProvider *BinanceProvider, binanceDepth Bina
 
 	symbol := binanceDepth.S
 
-	gotOrderBook, err := binanceProviderBookStore.GetOrderBook(symbol)
+	gotOrderBook, ok := binanceProviderBookStore.orderBooks[symbol]
 
-	if err != nil {
+	if !ok {
 		snapshot, err := binanceProvider.GetSnapshotOrderBook(symbol)
 
 		if err != nil {
@@ -123,7 +132,7 @@ func ProcessBinanceOrderBook(binanceProvider *BinanceProvider, binanceDepth Bina
 
 	if binanceDepth.U <= lastUpdateID+1 && binanceDepth.U0 >= lastUpdateID+1 {
 		orderBook := binanceDepthToBinanceOrderBook(binanceDepth)
-		err = binanceProviderBookStore.SetOrderBook(&orderBook, false)
+		err := binanceProviderBookStore.SetOrderBook(&orderBook, false)
 		if err != nil {
 			return err
 		}

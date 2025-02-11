@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -257,7 +258,7 @@ func (p *BinanceProvider) messageReceived(_ int, _ *WebsocketConnection, bz []by
 	}
 
 	depthErr = json.Unmarshal(bz, &depthResp)
-	if len(depthResp.A) != 0 {
+	if depthResp.E == "depthUpdate" {
 		err := ProcessBinanceOrderBook(p, depthResp)
 		p.logger.Error().AnErr("Error processing binance order book", err)
 		return
@@ -347,17 +348,26 @@ func (p *BinanceProvider) GetExternalLiquidity(
 			continue
 		}
 
-		bob := *binanceOrderBook
+		bob := binanceOrderBook
 
 		type order struct {
 			price  float64
 			amount float64
 		}
 
+		p.logger.Debug().Interface("asks", bob.Asks).Interface("bids", bob.Bids).Msg("Order book data")
+		if bob.Bids == nil {
+			return externalLiquidity, errors.New("error on bob.Bids ")
+		}
+
 		// Convertir los mapas a slices de pares clave-valor
 		bidsSlice := make([]order, 0, len(bob.Bids))
 		for price, amount := range bob.Bids {
 			bidsSlice = append(bidsSlice, order{price, amount})
+		}
+
+		if bob.Asks == nil {
+			return externalLiquidity, errors.New("error on bob.Asks ")
 		}
 		asksSlice := make([]order, 0, len(bob.Asks))
 		for price, amount := range bob.Asks {
