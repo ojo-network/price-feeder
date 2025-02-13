@@ -21,7 +21,7 @@ RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) &&
     sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m).a | cut -d ' ' -f 1)
 
 COPY . .
-RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc CGO_ENABLED=0 LINK_STATICALLY=true make build
 
 # Runner
 FROM alpine
