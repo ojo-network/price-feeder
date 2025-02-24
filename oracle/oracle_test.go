@@ -71,6 +71,7 @@ func (m mockProvider) GetAvailablePairs() (map[string]struct{}, error) {
 func (p mockProvider) GetExternalLiquidity(
 	ammPools map[uint64]oracletypes.Pool,
 	accountedPools map[uint64]oracletypes.AccountedPool,
+	_ string,
 	pairs ...types.CurrencyPair,
 ) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
@@ -101,6 +102,7 @@ func (m failingProvider) GetAvailablePairs() (map[string]struct{}, error) {
 func (m failingProvider) GetExternalLiquidity(
 	ammPools map[uint64]oracletypes.Pool,
 	accountedPools map[uint64]oracletypes.AccountedPool,
+	_ string,
 	pairs ...types.CurrencyPair,
 ) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))

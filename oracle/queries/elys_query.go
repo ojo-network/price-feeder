@@ -2,7 +2,6 @@ package queries
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/cosmos/cosmos-sdk/types"
 	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
@@ -24,6 +23,7 @@ func QueryExtLiqPoolAssetInfo(
 	ammPools map[uint64]oracletypes.Pool,
 	accountedPools map[uint64]oracletypes.AccountedPool,
 	poolID uint64,
+	usdcDenom string,
 ) (FinaliseAssetInfo, error) {
 	finaliseAssetInfo := FinaliseAssetInfo{}
 
@@ -56,14 +56,12 @@ func QueryExtLiqPoolAssetInfo(
 		// Else we have found different pair in accounted pool, leave it use amm-pool (Should Not Happen)
 	}
 
-	usdcDENOM, _ := os.LookupEnv("USDC_DENOM")
-
-	if finaliseAssetInfo.TokenA.Denom != usdcDENOM && finaliseAssetInfo.TokenB.Denom != usdcDENOM {
+	if finaliseAssetInfo.TokenA.Denom != usdcDenom && finaliseAssetInfo.TokenB.Denom != usdcDenom {
 		return FinaliseAssetInfo{}, fmt.Errorf("pool asset info does not contain USDC")
 	}
 
 	// Make AssetB -> USDC
-	if finaliseAssetInfo.TokenA.Denom == usdcDENOM {
+	if finaliseAssetInfo.TokenA.Denom == usdcDenom {
 		finaliseAssetInfo.TokenA, finaliseAssetInfo.TokenB = finaliseAssetInfo.TokenB, finaliseAssetInfo.TokenA
 	}
 

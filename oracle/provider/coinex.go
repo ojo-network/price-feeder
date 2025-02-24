@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -377,6 +376,7 @@ func (p *CoinExProvider) GetAndSetCandle(pair string) {
 func (p *CoinExProvider) GetExternalLiquidity(
 	ammPools map[uint64]oracletypes.Pool,
 	accountedPools map[uint64]oracletypes.AccountedPool,
+	usdcDenom string,
 	pairs ...types.CurrencyPair,
 ) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
@@ -447,7 +447,7 @@ func (p *CoinExProvider) GetExternalLiquidity(
 		}
 
 		assetFound := true
-		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolID)
+		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolID, usdcDenom)
 		if err != nil {
 			assetFound = false
 			p.logger.Err(err).
@@ -484,10 +484,10 @@ func (p *CoinExProvider) GetExternalLiquidity(
 			pair.PoolID,
 			baseAsset,
 			quoteAsset,
-			fmt.Sprintf("%f", externalLiquidityEntity.BaseAmount),
-			fmt.Sprintf("%f", externalLiquidityEntity.QuoteAmount),
-			fmt.Sprintf("%f", externalLiquidityEntity.BaseDepth),
-			fmt.Sprintf("%f", externalLiquidityEntity.QuoteDepth),
+			externalLiquidityEntity.BaseAmount,
+			externalLiquidityEntity.QuoteAmount,
+			externalLiquidityEntity.BaseDepth,
+			externalLiquidityEntity.QuoteDepth,
 		)
 		if err != nil {
 			p.logger.Err(err).

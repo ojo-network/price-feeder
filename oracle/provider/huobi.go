@@ -307,6 +307,7 @@ func (p *HuobiProvider) GetAvailablePairs() (map[string]struct{}, error) {
 func (p *HuobiProvider) GetExternalLiquidity(
 	_ map[uint64]oracletypes.Pool,
 	_ map[uint64]oracletypes.AccountedPool,
+	_ string,
 	pairs ...types.CurrencyPair,
 ) (map[uint64]types.ExternalLiquidity, error) {
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))

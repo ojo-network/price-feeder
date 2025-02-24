@@ -70,6 +70,7 @@ type Oracle struct {
 	ParamCache         *ParamCache
 	AmmPools           map[uint64]oracletypes.Pool
 	AccountedPools     map[uint64]oracletypes.AccountedPool
+	USDCDenom          string
 	chainConfig        bool
 
 	pricesMutex     sync.RWMutex
@@ -283,7 +284,12 @@ func (o *Oracle) SetPrices(ctx context.Context) error {
 					errCh <- err
 				}
 
-				providerExternalLiquidity, err = priceProvider.GetExternalLiquidity(o.AmmPools, o.AccountedPools, currencyPairs...)
+				providerExternalLiquidity, err = priceProvider.GetExternalLiquidity(
+					o.AmmPools,
+					o.AccountedPools,
+					o.USDCDenom,
+					currencyPairs...,
+				)
 				if err != nil {
 					provider.TelemetryFailure(providerName, provider.MessageTypeCandle)
 					errCh <- err

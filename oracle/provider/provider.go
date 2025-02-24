@@ -53,6 +53,7 @@ type (
 		GetExternalLiquidity(
 			ammPools map[uint64]oracletypes.Pool,
 			accountedPools map[uint64]oracletypes.AccountedPool,
+			usdcDenom string,
 			pairs ...types.CurrencyPair,
 		) (map[uint64]types.ExternalLiquidity, error)
 

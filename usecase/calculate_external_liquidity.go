@@ -19,19 +19,19 @@ func CalculateExternalLiquidityUseCase(
 	tPrice types.TickerPrice,
 ) (*entity.ExternalLiquidity, error) {
 
-	var highestPrice = float64(0)
-	var lowestPrice = float64(0)
-	var baseAmount = float64(0)
-	var quoteAmount = float64(0)
-	var highestBid float64
-	var lowestAsk float64
+	var highestPrice = math.LegacyNewDec(0)
+	var lowestPrice = math.LegacyNewDec(0)
+	var baseAmount = math.LegacyNewDec(0)
+	var quoteAmount = math.LegacyNewDec(0)
+	var highestBid math.LegacyDec
+	var lowestAsk math.LegacyDec
 
-	highestBid = depthData.Bids[0][0]
-	lowestAsk = depthData.Asks[0][0]
+	highestBid = math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", depthData.Bids[0][0]))
+	lowestAsk = math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", depthData.Asks[0][0]))
 
 	// Allow to take 50% on both sides, in case of equal
-	highestBidAllowed := highestBid * 0.5
-	lowestAskAllowed := lowestAsk * 1.5
+	highestBidAllowed := highestBid.QuoInt64(2)
+	lowestAskAllowed := lowestAsk.MulInt64(3).QuoInt64(2)
 
 	if assetFound {
 
@@ -48,47 +48,47 @@ func CalculateExternalLiquidityUseCase(
 
 		if subBaseFactor.LT(midRatio) {
 			baseFactor := math.LegacyMaxDec(minFactor, subBaseFactor)
-			highestBidAllowed = highestBid * (1 - baseFactor.MustFloat64())
+			highestBidAllowed = highestBid.Mul(math.LegacyOneDec().Sub(baseFactor))
 		}
 
 		if subQuoteFactor.LT(midRatio) {
 			quoteFactor := math.LegacyMaxDec(minFactor, subQuoteFactor)
-			lowestAskAllowed = lowestAsk * (1 + quoteFactor.MustFloat64())
+			lowestAskAllowed = lowestAsk.Mul(math.LegacyOneDec().Add(quoteFactor))
 		}
 	}
 
-	price := (highestBid + lowestAsk) / 2
+	price := (highestBid.Add(lowestAsk)).QuoInt64(2)
 
 	for _, bid := range depthData.Bids {
-		price := bid[0]
-		if price < highestBidAllowed {
+		price := math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", bid[0]))
+		if price.LT(highestBidAllowed) {
 			break
 		}
-		amount := bid[1]
-		quoteAmount += price * amount
+		amount := math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", bid[1]))
+		quoteAmount.Add(price.Mul(amount))
 		lowestPrice = price
 	}
 
 	fmt.Println("highestPrice, lowestPrice, baseAmount, quoteAmount", highestPrice, lowestPrice, baseAmount, quoteAmount)
 	for _, ask := range depthData.Asks {
-		price := ask[0]
-		amount := ask[1]
-		if price > lowestAskAllowed {
+		price := math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", ask[0]))
+		amount := math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", ask[1]))
+		if price.GT(lowestAskAllowed) {
 			break
 		}
-		baseAmount += amount
+		baseAmount.Add(amount)
 		highestPrice = price
 	}
 	fmt.Println("highestPrice, lowestPrice, baseAmount, quoteAmount", highestPrice, lowestPrice, baseAmount, quoteAmount)
-	baseDepth := (highestPrice / price) - 1
-	quoteDepth := 1 - (lowestPrice / price)
+	baseDepth := (highestPrice.Quo(price)).Sub(math.LegacyOneDec())
+	quoteDepth := math.LegacyOneDec().Sub(lowestPrice.Quo(price))
 	fmt.Println("baseDepth", baseDepth)
 	fmt.Println("quoteDepth", quoteDepth)
 
 	// Use decimals
 	externalLiquidityEntity := entity.ExternalLiquidity{
-		BaseAmount:  baseAmount * 1000_000,
-		QuoteAmount: quoteAmount * 1000_000,
+		BaseAmount:  baseAmount.MulInt64(1000_000),
+		QuoteAmount: quoteAmount.MulInt64(1000_000),
 		BaseDepth:   baseDepth,
 		QuoteDepth:  quoteDepth,
 	}
