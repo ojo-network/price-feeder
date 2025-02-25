@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"errors"
 	"fmt"
 
 	"cosmossdk.io/math"
@@ -26,8 +27,12 @@ func CalculateExternalLiquidityUseCase(
 	var highestBid math.LegacyDec
 	var lowestAsk math.LegacyDec
 
-	highestBid = math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", depthData.Bids[0][0]))
-	lowestAsk = math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", depthData.Asks[0][0]))
+	if len(depthData.Bids) > 0 || len(depthData.Asks) > 0 || len(depthData.Bids[0]) > 0 || len(depthData.Asks[0]) > 0 {
+		highestBid = math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", depthData.Bids[0][0]))
+		lowestAsk = math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", depthData.Asks[0][0]))
+	} else {
+		return nil, errors.New("no bids or asks in depthData")
+	}
 
 	// Allow to take 50% on both sides, in case of equal
 	highestBidAllowed := highestBid.QuoInt64(2)
