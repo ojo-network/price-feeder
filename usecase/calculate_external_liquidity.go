@@ -27,9 +27,16 @@ func CalculateExternalLiquidityUseCase(
 	var highestBid math.LegacyDec
 	var lowestAsk math.LegacyDec
 
-	if len(depthData.Bids) > 0 || len(depthData.Asks) > 0 || len(depthData.Bids[0]) > 0 || len(depthData.Asks[0]) > 0 {
-		highestBid = math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", depthData.Bids[0][0]))
-		lowestAsk = math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", depthData.Asks[0][0]))
+	if len(depthData.Bids) > 0 && len(depthData.Asks) > 0 && len(depthData.Bids[0]) > 0 && len(depthData.Asks[0]) > 0 {
+		var err error
+		highestBid, err = math.LegacyNewDecFromStr(fmt.Sprintf("%f", depthData.Bids[0][0]))
+		if err != nil {
+			return nil, err
+		}
+		lowestAsk, err = math.LegacyNewDecFromStr(fmt.Sprintf("%f", depthData.Asks[0][0]))
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		return nil, errors.New("no bids or asks in depthData")
 	}
@@ -46,8 +53,14 @@ func CalculateExternalLiquidityUseCase(
 		poolQuoteRatio := assetInfo.TokenA.Amount.ToLegacyDec().Quo(totalTokens)
 
 		// Valid string
-		midRatio, _ := math.LegacyNewDecFromStr("0.5")
-		minFactor, _ := math.LegacyNewDecFromStr("0.15")
+		midRatio, err := math.LegacyNewDecFromStr("0.5")
+		if err != nil {
+			return nil, err
+		}
+		minFactor, err := math.LegacyNewDecFromStr("0.15")
+		if err != nil {
+			return nil, err
+		}
 		subBaseFactor := math.LegacyNewDec(1).Sub(poolBaseRatio)
 		subQuoteFactor := math.LegacyNewDec(1).Sub(poolQuoteRatio)
 
@@ -65,19 +78,33 @@ func CalculateExternalLiquidityUseCase(
 	price := (highestBid.Add(lowestAsk)).QuoInt64(2)
 
 	for _, bid := range depthData.Bids {
-		price := math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", bid[0]))
+		price, err := math.LegacyNewDecFromStr(fmt.Sprintf("%f", bid[0]))
+		if err != nil {
+			return nil, err
+		}
 		if price.LT(highestBidAllowed) {
 			break
 		}
-		amount := math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", bid[1]))
+
+		amount, err := math.LegacyNewDecFromStr(fmt.Sprintf("%f", bid[1]))
+		if err != nil {
+			return nil, err
+		}
 		quoteAmount.Add(price.Mul(amount))
 		lowestPrice = price
 	}
 
 	fmt.Println("highestPrice, lowestPrice, baseAmount, quoteAmount", highestPrice, lowestPrice, baseAmount, quoteAmount)
 	for _, ask := range depthData.Asks {
-		price := math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", ask[0]))
-		amount := math.LegacyMustNewDecFromStr(fmt.Sprintf("%f", ask[1]))
+		price, err := math.LegacyNewDecFromStr(fmt.Sprintf("%f", ask[0]))
+		if err != nil {
+			return nil, err
+		}
+		amount, err := math.LegacyNewDecFromStr(fmt.Sprintf("%f", ask[1]))
+		if err != nil {
+			return nil, err
+		}
+
 		if price.GT(lowestAskAllowed) {
 			break
 		}
