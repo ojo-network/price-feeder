@@ -4,8 +4,6 @@ import (
 	"errors"
 	"strconv"
 	"sync"
-
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -126,7 +124,8 @@ func ProcessBinanceOrderBook(binanceProvider *BinanceProvider, binanceDepth Bina
 	lastUpdateID := gotOrderBook.lastU
 
 	if binanceDepth.U0 <= lastUpdateID {
-		log.Info().Str("pair", symbol).Uint64("last_update_id", uint64(lastUpdateID)).Msg("BINANCE_ORDER_BOOK_STORE")
+		binanceProvider.logger.Info().Str("pair", symbol).Uint64("last_update_id", uint64(lastUpdateID)).
+			Msg("BINANCE_ORDER_BOOK_STORE")
 		return nil
 	}
 
@@ -137,11 +136,11 @@ func ProcessBinanceOrderBook(binanceProvider *BinanceProvider, binanceDepth Bina
 			return err
 		}
 
-		log.Debug().Str("event", "ok").Str("pair", symbol).Msg("BINANCE_ORDER_BOOK_STORE")
+		binanceProvider.logger.Debug().Str("event", "ok").Str("pair", symbol).Msg("BINANCE_ORDER_BOOK_STORE")
 		return nil
 	}
 
-	log.Info().Str("event", "sync").Str("pair", symbol).Uint64("last_update_id", uint64(lastUpdateID)).
+	binanceProvider.logger.Info().Str("event", "sync").Str("pair", symbol).Uint64("last_update_id", uint64(lastUpdateID)).
 		Msg("BINANCE_ORDER_BOOK_STORE")
 	snapshot, err := binanceProvider.GetSnapshotOrderBook(symbol)
 	if err != nil {
