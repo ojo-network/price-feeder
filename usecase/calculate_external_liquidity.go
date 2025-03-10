@@ -90,7 +90,7 @@ func CalculateExternalLiquidityUseCase(
 		if err != nil {
 			return nil, err
 		}
-		quoteAmount.Add(price.Mul(amount))
+		quoteAmount = quoteAmount.Add(price.Mul(amount))
 		lowestPrice = price
 	}
 
@@ -108,7 +108,7 @@ func CalculateExternalLiquidityUseCase(
 		if price.GT(lowestAskAllowed) {
 			break
 		}
-		baseAmount.Add(amount)
+		baseAmount = baseAmount.Add(amount)
 		highestPrice = price
 	}
 	fmt.Println("highestPrice, lowestPrice, baseAmount, quoteAmount", highestPrice, lowestPrice, baseAmount, quoteAmount)
