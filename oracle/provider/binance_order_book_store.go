@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var (
@@ -106,7 +107,8 @@ func ProcessBinanceOrderBook(binanceProvider *BinanceProvider, binanceDepth Bina
 
 	if !ok {
 		snapshot, err := binanceProvider.GetSnapshotOrderBook(symbol)
-
+		// Delay calls for binance snapshot order book by 2.5 seconds to avoid rate limit
+		time.Sleep(2500 * time.Millisecond)
 		if err != nil {
 			return err
 		}
