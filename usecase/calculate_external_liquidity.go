@@ -94,7 +94,6 @@ func CalculateExternalLiquidityUseCase(
 		lowestPrice = price
 	}
 
-	fmt.Println("highestPrice, lowestPrice, baseAmount, quoteAmount", highestPrice, lowestPrice, baseAmount, quoteAmount)
 	for _, ask := range depthData.Asks {
 		price, err := math.LegacyNewDecFromStr(fmt.Sprintf("%f", ask[0]))
 		if err != nil {
@@ -111,11 +110,8 @@ func CalculateExternalLiquidityUseCase(
 		baseAmount = baseAmount.Add(amount)
 		highestPrice = price
 	}
-	fmt.Println("highestPrice, lowestPrice, baseAmount, quoteAmount", highestPrice, lowestPrice, baseAmount, quoteAmount)
 	baseDepth := (highestPrice.Quo(price)).Sub(math.LegacyOneDec())
 	quoteDepth := math.LegacyOneDec().Sub(lowestPrice.Quo(price))
-	fmt.Println("baseDepth", baseDepth)
-	fmt.Println("quoteDepth", quoteDepth)
 
 	// Use decimals
 	externalLiquidityEntity := entity.ExternalLiquidity{

@@ -2,7 +2,6 @@ package provider
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -35,7 +34,6 @@ func (p *GateProvider) GetExternalLiquidity(
 		}
 		//https://api.gateio.ws/api/v4/spot/order_book?currency_pair=BTC_USDT&limit=5000
 		route := p.endpoints.Rest + gateRestOrderBook + "?currency_pair=" + pair.Base + "_" + pair.Quote + "&limit=5000"
-		fmt.Println("external_liquidity_route", route)
 		resp, err := http.Get(route)
 		if err != nil {
 			p.logger.Err(err).
