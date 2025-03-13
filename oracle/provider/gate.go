@@ -409,7 +409,7 @@ func newGateTickerSubscription(cp ...string) GateTickerSubscriptionMsg {
 func newGateCandleSubscription(gatePair string) GateCandleSubscriptionMsg {
 	params := []interface{}{
 		gatePair, // currency pair ex. "ATOM_USDT"
-		60,       // time interval in seconds
+		1,        // time interval in seconds
 	}
 	return GateCandleSubscriptionMsg{
 		Method: "kline.subscribe",

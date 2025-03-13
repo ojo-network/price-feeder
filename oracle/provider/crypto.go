@@ -30,7 +30,7 @@ const (
 	cryptoHeartbeatMethod    = "public/heartbeat"
 	cryptoHeartbeatReqMethod = "public/respond-heartbeat"
 	cryptoTickerMsgPrefix    = "ticker."
-	cryptoCandleMsgPrefix    = "candlestick.5m."
+	cryptoCandleMsgPrefix    = "candlestick.1m."
 )
 
 var _ Provider = (*CryptoProvider)(nil)

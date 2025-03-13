@@ -24,7 +24,7 @@ const (
 	bitgetRestHost      = "https://api.bitget.com"
 	bitgetRestPath      = "/api/spot/v1/public/products"
 	tickerChannel       = "ticker"
-	candleChannel       = "candle5m"
+	candleChannel       = "candle1m"
 	instType            = "SP"
 )
 

@@ -20,7 +20,7 @@ var (
 
 const (
 	// tvwapCandlePeriod represents the time period we use for tvwap in minutes
-	tvwapCandlePeriod = 10 * time.Minute
+	tvwapCandlePeriod = 30 * time.Second
 )
 
 // compute VWAP for each base by dividing the Σ {P * V} by Σ {V}

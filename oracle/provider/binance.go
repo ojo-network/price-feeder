@@ -469,9 +469,9 @@ func currencyPairToBinanceDepthPair(cp types.CurrencyPair) string {
 }
 
 // currencyPairToBinanceCandlePair receives a currency pair and return binance
-// candle symbol atomusdt@kline_1m.
+// candle symbol atomusdt@kline_1s.
 func currencyPairToBinanceCandlePair(cp types.CurrencyPair) string {
-	return strings.ToLower(cp.String() + "@kline_1m")
+	return strings.ToLower(cp.String() + "@kline_1s")
 }
 
 // newBinanceSubscriptionMsg returns a new subscription Msg.
