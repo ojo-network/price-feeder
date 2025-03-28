@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
@@ -117,10 +118,34 @@ func NewBinanceProvider(
 ) (*BinanceProvider, error) {
 	if (endpoints.Name) != ProviderBinance {
 		if !binanceUS {
-			endpoints = Endpoint{
+			binanceEndpoint := Endpoint{
 				Name:      ProviderBinance,
 				Rest:      binanceRestHost,
 				Websocket: binanceWSHost,
+			}
+
+			binanceUSEndpoint := Endpoint{
+				Name:      ProviderBinanceUS,
+				Rest:      binanceRestUSHost,
+				Websocket: binanceUSWSHost,
+			}
+
+			client := http.Client{
+				Timeout: 5 * time.Second,
+			}
+			_, err := client.Get(binanceEndpoint.Rest + binanceRestPath)
+			if err == nil {
+				endpoints = binanceEndpoint
+				logger.Info().Msg("Using regular Binance endpoints")
+			} else {
+				_, err := client.Get(binanceUSEndpoint.Rest + binanceRestPath)
+				if err == nil {
+					endpoints = binanceUSEndpoint
+					logger.Info().Msg("Using Binance US endpoints")
+				} else {
+					endpoints = binanceEndpoint
+					logger.Warn().Msg("Failed to connect to both Binance endpoints, defaulting to regular Binance")
+				}
 			}
 		} else {
 			endpoints = Endpoint{
