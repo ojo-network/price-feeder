@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"sort"
@@ -330,6 +331,12 @@ func (p *BinanceProvider) GetAvailablePairs() (map[string]struct{}, error) {
 func (p *BinanceProvider) GetSnapshotOrderBook(symbol string) (BinanceDepthDataResponse, error) {
 
 	route := p.endpoints.Rest + binanceRestDepthPath + "?symbol=" + symbol + "&limit=5000"
+
+	minDelay := 2 * time.Second
+	maxDelay := 10 * time.Second
+	// Generate a random duration within the range
+	delay := time.Duration(rand.Int63n(maxDelay.Nanoseconds()-minDelay.Nanoseconds()) + minDelay.Nanoseconds())
+	time.Sleep(delay)
 
 	resp, err := http.Get(route)
 
