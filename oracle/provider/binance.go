@@ -328,7 +328,11 @@ func (p *BinanceProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return availablePairs, nil
 }
 
+var snapshotOrderBookMutex = &sync.Mutex{}
+
 func (p *BinanceProvider) GetSnapshotOrderBook(symbol string) (BinanceDepthDataResponse, error) {
+	snapshotOrderBookMutex.Lock()
+	defer snapshotOrderBookMutex.Unlock()
 
 	route := p.endpoints.Rest + binanceRestDepthPath + "?symbol=" + symbol + "&limit=5000"
 
@@ -340,9 +344,15 @@ func (p *BinanceProvider) GetSnapshotOrderBook(symbol string) (BinanceDepthDataR
 
 	resp, err := http.Get(route)
 
+	p.logger.Info().
+		Str("datetime", time.Now().Format("2006-01-02 15:04:05")).
+		Str("symbol", symbol).
+		Str("delay", delay.String()).Msg("GET_SNAPSHOT_ORDER_BOOK")
+
 	if err != nil {
 		return BinanceDepthDataResponse{}, err
 	}
+
 	defer resp.Body.Close()
 	var binanceDepthDataResponse BinanceDepthDataResponse
 
