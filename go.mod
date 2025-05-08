@@ -1,8 +1,8 @@
 module github.com/ojo-network/price-feeder
 
-go 1.22.1
+go 1.23.0
 
-toolchain go1.22.7
+toolchain go1.24.1
 
 require (
 	cosmossdk.io/errors v1.0.1
@@ -22,7 +22,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/sync v0.8.0
+	golang.org/x/sync v0.14.0
 	google.golang.org/grpc v1.64.1
 	gopkg.in/yaml.v3 v3.0.1
 )
