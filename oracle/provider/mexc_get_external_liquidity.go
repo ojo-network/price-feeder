@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -14,15 +15,17 @@ import (
 	"github.com/ojo-network/price-feeder/usecase/entity"
 )
 
-type GateResponseSpotOrderBook struct {
-	Asks [][2]string `json:"asks"`
-	Bids [][2]string `json:"bids"`
+const mexcProvider = "mexc"
+
+type MexcOrderBookResponse struct {
+	LastUpdateID int64      `json:"lastUpdateId"`
+	Bids         [][]string `json:"bids"`
+	Asks         [][]string `json:"asks"`
+	Timestamp    int64      `json:"timestamp"`
 }
 
-const gateProvider = "gate"
-
 // GetExternalLiquidity returns external liquidity info on the provided pairs
-func (p *GateProvider) GetExternalLiquidity(
+func (p *MexcProvider) GetExternalLiquidity(
 	ammPools map[uint64]oracletypes.Pool,
 	accountedPools map[uint64]oracletypes.AccountedPool,
 	usdcDenom string,
@@ -38,89 +41,51 @@ func (p *GateProvider) GetExternalLiquidity(
 	var mutex sync.Mutex
 
 	for _, pair := range pairs {
+
 		if pair.PoolID == 0 {
 			continue
 		}
+
 		wg.Add(1)
 
-		go func() {
+		go func(pair types.CurrencyPair) {
+
 			defer wg.Done()
-			//https://api.gateio.ws/api/v4/spot/order_book?currency_pair=BTC_USDT&limit=5000
-			route := p.endpoints.Rest + gateRestOrderBook + "?currency_pair=" + pair.Base + "_" + pair.Quote + "&limit=5000"
+			if err := p.rateLimiter.Wait(context.Background()); err != nil {
+				p.logger.Err(err).
+					Str("provider", mexcProvider).
+					Interface("pair", pair).
+					Msg("RATE_LIMIT_WAIT_ERROR")
+				return
+			}
+
+			route := mexcRestBase + "/api/v3/depth?symbol=" + pair.Base + pair.Quote + "&limit=5000"
 			resp, err := client.Get(route)
 			if err != nil {
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", mexcProvider).
 					Interface("pair", pair).
-					Msg("ERROR_GETTING_ORDER_BOOK_ON_GATE")
+					Msg("ERROR_GETTING_ORDER_BOOK_ON_MEXC")
 				return
 			}
 			defer resp.Body.Close()
 
-			var gateResponseSpotOrderBook GateResponseSpotOrderBook
-			if err := json.NewDecoder(resp.Body).Decode(&gateResponseSpotOrderBook); err != nil {
+			var MexcOrderBookResponse MexcOrderBookResponse
+			if err := json.NewDecoder(resp.Body).Decode(&MexcOrderBookResponse); err != nil {
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", mexcProvider).
 					Interface("pair", pair).
-					Msg("ERROR_DECODING_RESPONSE_SPOT_ORDER_BOOK")
+					Msg("ERROR_DECODING_RESPONSE_MEXC")
 				return
 			}
-			asks := [][2]float64{}
-			bids := [][2]float64{}
 
-			for _, ask := range gateResponseSpotOrderBook.Asks {
-
-				if len(ask) < 2 {
-					p.logger.Error().
-						Str("provider", gateProvider).
-						Interface("ask", ask).
-						Msg("INVALID_ASK_DATA_FORMAT")
-					continue
-				}
-
-				price, err := strconv.ParseFloat(ask[0], 64)
-
-				if err != nil {
-					return
-				}
-
-				quantity, err := strconv.ParseFloat(ask[1], 64)
-
-				if err != nil {
-					return
-				}
-
-				asks = append(asks, [2]float64{price, quantity})
-			}
-
-			for _, bid := range gateResponseSpotOrderBook.Bids {
-
-				if len(bid) < 2 {
-					p.logger.Error().
-						Str("provider", gateProvider).
-						Interface("bid", bid).
-						Msg("INVALID_BID_DATA_FORMAT")
-					continue
-				}
-
-				price, err := strconv.ParseFloat(bid[0], 64)
-
-				if err != nil {
-					return
-				}
-
-				quantity, err := strconv.ParseFloat(bid[1], 64)
-
-				if err != nil {
-					return
-				}
-
-				bids = append(bids, [2]float64{price, quantity})
-			}
-
-			depthDataEntity := entity.DepthData{
-				Asks: asks,
-				Bids: bids,
+			depthDataEntity, err := mexcBookResponseToEntityDepthData(MexcOrderBookResponse)
+			if err != nil {
+				p.logger.Err(err).
+					Str("provider", mexcProvider).
+					Interface("pair", pair).
+					Msg("ERROR_MAPPING_RESPONSE_MEXC")
+				return
 			}
 
 			assetFound := true
@@ -128,7 +93,7 @@ func (p *GateProvider) GetExternalLiquidity(
 			if err != nil {
 				assetFound = false
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", mexcProvider).
 					Interface("pair", pair).
 					Msg("ERROR_QUERYING_POOL_ASSET_INFO")
 			}
@@ -142,7 +107,7 @@ func (p *GateProvider) GetExternalLiquidity(
 			)
 			if err != nil {
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", mexcProvider).
 					Interface("pair", pair).
 					Msg("ERROR_CALCULATING_EXTERNAL_LIQUIDITY")
 				return
@@ -169,21 +134,76 @@ func (p *GateProvider) GetExternalLiquidity(
 			)
 			if err != nil {
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", mexcProvider).
 					Interface("pair", pair).
 					Msg("ERROR_CREATING_NEW_EXTERNAL_LIQUIDITY")
 				return
 			}
 
 			p.logger.Info().
-				Str("provider", gateProvider).
+				Str("provider", mexcProvider).
 				Interface("pair", pair).Msg("EXTERNAL_LIQUIDITY_WAS_CREATED")
 			mutex.Lock()
 			externalLiquidity[pair.PoolID] = liq
 			mutex.Unlock()
-		}()
 
+		}(pair)
 	}
+
 	wg.Wait()
+
 	return externalLiquidity, nil
+}
+
+func mexcBookResponseToEntityDepthData(book MexcOrderBookResponse) (entity.DepthData, error) {
+
+	asks := [][2]float64{}
+	bids := [][2]float64{}
+
+	for _, ask := range book.Asks {
+
+		if len(ask) < 2 {
+			continue
+		}
+
+		price, err := strconv.ParseFloat(ask[0], 64)
+
+		if err != nil {
+			return entity.DepthData{}, err
+		}
+
+		quantity, err := strconv.ParseFloat(ask[1], 64)
+
+		if err != nil {
+			return entity.DepthData{}, err
+		}
+
+		asks = append(asks, [2]float64{price, quantity})
+	}
+
+	for _, bid := range book.Bids {
+
+		if len(bid) < 2 {
+			continue
+		}
+
+		price, err := strconv.ParseFloat(bid[0], 64)
+
+		if err != nil {
+			return entity.DepthData{}, err
+		}
+
+		quantity, err := strconv.ParseFloat(bid[1], 64)
+
+		if err != nil {
+			return entity.DepthData{}, err
+		}
+
+		bids = append(bids, [2]float64{price, quantity})
+	}
+
+	return entity.DepthData{
+		Asks: asks,
+		Bids: bids,
+	}, nil
 }

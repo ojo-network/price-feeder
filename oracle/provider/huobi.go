@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -42,6 +42,7 @@ type (
 		endpoints Endpoint
 
 		priceStore
+		rateLimiter *rate.Limiter
 	}
 
 	// HuobiTicker defines the response type for the channel and the tick object for a
@@ -118,9 +119,10 @@ func NewHuobiProvider(
 	huobiLogger := logger.With().Str("provider", string(ProviderHuobi)).Logger()
 
 	provider := &HuobiProvider{
-		logger:     huobiLogger,
-		endpoints:  endpoints,
-		priceStore: newPriceStore(huobiLogger),
+		logger:      huobiLogger,
+		endpoints:   endpoints,
+		priceStore:  newPriceStore(huobiLogger),
+		rateLimiter: rate.NewLimiter(rate.Limit(4), 5),
 	}
 	provider.currencyPairToTickerPair = currencyPairToHuobiTickerPair
 	provider.curencyPairToCandlePair = currencyPairToHuobiCandlePair
@@ -301,18 +303,6 @@ func (p *HuobiProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
-}
-
-// GetExternalLiquidity returns external liquidity info on the provided pairs
-func (p *HuobiProvider) GetExternalLiquidity(
-	_ map[uint64]oracletypes.Pool,
-	_ map[uint64]oracletypes.AccountedPool,
-	_ string,
-	pairs ...types.CurrencyPair,
-) (map[uint64]types.ExternalLiquidity, error) {
-	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
-
-	return externalLiquidity, nil
 }
 
 // decompressGzip uncompress gzip compressed messages. All data returned from the

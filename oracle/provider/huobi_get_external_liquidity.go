@@ -1,9 +1,11 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
-	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,15 +16,24 @@ import (
 	"github.com/ojo-network/price-feeder/usecase/entity"
 )
 
-type GateResponseSpotOrderBook struct {
-	Asks [][2]string `json:"asks"`
-	Bids [][2]string `json:"bids"`
+const huobiProvider = "huobi"
+
+type HuobiOrderBookResponse struct {
+	Channel   string        `json:"ch"`
+	Status    string        `json:"status"`
+	Timestamp int64         `json:"ts"`
+	Data      HuobiBookData `json:"tick"`
 }
 
-const gateProvider = "gate"
+type HuobiBookData struct {
+	Bids      [][2]float64 `json:"bids"`
+	Asks      [][2]float64 `json:"asks"`
+	Version   int64        `json:"version"`
+	Timestamp int64        `json:"ts"`
+}
 
 // GetExternalLiquidity returns external liquidity info on the provided pairs
-func (p *GateProvider) GetExternalLiquidity(
+func (p *HuobiProvider) GetExternalLiquidity(
 	ammPools map[uint64]oracletypes.Pool,
 	accountedPools map[uint64]oracletypes.AccountedPool,
 	usdcDenom string,
@@ -38,89 +49,53 @@ func (p *GateProvider) GetExternalLiquidity(
 	var mutex sync.Mutex
 
 	for _, pair := range pairs {
+
 		if pair.PoolID == 0 {
 			continue
 		}
-		wg.Add(1)
 
-		go func() {
+		wg.Add(1)
+		go func(pair types.CurrencyPair) {
+
 			defer wg.Done()
-			//https://api.gateio.ws/api/v4/spot/order_book?currency_pair=BTC_USDT&limit=5000
-			route := p.endpoints.Rest + gateRestOrderBook + "?currency_pair=" + pair.Base + "_" + pair.Quote + "&limit=5000"
+			if err := p.rateLimiter.Wait(context.Background()); err != nil {
+				p.logger.Err(err).
+					Str("provider", huobiProvider).
+					Interface("pair", pair).
+					Msg("RATE_LIMIT_WAIT_ERROR")
+				return
+			}
+
+			base := strings.ToLower(pair.Base)
+			quote := strings.ToLower(pair.Quote)
+
+			route := huobiRestHost + "/market/fullMbp?symbol=" + base + quote
 			resp, err := client.Get(route)
 			if err != nil {
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", huobiProvider).
 					Interface("pair", pair).
-					Msg("ERROR_GETTING_ORDER_BOOK_ON_GATE")
+					Msg("ERROR_GETTING_ORDER_BOOK_ON_HUOBI")
 				return
 			}
 			defer resp.Body.Close()
 
-			var gateResponseSpotOrderBook GateResponseSpotOrderBook
-			if err := json.NewDecoder(resp.Body).Decode(&gateResponseSpotOrderBook); err != nil {
+			var huobiOrderBookResponse HuobiOrderBookResponse
+			if err := json.NewDecoder(resp.Body).Decode(&huobiOrderBookResponse); err != nil {
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", huobiProvider).
 					Interface("pair", pair).
-					Msg("ERROR_DECODING_RESPONSE_SPOT_ORDER_BOOK")
+					Msg("ERROR_DECODING_RESPONSE_HUOBI")
 				return
 			}
-			asks := [][2]float64{}
-			bids := [][2]float64{}
 
-			for _, ask := range gateResponseSpotOrderBook.Asks {
-
-				if len(ask) < 2 {
-					p.logger.Error().
-						Str("provider", gateProvider).
-						Interface("ask", ask).
-						Msg("INVALID_ASK_DATA_FORMAT")
-					continue
-				}
-
-				price, err := strconv.ParseFloat(ask[0], 64)
-
-				if err != nil {
-					return
-				}
-
-				quantity, err := strconv.ParseFloat(ask[1], 64)
-
-				if err != nil {
-					return
-				}
-
-				asks = append(asks, [2]float64{price, quantity})
-			}
-
-			for _, bid := range gateResponseSpotOrderBook.Bids {
-
-				if len(bid) < 2 {
-					p.logger.Error().
-						Str("provider", gateProvider).
-						Interface("bid", bid).
-						Msg("INVALID_BID_DATA_FORMAT")
-					continue
-				}
-
-				price, err := strconv.ParseFloat(bid[0], 64)
-
-				if err != nil {
-					return
-				}
-
-				quantity, err := strconv.ParseFloat(bid[1], 64)
-
-				if err != nil {
-					return
-				}
-
-				bids = append(bids, [2]float64{price, quantity})
-			}
-
-			depthDataEntity := entity.DepthData{
-				Asks: asks,
-				Bids: bids,
+			depthDataEntity, err := huobiBookResponseToEntityDepthData(huobiOrderBookResponse)
+			if err != nil {
+				p.logger.Err(err).
+					Str("provider", huobiProvider).
+					Interface("pair", pair).
+					Msg("ERROR_MAPPING_RESPONSE_HUOBI")
+				return
 			}
 
 			assetFound := true
@@ -128,7 +103,7 @@ func (p *GateProvider) GetExternalLiquidity(
 			if err != nil {
 				assetFound = false
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", huobiProvider).
 					Interface("pair", pair).
 					Msg("ERROR_QUERYING_POOL_ASSET_INFO")
 			}
@@ -142,7 +117,7 @@ func (p *GateProvider) GetExternalLiquidity(
 			)
 			if err != nil {
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", huobiProvider).
 					Interface("pair", pair).
 					Msg("ERROR_CALCULATING_EXTERNAL_LIQUIDITY")
 				return
@@ -169,21 +144,53 @@ func (p *GateProvider) GetExternalLiquidity(
 			)
 			if err != nil {
 				p.logger.Err(err).
-					Str("provider", gateProvider).
+					Str("provider", huobiProvider).
 					Interface("pair", pair).
 					Msg("ERROR_CREATING_NEW_EXTERNAL_LIQUIDITY")
 				return
 			}
 
 			p.logger.Info().
-				Str("provider", gateProvider).
+				Str("provider", huobiProvider).
 				Interface("pair", pair).Msg("EXTERNAL_LIQUIDITY_WAS_CREATED")
 			mutex.Lock()
 			externalLiquidity[pair.PoolID] = liq
 			mutex.Unlock()
-		}()
 
+		}(pair)
 	}
+
 	wg.Wait()
 	return externalLiquidity, nil
+}
+
+func huobiBookResponseToEntityDepthData(book HuobiOrderBookResponse) (entity.DepthData, error) {
+
+	asks := [][2]float64{}
+	bids := [][2]float64{}
+
+	if book.Data.Asks == nil || book.Data.Bids == nil {
+		return entity.DepthData{}, errors.New("huobi order book response data ask or bid is empty")
+	}
+
+	for _, ask := range book.Data.Asks {
+		if len(ask) < 2 {
+			continue
+		}
+		price, quantity := ask[0], ask[1]
+		asks = append(asks, [2]float64{price, quantity})
+	}
+
+	for _, bid := range book.Data.Bids {
+		if len(bid) < 2 {
+			continue
+		}
+		price, quantity := bid[0], bid[1]
+		bids = append(bids, [2]float64{price, quantity})
+	}
+
+	return entity.DepthData{
+		Asks: asks,
+		Bids: bids,
+	}, nil
 }

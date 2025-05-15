@@ -11,11 +11,11 @@ import (
 	"sync"
 
 	"cosmossdk.io/math"
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -23,6 +23,7 @@ const (
 	mexcWSPath   = "/ws"
 	mexcRestHost = "https://api.mexc.com/"
 	mexcRestPath = "/api/v3/ticker/price"
+	mexcRestBase = "https://api.mexc.com"
 )
 
 var _ Provider = (*MexcProvider)(nil)
@@ -39,6 +40,7 @@ type (
 		endpoints Endpoint
 
 		priceStore
+		rateLimiter *rate.Limiter
 	}
 
 	// MexcTickerResponse is the ticker price response object.
@@ -110,9 +112,10 @@ func NewMexcProvider(
 	mexcLogger := logger.With().Str("provider", "mexc").Logger()
 
 	provider := &MexcProvider{
-		logger:     mexcLogger,
-		endpoints:  endpoints,
-		priceStore: newPriceStore(mexcLogger),
+		logger:      mexcLogger,
+		endpoints:   endpoints,
+		priceStore:  newPriceStore(mexcLogger),
+		rateLimiter: rate.NewLimiter(rate.Limit(45), 450),
 	}
 	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToMexcPair)
 
@@ -284,18 +287,6 @@ func (p *MexcProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
-}
-
-// GetExternalLiquidity returns external liquidity info on the provided pairs
-func (p *MexcProvider) GetExternalLiquidity(
-	_ map[uint64]oracletypes.Pool,
-	_ map[uint64]oracletypes.AccountedPool,
-	_ string,
-	pairs ...types.CurrencyPair,
-) (map[uint64]types.ExternalLiquidity, error) {
-	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
-
-	return externalLiquidity, nil
 }
 
 // currencyPairToMexcPair receives a currency pair and return mexc

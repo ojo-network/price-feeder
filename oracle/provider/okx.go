@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/rs/zerolog"
+	"golang.org/x/time/rate"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
@@ -38,6 +38,7 @@ type (
 		endpoints Endpoint
 
 		priceStore
+		rateLimiter *rate.Limiter
 	}
 
 	// OkxInstId defines the id Symbol of an pair.
@@ -120,9 +121,10 @@ func NewOkxProvider(
 	okxLogger := logger.With().Str("provider", string(ProviderOkx)).Logger()
 
 	provider := &OkxProvider{
-		logger:     okxLogger,
-		endpoints:  endpoints,
-		priceStore: newPriceStore(okxLogger),
+		logger:      okxLogger,
+		endpoints:   endpoints,
+		priceStore:  newPriceStore(okxLogger),
+		rateLimiter: rate.NewLimiter(rate.Limit(4), 10),
 	}
 	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToOkxPair)
 
@@ -279,18 +281,6 @@ func (p *OkxProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
-}
-
-// GetExternalLiquidity returns external liquidity info on the provided pairs
-func (p *OkxProvider) GetExternalLiquidity(
-	_ map[uint64]oracletypes.Pool,
-	_ map[uint64]oracletypes.AccountedPool,
-	_ string,
-	pairs ...types.CurrencyPair,
-) (map[uint64]types.ExternalLiquidity, error) {
-	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
-
-	return externalLiquidity, nil
 }
 
 func (ticker OkxTickerPair) toTickerPrice() (types.TickerPrice, error) {

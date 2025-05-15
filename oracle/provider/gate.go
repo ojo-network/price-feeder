@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
+	"golang.org/x/time/rate"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
@@ -40,6 +41,7 @@ type (
 		endpoints      Endpoint
 
 		priceStore
+		rateLimiter *rate.Limiter
 	}
 
 	GateTicker struct {
@@ -129,6 +131,7 @@ func NewGateProvider(
 		reconnectTimer: time.NewTicker(gatePingCheck),
 		endpoints:      endpoints,
 		priceStore:     newPriceStore(gateLogger),
+		rateLimiter:    rate.NewLimiter(rate.Limit(20), 200),
 	}
 	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToGatePair)
 
