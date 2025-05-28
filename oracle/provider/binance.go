@@ -336,8 +336,8 @@ func (p *BinanceProvider) GetSnapshotOrderBook(symbol string) (BinanceDepthDataR
 
 	route := p.endpoints.Rest + binanceRestDepthPath + "?symbol=" + symbol + "&limit=5000"
 
-	minDelay := 2 * time.Second
-	maxDelay := 10 * time.Second
+	minDelay := 3 * time.Second
+	maxDelay := 5 * time.Second
 	// Generate a random duration within the range
 	delay := time.Duration(rand.Int63n(maxDelay.Nanoseconds()-minDelay.Nanoseconds()) + minDelay.Nanoseconds())
 	time.Sleep(delay)
