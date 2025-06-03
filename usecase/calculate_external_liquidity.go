@@ -41,9 +41,9 @@ func CalculateExternalLiquidityUseCase(
 		return nil, errors.New("no bids or asks in depthData")
 	}
 
-	// Allow to take 50% on both sides, in case of equal
-	highestBidAllowed := highestBid.QuoInt64(2)
-	lowestAskAllowed := lowestAsk.MulInt64(3).QuoInt64(2)
+	// Allow to take 15% on both sides, in case of equal
+	highestBidAllowed := highestBid.MulInt64(85).QuoInt64(100)
+	lowestAskAllowed := lowestAsk.MulInt64(115).QuoInt64(100)
 
 	if assetFound {
 

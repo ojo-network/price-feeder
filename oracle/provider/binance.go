@@ -202,17 +202,56 @@ func (p *BinanceProvider) StartConnections() {
 }
 
 func (p *BinanceProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {
-	subscriptionMsgs := make([]interface{}, 0, len(p.subscribedPairs)*2)
+	tickerStreams := make([]string, 0, len(cps))
+	candleStreams := make([]string, 0, len(cps))
+	depthStreams := make([]string, 0, len(cps))
+
 	for _, cp := range cps {
 		binanceTickerPair := currencyPairToBinanceTickerPair(cp)
-		subscriptionMsgs = append(subscriptionMsgs, newBinanceSubscriptionMsg(binanceTickerPair))
+		tickerStreams = append(tickerStreams, binanceTickerPair)
 
 		binanceCandlePair := currencyPairToBinanceCandlePair(cp)
-		subscriptionMsgs = append(subscriptionMsgs, newBinanceSubscriptionMsg(binanceCandlePair))
+		candleStreams = append(candleStreams, binanceCandlePair)
 
 		if cp.PoolID > 0 {
 			binanceDepthPair := currencyPairToBinanceDepthPair(cp)
-			subscriptionMsgs = append(subscriptionMsgs, newBinanceSubscriptionMsg(binanceDepthPair))
+			depthStreams = append(depthStreams, binanceDepthPair)
+		}
+	}
+
+	subscriptionMsgs := make([]interface{}, 0)
+
+	if len(tickerStreams) > 0 {
+		subscriptionMsgs = append(subscriptionMsgs, BinanceSubscriptionMsg{
+			Method: "SUBSCRIBE",
+			Params: tickerStreams,
+			ID:     1,
+		})
+	}
+
+	if len(candleStreams) > 0 {
+		subscriptionMsgs = append(subscriptionMsgs, BinanceSubscriptionMsg{
+			Method: "SUBSCRIBE",
+			Params: candleStreams,
+			ID:     1,
+		})
+	}
+
+	if len(depthStreams) > 0 {
+		const maxDepthPerGroup = 25
+
+		for i := 0; i < len(depthStreams); i += maxDepthPerGroup {
+			end := i + maxDepthPerGroup
+			if end > len(depthStreams) {
+				end = len(depthStreams)
+			}
+
+			depthGroup := depthStreams[i:end]
+			subscriptionMsgs = append(subscriptionMsgs, BinanceSubscriptionMsg{
+				Method: "SUBSCRIBE",
+				Params: depthGroup,
+				ID:     1,
+			})
 		}
 	}
 	return subscriptionMsgs
@@ -342,7 +381,11 @@ func (p *BinanceProvider) GetSnapshotOrderBook(symbol string) (BinanceDepthDataR
 	delay := time.Duration(rand.Int63n(maxDelay.Nanoseconds()-minDelay.Nanoseconds()) + minDelay.Nanoseconds())
 	time.Sleep(delay)
 
-	resp, err := http.Get(route)
+	client := http.Client{
+		Timeout: 3000 * time.Millisecond,
+	}
+
+	resp, err := client.Get(route)
 
 	p.logger.Info().
 		Str("datetime", time.Now().Format("2006-01-02 15:04:05")).

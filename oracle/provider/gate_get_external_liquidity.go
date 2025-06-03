@@ -31,7 +31,7 @@ func (p *GateProvider) GetExternalLiquidity(
 	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
 
 	client := http.Client{
-		Timeout: 1000 * time.Millisecond,
+		Timeout: 2000 * time.Millisecond,
 	}
 
 	var wg sync.WaitGroup
