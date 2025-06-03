@@ -1,0 +1,39 @@
+[[currency_pairs]]
+base = "USDT"
+providers = [
+  "coinbase",
+  "kraken",
+  "crypto",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "ATOM"
+base_proxy = "ATOM"
+providers = [
+  "binance",
+]
+quote = "USDT"
+quote_proxy = "USDC"
+extern_liquidity_provider = "binance"
+pool_id = 1
+
+
+# [[currency_pairs]]
+# base = "AKT"
+# base_proxy = "AKT"
+# providers = [
+#   "gate",
+# ]
+# quote = "USDT"
+# quote_proxy = "USDC"
+# extern_liquidity_provider = "gate"
+# pool_id = 2
+

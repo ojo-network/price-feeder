@@ -1,0 +1,34 @@
+config_dir = "/app"
+
+gas_adjustment = 1.8
+provider_timeout = "1000000s"
+
+[server]
+listen_addr = "0.0.0.0:8080"
+read_timeout = "120s"
+verbose_cors = true
+write_timeout = "120s"
+
+[account]
+address = "elys1wzm8dvpxpxxf26y4xn85w5adakcenprg4cq2uf"
+chain_id = "elys-1"
+validator = "elysvaloper12tzylat4udvjj56uuhu3vj2n4vgp7cf9pwcqcs"
+
+[keyring]
+backend = "test"
+dir = "/root/.elys"
+
+[rpc]
+grpc_endpoint = "rpc.elys.network:443"
+rpc_timeout = "50000ms"
+
+tmrpc_endpoint = "https://rpc.elys.network:443"
+
+[telemetry]
+enable-hostname = true
+enable-hostname-label = true
+enable-service-label = true
+enabled = true
+global-labels = [["chain_id", "elys-1"]]
+service-name = "price-feeder"
+prometheus-retention-time = 100

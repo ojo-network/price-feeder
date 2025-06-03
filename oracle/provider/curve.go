@@ -11,6 +11,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/gorilla/websocket"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 )
@@ -284,6 +285,18 @@ func (p *CurveProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
+}
+
+// GetExternalLiquidity returns external liquidity info on the provided pairs
+func (p *CurveProvider) GetExternalLiquidity(
+	_ map[uint64]oracletypes.Pool,
+	_ map[uint64]oracletypes.AccountedPool,
+	_ string,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
 }
 
 // currencyPairToCurvePair receives a currency pair and return curve

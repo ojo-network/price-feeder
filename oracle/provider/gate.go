@@ -12,16 +12,18 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
+	"golang.org/x/time/rate"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 const (
-	gateWSHost    = "ws.gate.io"
-	gateWSPath    = "/v4"
-	gatePingCheck = time.Second * 28 // should be < 30
-	gateRestHost  = "https://api.gateio.ws"
-	gateRestPath  = "/api/v4/spot/currency_pairs"
+	gateWSHost        = "ws.gate.io"
+	gateWSPath        = "/v4"
+	gatePingCheck     = time.Second * 28 // should be < 30
+	gateRestHost      = "https://api.gateio.ws"
+	gateRestPath      = "/api/v4/spot/currency_pairs"
+	gateRestOrderBook = "/api/v4/spot/order_book"
 )
 
 var _ Provider = (*GateProvider)(nil)
@@ -39,6 +41,7 @@ type (
 		endpoints      Endpoint
 
 		priceStore
+		rateLimiter *rate.Limiter
 	}
 
 	GateTicker struct {
@@ -128,6 +131,7 @@ func NewGateProvider(
 		reconnectTimer: time.NewTicker(gatePingCheck),
 		endpoints:      endpoints,
 		priceStore:     newPriceStore(gateLogger),
+		rateLimiter:    rate.NewLimiter(rate.Limit(20), 200),
 	}
 	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToGatePair)
 
@@ -408,7 +412,7 @@ func newGateTickerSubscription(cp ...string) GateTickerSubscriptionMsg {
 func newGateCandleSubscription(gatePair string) GateCandleSubscriptionMsg {
 	params := []interface{}{
 		gatePair, // currency pair ex. "ATOM_USDT"
-		60,       // time interval in seconds
+		1,        // time interval in seconds
 	}
 	return GateCandleSubscriptionMsg{
 		Method: "kline.subscribe",

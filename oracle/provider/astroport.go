@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
+
 	"github.com/ojo-network/ojo/util/decmath"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
@@ -232,6 +234,18 @@ func (p *AstroportProvider) getAvailableAssets() (map[string]types.CurrencyPair,
 		}
 	}
 	return availablePairs, nil
+}
+
+// GetExternalLiquidity returns external liquidity info on the provided pairs
+func (p *AstroportProvider) GetExternalLiquidity(
+	_ map[uint64]oracletypes.Pool,
+	_ map[uint64]oracletypes.AccountedPool,
+	_ string,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
 }
 
 // queryTickers returns the AstroportTickerPairs available from the API.

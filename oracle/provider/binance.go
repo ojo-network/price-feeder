@@ -3,24 +3,33 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"math/rand"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
 
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
+	"github.com/ojo-network/price-feeder/oracle/queries"
 	"github.com/ojo-network/price-feeder/oracle/types"
+	"github.com/ojo-network/price-feeder/usecase"
+	"github.com/ojo-network/price-feeder/usecase/entity"
 )
 
 const (
-	binanceWSHost     = "stream.binance.com:9443"
-	binanceUSWSHost   = "stream.binance.us:9443"
-	binanceWSPath     = "/ws/ojostream"
-	binanceRestHost   = "https://api1.binance.com"
-	binanceRestUSHost = "https://api.binance.us"
-	binanceRestPath   = "/api/v3/ticker/price"
+	binanceWSHost        = "stream.binance.com:9443"
+	binanceUSWSHost      = "stream.binance.us:9443"
+	binanceWSPath        = "/ws/ojostream"
+	binanceRestHost      = "https://api1.binance.com"
+	binanceRestUSHost    = "https://api.binance.us"
+	binanceRestPath      = "/api/v3/ticker/price"
+	binanceRestDepthPath = "/api/v3/depth"
 )
 
 var _ Provider = (*BinanceProvider)(nil)
@@ -50,6 +59,16 @@ type (
 		LastPrice string `json:"c"` // Last price ex.: 0.0025
 		Volume    string `json:"v"` // Total traded base asset volume ex.: 1000
 		C         uint64 `json:"C"` // Statistics close time
+	}
+
+	BinanceDepth struct {
+		E  string     `json:"e"` // depthUpdate // Event type
+		E0 int64      `json:"E"` // Event time
+		S  string     `json:"s"` // Symbol ex.: BTCUSDT
+		U  int64      `json:"U"` // First update ID in event
+		U0 int64      `json:"u"` // Final update ID in event
+		B  [][]string `json:"b"` // Bids to be updated
+		A  [][]string `json:"a"` // Asks to be updated
 	}
 
 	// BinanceCandleMetadata candle metadata used to compute tvwap price.
@@ -83,6 +102,12 @@ type (
 	BinancePairSummary struct {
 		Symbol string `json:"symbol"`
 	}
+
+	BinanceDepthDataResponse struct {
+		LastUpdateID int64       `json:"lastUpdateId"`
+		Asks         [][2]string `json:"asks"`
+		Bids         [][2]string `json:"bids"`
+	}
 )
 
 func NewBinanceProvider(
@@ -94,10 +119,34 @@ func NewBinanceProvider(
 ) (*BinanceProvider, error) {
 	if (endpoints.Name) != ProviderBinance {
 		if !binanceUS {
-			endpoints = Endpoint{
+			binanceEndpoint := Endpoint{
 				Name:      ProviderBinance,
 				Rest:      binanceRestHost,
 				Websocket: binanceWSHost,
+			}
+
+			binanceUSEndpoint := Endpoint{
+				Name:      ProviderBinanceUS,
+				Rest:      binanceRestUSHost,
+				Websocket: binanceUSWSHost,
+			}
+
+			client := http.Client{
+				Timeout: 5 * time.Second,
+			}
+			_, err := client.Get(binanceEndpoint.Rest + binanceRestPath)
+			if err == nil {
+				endpoints = binanceEndpoint
+				logger.Info().Msg("Using regular Binance endpoints")
+			} else {
+				_, err := client.Get(binanceUSEndpoint.Rest + binanceRestPath)
+				if err == nil {
+					endpoints = binanceUSEndpoint
+					logger.Info().Msg("Using Binance US endpoints")
+				} else {
+					endpoints = binanceEndpoint
+					logger.Warn().Msg("Failed to connect to both Binance endpoints, defaulting to regular Binance")
+				}
 			}
 		} else {
 			endpoints = Endpoint{
@@ -153,13 +202,57 @@ func (p *BinanceProvider) StartConnections() {
 }
 
 func (p *BinanceProvider) getSubscriptionMsgs(cps ...types.CurrencyPair) []interface{} {
-	subscriptionMsgs := make([]interface{}, 0, len(p.subscribedPairs)*2)
+	tickerStreams := make([]string, 0, len(cps))
+	candleStreams := make([]string, 0, len(cps))
+	depthStreams := make([]string, 0, len(cps))
+
 	for _, cp := range cps {
 		binanceTickerPair := currencyPairToBinanceTickerPair(cp)
-		subscriptionMsgs = append(subscriptionMsgs, newBinanceSubscriptionMsg(binanceTickerPair))
+		tickerStreams = append(tickerStreams, binanceTickerPair)
 
 		binanceCandlePair := currencyPairToBinanceCandlePair(cp)
-		subscriptionMsgs = append(subscriptionMsgs, newBinanceSubscriptionMsg(binanceCandlePair))
+		candleStreams = append(candleStreams, binanceCandlePair)
+
+		if cp.PoolID > 0 {
+			binanceDepthPair := currencyPairToBinanceDepthPair(cp)
+			depthStreams = append(depthStreams, binanceDepthPair)
+		}
+	}
+
+	subscriptionMsgs := make([]interface{}, 0)
+
+	if len(tickerStreams) > 0 {
+		subscriptionMsgs = append(subscriptionMsgs, BinanceSubscriptionMsg{
+			Method: "SUBSCRIBE",
+			Params: tickerStreams,
+			ID:     1,
+		})
+	}
+
+	if len(candleStreams) > 0 {
+		subscriptionMsgs = append(subscriptionMsgs, BinanceSubscriptionMsg{
+			Method: "SUBSCRIBE",
+			Params: candleStreams,
+			ID:     1,
+		})
+	}
+
+	if len(depthStreams) > 0 {
+		const maxDepthPerGroup = 25
+
+		for i := 0; i < len(depthStreams); i += maxDepthPerGroup {
+			end := i + maxDepthPerGroup
+			if end > len(depthStreams) {
+				end = len(depthStreams)
+			}
+
+			depthGroup := depthStreams[i:end]
+			subscriptionMsgs = append(subscriptionMsgs, BinanceSubscriptionMsg{
+				Method: "SUBSCRIBE",
+				Params: depthGroup,
+				ID:     1,
+			})
+		}
 	}
 	return subscriptionMsgs
 }
@@ -205,6 +298,8 @@ func (p *BinanceProvider) messageReceived(_ int, _ *WebsocketConnection, bz []by
 		candleErr        error
 		subscribeResp    BinanceSubscriptionResp
 		subscribeRespErr error
+		depthResp        BinanceDepth
+		depthErr         error
 	)
 
 	tickerErr = json.Unmarshal(bz, &tickerResp)
@@ -226,10 +321,18 @@ func (p *BinanceProvider) messageReceived(_ int, _ *WebsocketConnection, bz []by
 		return
 	}
 
+	depthErr = json.Unmarshal(bz, &depthResp)
+	if depthResp.E == "depthUpdate" {
+		err := ProcessBinanceOrderBook(p, depthResp)
+		p.logger.Error().AnErr("Error processing binance order book", err)
+		return
+	}
+
 	p.logger.Error().
 		Int("length", len(bz)).
 		AnErr("ticker", tickerErr).
 		AnErr("candle", candleErr).
+		AnErr("depth", depthErr).
 		AnErr("subscribeResp", subscribeRespErr).
 		Msg("Error on receive message")
 }
@@ -264,16 +367,196 @@ func (p *BinanceProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	return availablePairs, nil
 }
 
+var snapshotOrderBookMutex = &sync.Mutex{}
+
+func (p *BinanceProvider) GetSnapshotOrderBook(symbol string) (BinanceDepthDataResponse, error) {
+	snapshotOrderBookMutex.Lock()
+	defer snapshotOrderBookMutex.Unlock()
+
+	route := p.endpoints.Rest + binanceRestDepthPath + "?symbol=" + symbol + "&limit=5000"
+
+	minDelay := 3 * time.Second
+	maxDelay := 5 * time.Second
+	// Generate a random duration within the range
+	delay := time.Duration(rand.Int63n(maxDelay.Nanoseconds()-minDelay.Nanoseconds()) + minDelay.Nanoseconds())
+	time.Sleep(delay)
+
+	client := http.Client{
+		Timeout: 3000 * time.Millisecond,
+	}
+
+	resp, err := client.Get(route)
+
+	p.logger.Info().
+		Str("datetime", time.Now().Format("2006-01-02 15:04:05")).
+		Str("symbol", symbol).
+		Str("delay", delay.String()).Msg("GET_SNAPSHOT_ORDER_BOOK")
+
+	if err != nil {
+		return BinanceDepthDataResponse{}, err
+	}
+
+	defer resp.Body.Close()
+	var binanceDepthDataResponse BinanceDepthDataResponse
+
+	if err := json.NewDecoder(resp.Body).Decode(&binanceDepthDataResponse); err != nil {
+		return BinanceDepthDataResponse{}, err
+	}
+
+	return binanceDepthDataResponse, nil
+}
+
+const binanceProvider = "binance"
+
+// GetExternalLiquidity returns external liquidity info on the provided pairs
+func (p *BinanceProvider) GetExternalLiquidity(
+	ammPools map[uint64]oracletypes.Pool,
+	accountedPools map[uint64]oracletypes.AccountedPool,
+	usdcDenom string,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+	for _, pair := range pairs {
+		if pair.PoolID == 0 {
+			continue
+		}
+
+		binanceOrderBookStore := NewOrderBookStore(p)
+		binanceOrderBook, err := binanceOrderBookStore.GetOrderBook(pair.String())
+
+		if err != nil {
+			p.logger.Warn().
+				Str("provider", binanceProvider).
+				Interface("pair", pair).
+				Err(err).
+				Msg("ERROR_CALCULATING_EXTERNAL_LIQUIDITY")
+			continue
+		}
+
+		bob := binanceOrderBook
+
+		type order struct {
+			price  float64
+			amount float64
+		}
+
+		p.logger.Debug().Interface("asks", bob.Asks).Interface("bids", bob.Bids).Msg("Order book data")
+		if bob.Bids == nil {
+			return externalLiquidity, errors.New("error on bob.Bids ")
+		}
+
+		// Convertir los mapas a slices de pares clave-valor
+		bidsSlice := make([]order, 0, len(bob.Bids))
+		for price, amount := range bob.Bids {
+			bidsSlice = append(bidsSlice, order{price, amount})
+		}
+
+		if bob.Asks == nil {
+			return externalLiquidity, errors.New("error on bob.Asks ")
+		}
+		asksSlice := make([]order, 0, len(bob.Asks))
+		for price, amount := range bob.Asks {
+			asksSlice = append(asksSlice, order{price, amount})
+		}
+
+		sort.Slice(bidsSlice, func(i, j int) bool {
+			return bidsSlice[i].price > bidsSlice[j].price
+		})
+		sort.Slice(asksSlice, func(i, j int) bool {
+			return asksSlice[i].price < asksSlice[j].price
+		})
+
+		asks := [][2]float64{}
+		bids := [][2]float64{}
+
+		for _, bid := range bidsSlice {
+			bids = append(bids, [2]float64{bid.price, bid.amount})
+		}
+
+		for _, ask := range asksSlice {
+			asks = append(asks, [2]float64{ask.price, ask.amount})
+		}
+
+		depthDataEntity := entity.DepthData{
+			Asks: asks,
+			Bids: bids,
+		}
+
+		assetFound := true
+		poolAssetInfo, err := queries.QueryExtLiqPoolAssetInfo(ammPools, accountedPools, pair.PoolID, usdcDenom)
+		if err != nil {
+			assetFound = false
+			p.logger.Err(err).
+				Str("provider", binanceProvider).
+				Interface("pair", pair).
+				Msg("ERROR_QUERYING_POOL_ASSET_INFO")
+		}
+
+		price, _ := p.GetTickerPrice(pair)
+		externalLiquidityEntity, err := usecase.CalculateExternalLiquidityUseCase(
+			depthDataEntity,
+			poolAssetInfo,
+			assetFound,
+			price,
+		)
+
+		if err != nil {
+			p.logger.Err(err).
+				Str("provider", binanceProvider).
+				Interface("pair", pair).
+				Msg("ERROR_CALCULATING_EXTERNAL_LIQUIDITY")
+			return externalLiquidity, err
+		}
+
+		baseAsset := pair.BaseProxy
+		if baseAsset == "" {
+			baseAsset = pair.Base
+		}
+
+		quoteAsset := pair.QuoteProxy
+		if quoteAsset == "" {
+			quoteAsset = pair.Quote
+		}
+		liq, err := types.NewExternalLiquidity(
+			pair.PoolID,
+			baseAsset,
+			quoteAsset,
+			externalLiquidityEntity.BaseAmount,
+			externalLiquidityEntity.QuoteAmount,
+			externalLiquidityEntity.BaseDepth,
+			externalLiquidityEntity.QuoteDepth,
+		)
+		if err != nil {
+			p.logger.Err(err).
+				Str("provider", binanceProvider).
+				Interface("pair", pair).
+				Msg("ERROR_CREATING_NEW_EXTERNAL_LIQUIDITY")
+			return externalLiquidity, err
+		}
+		p.logger.Info().
+			Str("provider", binanceProvider).
+			Interface("pair", pair).Msg("EXTERNAL_LIQUIDITY_WAS_CREATED")
+
+		externalLiquidity[pair.PoolID] = liq
+	}
+
+	return externalLiquidity, nil
+}
+
 // currencyPairToBinanceTickerPair receives a currency pair and return binance
 // ticker symbol atomusdt@ticker.
 func currencyPairToBinanceTickerPair(cp types.CurrencyPair) string {
 	return strings.ToLower(cp.String() + "@ticker")
 }
 
+func currencyPairToBinanceDepthPair(cp types.CurrencyPair) string {
+	return strings.ToLower(cp.String() + "@depth")
+}
+
 // currencyPairToBinanceCandlePair receives a currency pair and return binance
-// candle symbol atomusdt@kline_1m.
+// candle symbol atomusdt@kline_1s.
 func currencyPairToBinanceCandlePair(cp types.CurrencyPair) string {
-	return strings.ToLower(cp.String() + "@kline_1m")
+	return strings.ToLower(cp.String() + "@kline_1s")
 }
 
 // newBinanceSubscriptionMsg returns a new subscription Msg.

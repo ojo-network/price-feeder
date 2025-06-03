@@ -1,0 +1,112 @@
+[[currency_pairs]]
+base = "USDT"
+providers = [
+  "coinbase",
+  "kraken",
+  "crypto",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "USDC"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "ATOM"
+base_proxy = "ATOM"
+providers = [
+  "binance",
+]
+quote = "USDT"
+quote_proxy = "USDC"
+extern_liquidity_provider = "binance"
+pool_id = 2
+
+[[currency_pairs]]
+base = "ATOM"
+providers = [
+  "kraken",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "osmosis",
+]
+quote = "ATOM"
+
+[[currency_pairs]]
+base = "OSMO"
+providers = [
+  "crypto",
+]
+quote = "USD"
+
+[[currency_pairs]]
+base = "JUNO"
+quote = "OSMO"
+providers = [ "osmosis",]
+
+[[currency_pairs]]
+base = "BTC"
+providers = [
+  "binance",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "ETH"
+providers = [
+  "binance",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "ETH"
+providers = [
+  "binance",
+]
+quote = "USDT"
+
+[[currency_pairs]]
+base = "ETH"
+base_proxy = "ETH"
+providers = [
+  "binance",
+]
+quote = "USDT"
+quote_proxy = "USDC"
+
+[[currency_pairs]]
+base = "MATIC"
+providers = [
+  "binance",
+]
+quote = "USDT"
+quote_proxy = "USDC"
+
+
+[[currency_pairs]]
+base = "BNB"
+providers = [
+  "binance",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "AVAX"
+providers = [
+  "binance",
+]
+quote = "USDC"
+
+[[currency_pairs]]
+base = "AKT"
+providers = [
+  "gate",
+]
+quote = "USDT"

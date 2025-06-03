@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -22,6 +23,7 @@ const (
 	mexcWSPath   = "/ws"
 	mexcRestHost = "https://api.mexc.com/"
 	mexcRestPath = "/api/v3/ticker/price"
+	mexcRestBase = "https://api.mexc.com"
 )
 
 var _ Provider = (*MexcProvider)(nil)
@@ -38,6 +40,7 @@ type (
 		endpoints Endpoint
 
 		priceStore
+		rateLimiter *rate.Limiter
 	}
 
 	// MexcTickerResponse is the ticker price response object.
@@ -109,9 +112,10 @@ func NewMexcProvider(
 	mexcLogger := logger.With().Str("provider", "mexc").Logger()
 
 	provider := &MexcProvider{
-		logger:     mexcLogger,
-		endpoints:  endpoints,
-		priceStore: newPriceStore(mexcLogger),
+		logger:      mexcLogger,
+		endpoints:   endpoints,
+		priceStore:  newPriceStore(mexcLogger),
+		rateLimiter: rate.NewLimiter(rate.Limit(45), 450),
 	}
 	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToMexcPair)
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
+	"golang.org/x/time/rate"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
@@ -37,6 +38,7 @@ type (
 		endpoints Endpoint
 
 		priceStore
+		rateLimiter *rate.Limiter
 	}
 
 	// OkxInstId defines the id Symbol of an pair.
@@ -119,9 +121,10 @@ func NewOkxProvider(
 	okxLogger := logger.With().Str("provider", string(ProviderOkx)).Logger()
 
 	provider := &OkxProvider{
-		logger:     okxLogger,
-		endpoints:  endpoints,
-		priceStore: newPriceStore(okxLogger),
+		logger:      okxLogger,
+		endpoints:   endpoints,
+		priceStore:  newPriceStore(okxLogger),
+		rateLimiter: rate.NewLimiter(rate.Limit(4), 10),
 	}
 	provider.setCurrencyPairToTickerAndCandlePair(currencyPairToOkxPair)
 

@@ -20,7 +20,7 @@ var (
 
 const (
 	// tvwapCandlePeriod represents the time period we use for tvwap in minutes
-	tvwapCandlePeriod = 10 * time.Minute
+	tvwapCandlePeriod = 30 * time.Second
 )
 
 // compute VWAP for each base by dividing the Σ {P * V} by Σ {V}
@@ -238,6 +238,10 @@ func CreatePairProvidersFromCurrencyPairProvidersList(
 
 	for _, pair := range currencyPairs {
 		for _, provider := range pair.Providers {
+			poolID := uint64(0)
+			if provider == pair.ExternLiquidityProvider {
+				poolID = pair.PoolId
+			}
 			if len(pair.PairAddress) > 0 {
 				for _, uniPair := range pair.PairAddress {
 					if (uniPair.AddressProvider == provider) && (uniPair.Address != "") {
@@ -255,8 +259,11 @@ func CreatePairProvidersFromCurrencyPairProvidersList(
 				providerPairs[types.ProviderName(provider)] = append(
 					providerPairs[types.ProviderName(provider)],
 					types.CurrencyPair{
-						Base:  pair.BaseDenom,
-						Quote: pair.QuoteDenom,
+						Base:       pair.BaseDenom,
+						Quote:      pair.QuoteDenom,
+						BaseProxy:  pair.BaseProxyDenom,
+						QuoteProxy: pair.QuoteProxyDenom,
+						PoolID:     poolID,
 					},
 				)
 			}

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
 )
@@ -23,7 +24,7 @@ const (
 	bitgetRestHost      = "https://api.bitget.com"
 	bitgetRestPath      = "/api/spot/v1/public/products"
 	tickerChannel       = "ticker"
-	candleChannel       = "candle5m"
+	candleChannel       = "candle1m"
 	instType            = "SP"
 )
 
@@ -305,6 +306,18 @@ func (p *BitgetProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
+}
+
+// GetExternalLiquidity returns external liquidity info on the provided pairs
+func (p *BitgetProvider) GetExternalLiquidity(
+	_ map[uint64]oracletypes.Pool,
+	_ map[uint64]oracletypes.AccountedPool,
+	_ string,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
 }
 
 // toTickerPrice converts current BitgetTicker to TickerPrice.

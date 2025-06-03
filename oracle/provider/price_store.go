@@ -1,10 +1,12 @@
 package provider
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/rs/zerolog"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -120,6 +122,24 @@ func (ps *priceStore) GetTickerPrices(pairs ...types.CurrencyPair) (types.Curren
 		tickerPrices[cp] = ticker
 	}
 	return tickerPrices, nil
+}
+
+// GetTickerPrice returns the tickerPrice based on the provided pair. Logs a
+// warning for each currency pair that is not available.
+func (ps *priceStore) GetTickerPrice(pair types.CurrencyPair) (types.TickerPrice, error) {
+	ps.tickerMtx.RLock()
+	defer ps.tickerMtx.RUnlock()
+	key := ps.currencyPairToTickerPair(pair)
+	ticker, ok := ps.tickers[key]
+	if !ok {
+		ps.logger.Warn().Msgf("failed to get ticker price for %s", key)
+		return types.TickerPrice{
+			Price:  math.LegacyNewDec(0),
+			Volume: math.LegacyNewDec(0),
+		}, fmt.Errorf("failed to get ticker price for %s", key)
+	}
+
+	return ticker, nil
 }
 
 // GetCandlePrices returns a copy of the the candlePrices based on the provided pairs.

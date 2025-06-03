@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/ojo-network/price-feeder/oracle/types"
 	"github.com/rs/zerolog"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -41,6 +42,7 @@ type (
 		endpoints Endpoint
 
 		priceStore
+		rateLimiter *rate.Limiter
 	}
 
 	// HuobiTicker defines the response type for the channel and the tick object for a
@@ -117,9 +119,10 @@ func NewHuobiProvider(
 	huobiLogger := logger.With().Str("provider", string(ProviderHuobi)).Logger()
 
 	provider := &HuobiProvider{
-		logger:     huobiLogger,
-		endpoints:  endpoints,
-		priceStore: newPriceStore(huobiLogger),
+		logger:      huobiLogger,
+		endpoints:   endpoints,
+		priceStore:  newPriceStore(huobiLogger),
+		rateLimiter: rate.NewLimiter(rate.Limit(4), 5),
 	}
 	provider.currencyPairToTickerPair = currencyPairToHuobiTickerPair
 	provider.curencyPairToCandlePair = currencyPairToHuobiCandlePair

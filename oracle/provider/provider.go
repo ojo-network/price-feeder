@@ -3,31 +3,34 @@ package provider
 import (
 	"time"
 
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/ojo-network/price-feeder/oracle/types"
 )
 
 const (
 	defaultTimeout = 10 * time.Second
 
-	ProviderKraken      types.ProviderName = "kraken"
-	ProviderBinance     types.ProviderName = "binance"
-	ProviderBinanceUS   types.ProviderName = "binanceus"
-	ProviderOsmosis     types.ProviderName = "osmosis"
-	ProviderHuobi       types.ProviderName = "huobi"
-	ProviderOkx         types.ProviderName = "okx"
-	ProviderGate        types.ProviderName = "gate"
-	ProviderCoinbase    types.ProviderName = "coinbase"
-	ProviderBitget      types.ProviderName = "bitget"
-	ProviderMexc        types.ProviderName = "mexc"
-	ProviderCrypto      types.ProviderName = "crypto"
-	ProviderPolygon     types.ProviderName = "polygon"
-	ProviderEthUniswap  types.ProviderName = "eth-uniswap"
-	ProviderEthCamelot  types.ProviderName = "eth-camelot"
-	ProviderEthBalancer types.ProviderName = "eth-balancer"
-	ProviderEthPancake  types.ProviderName = "eth-pancake"
-	ProviderEthCurve    types.ProviderName = "eth-curve"
-	ProviderKujira      types.ProviderName = "kujira"
-	ProviderMock        types.ProviderName = "mock"
+	ProviderKraken        types.ProviderName = "kraken"
+	ProviderBinance       types.ProviderName = "binance"
+	ProviderBinanceUS     types.ProviderName = "binanceus"
+	ProviderOsmosis       types.ProviderName = "osmosis"
+	ProviderHuobi         types.ProviderName = "huobi"
+	ProviderOkx           types.ProviderName = "okx"
+	ProviderGate          types.ProviderName = "gate"
+	ProviderCoinbase      types.ProviderName = "coinbase"
+	ProviderBitget        types.ProviderName = "bitget"
+	ProviderMexc          types.ProviderName = "mexc"
+	ProviderCrypto        types.ProviderName = "crypto"
+	ProviderPolygon       types.ProviderName = "polygon"
+	ProviderEthUniswap    types.ProviderName = "eth-uniswap"
+	ProviderEthCamelot    types.ProviderName = "eth-camelot"
+	ProviderEthBalancer   types.ProviderName = "eth-balancer"
+	ProviderEthPancake    types.ProviderName = "eth-pancake"
+	ProviderEthCurve      types.ProviderName = "eth-curve"
+	ProviderKujira        types.ProviderName = "kujira"
+	ProviderMock          types.ProviderName = "mock"
+	ProviderCoinEx        types.ProviderName = "coinex"
+	ProviderCryptoCompare types.ProviderName = "cryptocompare"
 )
 
 var (
@@ -45,6 +48,14 @@ type (
 
 		// GetAvailablePairs return all available pairs symbol to subscribe.
 		GetAvailablePairs() (map[string]struct{}, error)
+
+		// GetExternalLiquidity returns external liquidity objects
+		GetExternalLiquidity(
+			ammPools map[uint64]oracletypes.Pool,
+			accountedPools map[uint64]oracletypes.AccountedPool,
+			usdcDenom string,
+			pairs ...types.CurrencyPair,
+		) (map[uint64]types.ExternalLiquidity, error)
 
 		// SubscribeCurrencyPairs sends subscription messages for the new currency
 		// pairs and adds them to the providers subscribed pairs

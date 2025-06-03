@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	oracletypes "github.com/ojo-network/ojo/x/oracle/types"
 	"github.com/rs/zerolog"
 
 	"github.com/ojo-network/price-feeder/oracle/types"
@@ -215,6 +216,18 @@ func (p *CoinbaseProvider) GetAvailablePairs() (map[string]struct{}, error) {
 	}
 
 	return availablePairs, nil
+}
+
+// GetExternalLiquidity returns external liquidity info on the provided pairs
+func (p *CoinbaseProvider) GetExternalLiquidity(
+	_ map[uint64]oracletypes.Pool,
+	_ map[uint64]oracletypes.AccountedPool,
+	_ string,
+	pairs ...types.CurrencyPair,
+) (map[uint64]types.ExternalLiquidity, error) {
+	externalLiquidity := make(map[uint64]types.ExternalLiquidity, len(pairs))
+
+	return externalLiquidity, nil
 }
 
 func (p *CoinbaseProvider) messageReceived(_ int, _ *WebsocketConnection, bz []byte) {
