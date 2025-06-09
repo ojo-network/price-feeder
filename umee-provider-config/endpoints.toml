@@ -29,11 +29,6 @@ rest = "https://api.eth-api.staging.ojolabs.xyz"
 websocket = "api.eth-api.staging.ojolabs.xyz"
 
 [[provider_endpoints]]
-name = "kujira"
-rest = "https://api.kujira-api.staging.ojolabs.xyz"
-websocket = "api.kujira-api.staging.ojolabs.xyz"
-
-[[provider_endpoints]]
 name = "eth-curve"
 rest = "https://api.eth-api.staging.ojo.network"
 websocket = "api.eth-api.staging.ojo.network"
