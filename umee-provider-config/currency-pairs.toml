@@ -311,13 +311,6 @@ providers = [
 quote = "JUNO"
 
 [[currency_pairs]]
-base = "USK"
-providers = [
-  "kujira",
-]
-quote = "USDC"
-
-[[currency_pairs]]
 base = "stUMEE"
 providers = [
   "osmosis",
