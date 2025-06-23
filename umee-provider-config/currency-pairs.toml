@@ -423,10 +423,13 @@ quote = "USDC"
 
 [[currency_pairs]]
 base = "DYDX"
-providers = [
-  "osmosis",
-]
+quote = "USDT"
+providers = [ "binance", "okx",]
+
+[[currency_pairs]]
+base = "DYDX"
 quote = "USDC"
+providers = [ "binance", "okx",]
 
 [[currency_pairs]]
 base = "DYDX"
