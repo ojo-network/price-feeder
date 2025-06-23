@@ -13,26 +13,6 @@ name = "eth-uniswap"
 rest = "https://api.eth-api.staging.ojolabs.xyz"
 websocket = "api.eth-api.staging.ojolabs.xyz"
 
-[[provider_endpoints]]
-name = "eth-camelot"
-rest = "https://api.eth-api.staging.ojolabs.xyz"
-websocket = "api.eth-api.staging.ojolabs.xyz"
-
-[[provider_endpoints]]
-name = "eth-balancer"
-rest = "https://api.eth-api.staging.ojolabs.xyz"
-websocket = "api.eth-api.staging.ojolabs.xyz"
-
-[[provider_endpoints]]
-name = "eth-pancake"
-rest = "https://api.eth-api.staging.ojolabs.xyz"
-websocket = "api.eth-api.staging.ojolabs.xyz"
-
-[[provider_endpoints]]
-name = "eth-curve"
-rest = "https://api.eth-api.staging.ojo.network"
-websocket = "api.eth-api.staging.ojo.network"
-
 ## If you observe the following error: "ERR failed to initialize binance provider" then most likely
 ## someone is blocking your connection. In such case, try to use the Binance US API instead:
 # rest = "https://api.binance.us"
