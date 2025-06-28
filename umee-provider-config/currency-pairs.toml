@@ -311,13 +311,6 @@ providers = [
 quote = "JUNO"
 
 [[currency_pairs]]
-base = "USK"
-providers = [
-  "kujira",
-]
-quote = "USDC"
-
-[[currency_pairs]]
 base = "stUMEE"
 providers = [
   "osmosis",
@@ -430,10 +423,13 @@ quote = "USDC"
 
 [[currency_pairs]]
 base = "DYDX"
-providers = [
-  "osmosis",
-]
+quote = "USDT"
+providers = [ "binance", "okx",]
+
+[[currency_pairs]]
+base = "DYDX"
 quote = "USDC"
+providers = [ "binance", "okx",]
 
 [[currency_pairs]]
 base = "DYDX"
