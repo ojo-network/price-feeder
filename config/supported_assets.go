@@ -30,6 +30,7 @@ var (
 		provider.ProviderEthCurve:    false,
 		provider.ProviderKujira:      false,
 		provider.ProviderAstroport:   false,
+		provider.ProviderDPSN:        true,
 		provider.ProviderMock:        false,
 	}
 

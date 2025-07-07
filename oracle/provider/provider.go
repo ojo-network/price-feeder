@@ -27,6 +27,7 @@ const (
 	ProviderEthPancake  types.ProviderName = "eth-pancake"
 	ProviderEthCurve    types.ProviderName = "eth-curve"
 	ProviderKujira      types.ProviderName = "kujira"
+	ProviderDPSN        types.ProviderName = "dpsn"
 	ProviderMock        types.ProviderName = "mock"
 )
 

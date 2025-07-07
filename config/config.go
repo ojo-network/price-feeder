@@ -69,6 +69,13 @@ type (
 		Quote       string                `mapstructure:"quote" validate:"required"`
 		PairAddress []PairAddressProvider `mapstructure:"pair_address_providers" validate:"dive"`
 		Providers   []types.ProviderName  `mapstructure:"providers" validate:"required,gt=0,dive,required"`
+		DPSNTopics  *DPSNTopics           `mapstructure:"dpsn_topics"`
+	}
+
+	// DPSNTopics defines DPSN-specific configuration for a currency pair.
+	DPSNTopics struct {
+		TopicID string `mapstructure:"topic_id" validate:"required"`
+		AssetID string `mapstructure:"asset_id" validate:"required"`
 	}
 
 	PairAddressProvider struct {
@@ -240,18 +247,34 @@ func (c Config) ProviderPairs() map[types.ProviderName][]types.CurrencyPair {
 			if len(pair.PairAddress) > 0 {
 				for _, uniPair := range pair.PairAddress {
 					if (uniPair.Provider == provider) && (uniPair.Address != "") {
-						providerPairs[uniPair.Provider] = append(providerPairs[uniPair.Provider], types.CurrencyPair{
+						currencyPair := types.CurrencyPair{
 							Base:    pair.Base,
 							Quote:   pair.Quote,
 							Address: uniPair.Address,
-						})
+						}
+						// Add DPSN topics if this is a DPSN provider and topics are configured
+						if provider == types.ProviderName("dpsn") && pair.DPSNTopics != nil {
+							currencyPair.DPSNTopics = &types.DPSNTopics{
+								TopicID: pair.DPSNTopics.TopicID,
+								AssetID: pair.DPSNTopics.AssetID,
+							}
+						}
+						providerPairs[uniPair.Provider] = append(providerPairs[uniPair.Provider], currencyPair)
 					}
 				}
 			} else {
-				providerPairs[provider] = append(providerPairs[provider], types.CurrencyPair{
+				currencyPair := types.CurrencyPair{
 					Base:  pair.Base,
 					Quote: pair.Quote,
-				})
+				}
+				// Add DPSN topics if this is a DPSN provider and topics are configured
+				if provider == types.ProviderName("dpsn") && pair.DPSNTopics != nil {
+					currencyPair.DPSNTopics = &types.DPSNTopics{
+						TopicID: pair.DPSNTopics.TopicID,
+						AssetID: pair.DPSNTopics.AssetID,
+					}
+				}
+				providerPairs[provider] = append(providerPairs[provider], currencyPair)
 			}
 		}
 	}

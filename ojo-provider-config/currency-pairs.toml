@@ -237,3 +237,13 @@ providers = [
   "astroport",
 ]
 quote = "INJ"
+
+[[currency_pairs]]
+base = "WHITE"
+providers = [
+  "dpsn",
+]
+quote = "USDC"
+[dpsn_topics]
+topic_id = "0xcaa7f02362c7a2f1d5d7a1b40c46b4c92acf20eb84231adda6a1a6903adbf7cb"
+asset_id = "0x6Ec94F50cAdcc79984463688dE42A0Ca696EC2db"
