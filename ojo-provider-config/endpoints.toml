@@ -1,6 +1,6 @@
 [[provider_endpoints]]
-name = "binance"
-rest = "https://api1.binance.com"
+name = "dpsn"
+rest = "https://data.streams.dpsn.org"
 websocket = "stream.binance.com:9443"
 
 ## If you observe the following error: "ERR failed to initialize binance provider" then most likely

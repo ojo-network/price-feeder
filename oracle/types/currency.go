@@ -6,9 +6,16 @@ import "encoding/json"
 // We primarily utilize the base for broadcasting exchange rates and use the
 // pair for querying for the ticker prices.
 type CurrencyPair struct {
-	Base    string
-	Quote   string
-	Address string
+	Base       string
+	Quote      string
+	Address    string
+	DPSNTopics *DPSNTopics
+}
+
+// DPSNTopics defines DPSN-specific configuration for a currency pair.
+type DPSNTopics struct {
+	TopicID string
+	AssetID string
 }
 
 // String implements the Stringer interface and defines a ticker symbol for

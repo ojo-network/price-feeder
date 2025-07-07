@@ -487,6 +487,9 @@ func NewProvider(
 
 	case provider.ProviderAstroport:
 		return provider.NewAstroportProvider(ctx, logger, endpoint, providerPairs...)
+
+	case provider.ProviderDPSN:
+		return provider.NewDPSNProvider(ctx, logger, endpoint, providerPairs...)
 	}
 
 	return nil, fmt.Errorf("provider %s not found", providerName)
