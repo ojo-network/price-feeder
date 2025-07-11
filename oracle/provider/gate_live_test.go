@@ -16,11 +16,6 @@ import (
 
 // TestGateLiveWebsocket connects to Gate's live websocket and listens for real data
 func TestGateLiveWebsocket(t *testing.T) {
-	// Skip in CI/CD environments to avoid rate limiting
-	if testing.Short() {
-		t.Skip("Skipping live websocket test in short mode")
-	}
-
 	// Test configuration
 	testPairs := []types.CurrencyPair{
 		{Base: "BTC", Quote: "USDT"},
