@@ -396,16 +396,16 @@ quote = "USDT"
 [[currency_pairs]]
 base = "STRD"
 providers = [
-  "osmosis",
+  "mexc",
 ]
-quote = "OSMO"
+quote = "USDT"
 
 [[currency_pairs]]
 base = "STRD"
 providers = [
-  "osmosis",
+  "kraken",
 ]
-quote = "USDC"
+quote = "USD"
 
 [[currency_pairs]]
 base = "milkTIA"
