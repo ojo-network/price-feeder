@@ -1,469 +1,326 @@
 [[currency_pairs]]
 base = "UMEE"
-providers = [
-  "mexc",
-  "gate",
-]
+providers = ["mexc", "gate"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "UMEE"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "ATOM"
 
 [[currency_pairs]]
 base = "USDT"
-providers = [
-  "kraken",
-  "coinbase",
-  "crypto",
-]
+providers = ["kraken", "coinbase", "crypto"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "USDC"
-providers = [
-  "kraken",
-]
+providers = ["kraken"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "ATOM"
-providers = [
-  "okx",
-  "bitget",
-]
+providers = ["okx", "bitget"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "ATOM"
-providers = [
-  "kraken",
-  "crypto",
-]
+providers = ["kraken", "crypto"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "USDC"
-providers = [
-  "okx",
-  "bitget",
-  "kraken",
-]
+providers = ["okx", "bitget", "kraken"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "DAI"
-providers = [
-  "okx",
-  "bitget",
-  "huobi",
-]
+providers = ["okx", "bitget", "huobi"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "DAI"
-providers = [
-  "kraken",
-]
+providers = ["kraken"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "ETH"
-providers = [
-  "okx",
-  "bitget",
-]
+providers = ["okx", "bitget"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "ETH"
-providers = [
-  "kraken",
-]
+providers = ["kraken"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "WBTC"
-providers = [
-  "okx",
-  "bitget",
-  "crypto",
-]
+providers = ["okx", "bitget", "crypto"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "CRO"
-providers = [
-  "crypto",
-  "bitget",
-  "okx",
-]
+providers = ["crypto", "bitget", "okx"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "BNB"
-providers = [
-  "mexc",
-  "bitget",
-  "okx",
-]
+providers = ["mexc", "bitget", "okx"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "OSMO"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "ATOM"
 
 [[currency_pairs]]
 base = "OSMO"
-providers = [
-  "bitget",
-  "gate",
-]
+providers = ["bitget", "gate"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "OSMO"
-providers = [
-  "crypto",
-]
+providers = ["crypto"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "WETH"
-providers = [
-  "eth-uniswap"
-]
+providers = ["eth-uniswap"]
 quote = "USDC"
 
 [[currency_pairs]]
 base = "WBTC"
-providers = [
-  "eth-uniswap"
-]
+providers = ["eth-uniswap"]
 quote = "WETH"
 
 [[currency_pairs]]
 base = "CBETH"
-providers = [
-  "eth-uniswap"
-]
+providers = ["eth-uniswap"]
 quote = "WETH"
 
 [[currency_pairs]]
 base = "stATOM"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "ATOM"
 
 [[currency_pairs]]
 base = "stOSMO"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "IST"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "IST"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "USDC"
 
 [[currency_pairs]]
 base = "USDC"
-providers = [
-  "kraken",
-]
+providers = ["kraken"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "AKT"
 quote = "USDT"
-providers = [ "huobi", "gate",]
+providers = ["huobi", "gate"]
 
 [[currency_pairs]]
 base = "AKT"
 quote = "USD"
-providers = [ "kraken", "crypto",]
+providers = ["kraken", "crypto"]
 
 [[currency_pairs]]
 base = "JUNO"
 quote = "USDT"
-providers = [ "mexc",]
+providers = ["mexc"]
 
 [[currency_pairs]]
 base = "JUNO"
 quote = "USD"
-providers = [ "kraken",]
+providers = ["kraken"]
 
 [[currency_pairs]]
 base = "JUNO"
 quote = "ATOM"
-providers = [ "osmosis",]
+providers = ["osmosis"]
 
 [[currency_pairs]]
 base = "LUNA"
 quote = "USDT"
-providers = [ "okx", "gate", "huobi", "bitget",]
+providers = ["okx", "gate", "huobi", "bitget"]
 
 [[currency_pairs]]
 base = "WAXL"
-providers = [
-  "kraken",
-]
+providers = ["kraken"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "WAXL"
-providers = [
-  "huobi",
-  "bitget",
-  "gate",
-]
+providers = ["huobi", "bitget", "gate"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "DOT"
-providers = [
-  "kraken",
-  "coinbase",
-  "crypto",
-]
+providers = ["kraken", "coinbase", "crypto"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "DOT"
-providers = [
-  "gate",
-  "bitget",
-]
+providers = ["gate", "bitget"]
 quote = "USDT"
 
 [[currency_pairs]]
-base = "MATIC"
-providers = [
-  "coinbase",
-  "kraken",
-]
+base = "POL"
+providers = ["coinbase", "kraken"]
 quote = "USD"
 
 [[currency_pairs]]
-base = "MATIC"
-providers = [
-  "gate",
-  "mexc",
-  "bitget",
-]
+base = "POL"
+providers = ["gate", "mexc", "bitget"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "stkATOM"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "ATOM"
 
 [[currency_pairs]]
 base = "qATOM"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "ATOM"
 
 [[currency_pairs]]
 base = "CBETH"
 quote = "USD"
-providers = [ "coinbase",]
+providers = ["coinbase"]
 
 [[currency_pairs]]
 base = "CMST"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "MARS"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "stJUNO"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "JUNO"
 
 [[currency_pairs]]
 base = "stUMEE"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "UMEE"
 
 [[currency_pairs]]
 base = "RETH"
-providers = [
-  "eth-uniswap",
-]
+providers = ["eth-uniswap"]
 quote = "WETH"
 
 [[currency_pairs]]
 base = "NCT"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "SOMM"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "SOMM"
-providers = [
-  "gate",
-]
+providers = ["gate"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "STARS"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "ATOM"
 
 [[currency_pairs]]
 base = "STARS"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "INJ"
-providers = [
-  "binance",
-  "gate",
-  "bitget",
-  "mexc",
-]
+providers = ["binance", "gate", "bitget", "mexc"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "SFRXETH"
-providers = [
-  "eth-uniswap"
-]
+providers = ["eth-uniswap"]
 quote = "WETH"
 
 [[currency_pairs]]
 base = "WSTETH"
-providers = [
-  "eth-uniswap"
-]
+providers = ["eth-uniswap"]
 quote = "WETH"
 
 [[currency_pairs]]
 base = "TIA"
-providers = [
-  "binance",
-  "okx",
-  "bitget",
-  "gate",
-]
+providers = ["binance", "okx", "bitget", "gate"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "STRD"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "STRD"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "USDC"
 
 [[currency_pairs]]
 base = "milkTIA"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "TIA"
 
 [[currency_pairs]]
 base = "milkTIA"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "USDC"
 
 [[currency_pairs]]
 base = "DYDX"
 quote = "USDT"
-providers = [ "binance", "okx",]
+providers = ["binance", "okx"]
 
 [[currency_pairs]]
 base = "DYDX"
 quote = "USDC"
-providers = [ "binance", "okx",]
+providers = ["binance", "okx"]
 
 [[currency_pairs]]
 base = "DYDX"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "stTIA"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "TIA"
 
 [[currency_pairs]]
 base = "BLD"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "OSMO"
 
 [[currency_pairs]]
 base = "BLD"
-providers = [
-  "gate",
-]
+providers = ["gate"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "stDYDX"
-providers = [
-  "osmosis",
-]
+providers = ["osmosis"]
 quote = "DYDX"
 
 [[currency_pairs]]
@@ -478,23 +335,15 @@ providers = ["kraken", "coinbase", "crypto"]
 
 [[currency_pairs]]
 base = "SEI"
-providers = [
-  "binance",
-  "bitget",
-  "gate",
-]
+providers = ["binance", "bitget", "gate"]
 quote = "USDT"
 
 [[currency_pairs]]
 base = "SEI"
-providers = [
-  "kraken",
-  "crypto",
-  "coinbase",
-]
+providers = ["kraken", "crypto", "coinbase"]
 quote = "USD"
 
 [[currency_pairs]]
 base = "NTRN"
 quote = "USDT"
-providers = [ "binance", "bitget", "gate",]
+providers = ["binance", "bitget", "gate"]

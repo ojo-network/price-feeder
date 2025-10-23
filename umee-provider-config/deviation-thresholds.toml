@@ -75,7 +75,7 @@ base = "WAXL"
 threshold = "1.5"
 
 [[deviation_thresholds]]
-base = "MATIC"
+base = "POL"
 threshold = "1.5"
 
 [[deviation_thresholds]]
