@@ -60,6 +60,9 @@ func (pwm *PricesWithMutex) clonePrices() CurrencyPairDecByProvider {
 	for provider, prices := range pwm.prices {
 		pricesClone := make(CurrencyPairDec, len(prices))
 		for cp, price := range prices {
+			if cp.Base == "POL" {
+				cp.Base = "MATIC"
+			}
 			pricesClone[cp] = price
 		}
 		clone[provider] = pricesClone
