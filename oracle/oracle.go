@@ -150,6 +150,9 @@ func (o *Oracle) GetPrices() types.CurrencyPairDec {
 
 	for k, v := range o.prices {
 		// Fills in the prices with each value in the oracle
+		if k.Base == "POL" {
+			k.Base = "MATIC"
+		}
 		prices[k] = v
 	}
 
@@ -642,7 +645,11 @@ func GenerateExchangeRatesString(prices types.CurrencyPairDec) string {
 
 	// aggregate exchange rates as "<currency_pair>:<price>"
 	for cp, avgPrice := range prices {
-		exchangeRates[i] = fmt.Sprintf("%s:%s", cp.Base, avgPrice.String())
+		if cp.Base == "POL" {
+			exchangeRates[i] = fmt.Sprintf("MATIC:%s", avgPrice.String())
+		} else {
+			exchangeRates[i] = fmt.Sprintf("%s:%s", cp.Base, avgPrice.String())
+		}
 		i++
 	}
 
